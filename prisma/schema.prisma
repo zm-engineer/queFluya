@@ -20,15 +20,15 @@ enum Level {
 }
 
 model Profile {
-  id             String          @id @default(uuid())
-  userId         String          @unique @map("user_id")
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String          @unique @map("user_id") @db.Uuid
   username       String          @unique
   nativeLanguage Language        @map("native_language")
   targetLanguage Language        @map("target_language")
   level          Level           @default(BEGINNER)
   avatarUrl      String?         @map("avatar_url")
   createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at")
   topicProgress  TopicProgress[]
   recordings     Recording[]
 
@@ -36,8 +36,8 @@ model Profile {
 }
 
 model TopicProgress {
-  id          String   @id @default(uuid())
-  profileId   String   @map("profile_id")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId   String   @map("profile_id") @db.Uuid
   topicSlug   String   @map("topic_slug")
   section     Int      @default(1)
   completedAt DateTime? @map("completed_at")
@@ -49,8 +49,8 @@ model TopicProgress {
 }
 
 model Recording {
-  id              String   @id @default(uuid())
-  profileId       String   @map("profile_id")
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId       String   @map("profile_id") @db.Uuid
   topicSlug       String   @map("topic_slug")
   originalUrl     String   @map("original_url")
   transcription   String?
