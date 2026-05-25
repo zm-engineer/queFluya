@@ -117,3 +117,36 @@ const supabase = createClient();
 - **Supabase mock**: `test/mocks/supabase.ts` exposes `createSupabaseMock()` to build a controllable fake client per test.
 - **First-time Playwright setup**: run `npx playwright install chromium` once to download the browser binary.
 - **Caveat**: Vitest does not support async Server Components yet (see Next.js docs). The dashboard page is covered only by Playwright.
+
+## Docker
+
+The repo ships a multi-stage `Dockerfile` and a `docker-compose.yml` that produce a small production image using Next.js's `output: "standalone"` mode (~246 MB on `node:20-alpine`).
+
+### Build
+
+```bash
+docker compose --env-file .env.local build
+```
+
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are baked into the client bundle at build time, so they are passed as build args from `.env.local`.
+
+### Run
+
+```bash
+docker compose --env-file .env.local up
+```
+
+The container listens on `http://localhost:3000`. To run alongside the dev server (which already binds 3000), use `docker run -p 3001:3000 --env-file .env.local quefluya:local` instead.
+
+### Stop
+
+```bash
+docker compose down
+```
+
+### Notes
+
+- Use `npm run dev` for active development — Docker is for production-like runs and CI (see Next.js docs on local development).
+- The image runs as the unprivileged `nextjs` user inside the container.
+- Prisma's generated client is produced during the build stage; the runtime image does **not** include `node_modules` or the `prisma` CLI.
+- `DATABASE_URL` and `DIRECT_URL` are runtime-only (Supabase queries), passed via `environment` in the compose file.
