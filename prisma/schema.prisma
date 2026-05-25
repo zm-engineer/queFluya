@@ -19,6 +19,19 @@ enum Level {
   ADVANCED
 }
 
+// The `user_id` column has a manual foreign key to `auth.users(id)` with
+// `ON DELETE CASCADE`, added via raw SQL in Supabase:
+//
+//   alter table public.profiles
+//     add constraint profiles_user_id_fkey
+//     foreign key (user_id) references auth.users(id) on delete cascade;
+//
+// Prisma does not model this relation because `auth.users` lives in the
+// `auth` schema, outside Prisma's tracked schemas. Prisma will not see or
+// touch the constraint on `prisma db push`, so the cascade survives schema
+// changes. If you ever enable `multiSchema` with `schemas = ["public", "auth"]`,
+// remember to model `auth.users` (and ignore the rest of Supabase's auth
+// tables) so Prisma does not drop this FK as drift.
 model Profile {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId         String          @unique @map("user_id") @db.Uuid
