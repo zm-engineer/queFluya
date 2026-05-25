@@ -98,9 +98,22 @@ const supabase = createClient();
 
 ## Scripts
 
-| Command         | What it does                            |
-| --------------- | --------------------------------------- |
-| `npm run dev`   | Start the Next.js dev server            |
-| `npm run build` | Production build                        |
-| `npm run start` | Run the production build                |
-| `npm run lint`  | Run ESLint                              |
+| Command                | What it does                                              |
+| ---------------------- | --------------------------------------------------------- |
+| `npm run dev`          | Start the Next.js dev server                              |
+| `npm run build`        | Production build                                          |
+| `npm run start`        | Run the production build                                  |
+| `npm run lint`         | Run ESLint                                                |
+| `npm run test`         | Run Vitest in watch mode                                  |
+| `npm run test:run`     | Run Vitest once (CI mode)                                 |
+| `npm run test:ui`      | Vitest with the interactive UI                            |
+| `npm run test:e2e`     | Run Playwright end-to-end tests                           |
+| `npm run test:e2e:ui`  | Playwright with the UI runner                             |
+
+## Testing
+
+- **Unit / component tests**: Vitest + React Testing Library, configured in `vitest.config.mts`. Tests live next to the source files as `*.test.ts(x)`.
+- **E2E tests**: Playwright, configured in `playwright.config.ts`. Tests live in `e2e/`.
+- **Supabase mock**: `test/mocks/supabase.ts` exposes `createSupabaseMock()` to build a controllable fake client per test.
+- **First-time Playwright setup**: run `npx playwright install chromium` once to download the browser binary.
+- **Caveat**: Vitest does not support async Server Components yet (see Next.js docs). The dashboard page is covered only by Playwright.
