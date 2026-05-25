@@ -150,3 +150,16 @@ docker compose down
 - The image runs as the unprivileged `nextjs` user inside the container.
 - Prisma's generated client is produced during the build stage; the runtime image does **not** include `node_modules` or the `prisma` CLI.
 - `DATABASE_URL` and `DIRECT_URL` are runtime-only (Supabase queries), passed via `environment` in the compose file.
+
+## CI with Jenkins
+
+A declarative pipeline lives in [`Jenkinsfile`](./Jenkinsfile) with four stages: **Install → Lint → Unit tests → Docker build**. Stages 1-3 run inside a `node:20-bookworm` container; stage 4 uses the host Docker socket to build the production image.
+
+Trigger: poll SCM every ~5 minutes (`H/5 * * * *`), plus manual builds.
+
+See [`jenkins/SETUP.md`](./jenkins/SETUP.md) for step-by-step instructions on:
+
+- Running Jenkins locally in Docker (with the Docker socket mounted)
+- Configuring `supabase-url` and `supabase-anon-key` as Secret text credentials
+- Wiring the pipeline job to this repo
+- Common gotchas (missing `docker` CLI in the controller, permission errors on the socket)
