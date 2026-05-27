@@ -19,16 +19,29 @@ enum Level {
   ADVANCED
 }
 
+// The `user_id` column has a manual foreign key to `auth.users(id)` with
+// `ON DELETE CASCADE`, added via raw SQL in Supabase:
+//
+//   alter table public.profiles
+//     add constraint profiles_user_id_fkey
+//     foreign key (user_id) references auth.users(id) on delete cascade;
+//
+// Prisma does not model this relation because `auth.users` lives in the
+// `auth` schema, outside Prisma's tracked schemas. Prisma will not see or
+// touch the constraint on `prisma db push`, so the cascade survives schema
+// changes. If you ever enable `multiSchema` with `schemas = ["public", "auth"]`,
+// remember to model `auth.users` (and ignore the rest of Supabase's auth
+// tables) so Prisma does not drop this FK as drift.
 model Profile {
-  id             String          @id @default(uuid())
-  userId         String          @unique @map("user_id")
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String          @unique @map("user_id") @db.Uuid
   username       String          @unique
   nativeLanguage Language        @map("native_language")
   targetLanguage Language        @map("target_language")
   level          Level           @default(BEGINNER)
   avatarUrl      String?         @map("avatar_url")
   createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at")
   topicProgress  TopicProgress[]
   recordings     Recording[]
 
@@ -36,8 +49,8 @@ model Profile {
 }
 
 model TopicProgress {
-  id          String   @id @default(uuid())
-  profileId   String   @map("profile_id")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId   String   @map("profile_id") @db.Uuid
   topicSlug   String   @map("topic_slug")
   section     Int      @default(1)
   completedAt DateTime? @map("completed_at")
@@ -49,8 +62,8 @@ model TopicProgress {
 }
 
 model Recording {
-  id              String   @id @default(uuid())
-  profileId       String   @map("profile_id")
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId       String   @map("profile_id") @db.Uuid
   topicSlug       String   @map("topic_slug")
   originalUrl     String   @map("original_url")
   transcription   String?
