@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/logout-button'
+import { PracticeCard } from '@/components/practice/practice-card'
 import { getTopicBySlug, type Level } from '@/lib/topics'
 
 const LEVEL_LABEL: Record<Level, string> = {
@@ -28,7 +29,7 @@ export default async function TopicPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username')
+    .select('id, username')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -140,33 +141,21 @@ export default async function TopicPage({
                 <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-4">
                   Frases para practicar
                 </h3>
-                <ul className="space-y-3">
+                <div className="space-y-4">
                   {section.practicePhrases.map((phrase, phraseIdx) => (
-                    <li
-                      key={phraseIdx}
-                      className="border-l-2 border-emerald-700 pl-4 font-serif text-lg text-stone-900"
-                    >
-                      {phrase}
-                    </li>
+                    <PracticeCard
+                      key={`${idx}-${phraseIdx}`}
+                      phrase={phrase}
+                      language={topic.language}
+                      topicSlug={topic.slug}
+                      profileId={profile.id}
+                    />
                   ))}
-                </ul>
+                </div>
               </div>
             )}
           </article>
         ))}
-
-        <div className="border-t border-stone-200 pt-12 text-center">
-          <button
-            type="button"
-            disabled
-            className="bg-emerald-800 text-stone-50 px-10 py-4 text-sm font-medium tracking-wide opacity-50 cursor-not-allowed"
-          >
-            Empezar a grabar
-          </button>
-          <p className="text-xs uppercase tracking-widest text-stone-400 mt-4">
-            Próximamente
-          </p>
-        </div>
       </section>
     </main>
   )
