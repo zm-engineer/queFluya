@@ -85,7 +85,7 @@ model Recording {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   profileId       String   @map("profile_id") @db.Uuid
   topicSlug       String   @map("topic_slug")
-  originalUrl     String   @map("original_url")
+  originalUrl     String?  @map("original_url")
   transcription   String?
   correctedText   String?  @map("corrected_text")
   correctedAudioUrl String? @map("corrected_audio_url")
