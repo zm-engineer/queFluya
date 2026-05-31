@@ -58,15 +58,19 @@ export function useSpeechRecognition(
   const [transcript, setTranscript] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [isSupported, setIsSupported] = useState(true)
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
+  const ctorRef = useRef<SpeechRecognitionCtor | null>(null)
 
-  const Ctor =
-    typeof window !== 'undefined'
-      ? window.SpeechRecognition ?? window.webkitSpeechRecognition
-      : undefined
-  const isSupported = Boolean(Ctor)
+  useEffect(() => {
+    const Ctor =
+      window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null
+    ctorRef.current = Ctor
+    setIsSupported(Boolean(Ctor))
+  }, [])
 
   const start = useCallback(() => {
+    const Ctor = ctorRef.current
     if (!Ctor) return
     setTranscript('')
     setError(null)
@@ -98,7 +102,7 @@ export function useSpeechRecognition(
     recognition.start()
     recognitionRef.current = recognition
     setStatus('recording')
-  }, [Ctor, language])
+  }, [language])
 
   const stop = useCallback(() => {
     recognitionRef.current?.stop()

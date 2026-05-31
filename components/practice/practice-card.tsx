@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { comparePhrase, type DiffState } from '@/lib/practice/diff'
 import { useSpeechRecognition } from '@/lib/practice/use-speech-recognition'
@@ -41,6 +41,7 @@ export function PracticeCard({
   const recognition = useSpeechRecognition(language)
   const synthesis = useSpeechSynthesis()
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  const saveTriggeredRef = useRef(false)
 
   const diff = useMemo(
     () =>
@@ -52,11 +53,10 @@ export function PracticeCard({
 
   const supabase = useMemo(() => createClient(), [])
 
-  // Auto-save the result once the user stops recording.
   useEffect(() => {
     if (recognition.status !== 'stopped' || !diff) return
-    if (saveState !== 'idle') return
-    let cancelled = false
+    if (saveTriggeredRef.current) return
+    saveTriggeredRef.current = true
     setSaveState('saving')
     supabase
       .from('recordings')
@@ -67,19 +67,14 @@ export function PracticeCard({
         corrected_text: `score=${diff.score}; expected="${phrase}"`,
       })
       .then(({ error }) => {
-        if (cancelled) return
         setSaveState(error ? 'error' : 'saved')
       })
-    return () => {
-      cancelled = true
-    }
   }, [
     diff,
     phrase,
     profileId,
     recognition.status,
     recognition.transcript,
-    saveState,
     supabase,
     topicSlug,
   ])
@@ -87,6 +82,7 @@ export function PracticeCard({
   const onRetry = () => {
     recognition.reset()
     setSaveState('idle')
+    saveTriggeredRef.current = false
   }
 
   if (!recognition.isSupported && !synthesis.isSupported) {
@@ -128,7 +124,8 @@ export function PracticeCard({
           <button
             type="button"
             onClick={recognition.stop}
-            className="text-sm bg-red-600 text-stone-50 px-4 py-2 hover:bg-red-700 transition-colors"
+            style={{ backgroundColor: '#dc2626', color: '#fafaf9' }}
+            className="text-sm px-4 py-2 transition-colors"
           >
             ⏹ Parar
           </button>
