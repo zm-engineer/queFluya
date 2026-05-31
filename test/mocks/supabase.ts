@@ -18,6 +18,8 @@ export type SupabaseMockOptions = {
   profile?: Partial<ProfileRow> | null
   signInError?: string
   signUpError?: string
+  resetPasswordError?: string
+  updateUserError?: string
   insertError?: { message: string; code?: string }
 }
 
@@ -41,6 +43,20 @@ export function createSupabaseMock(opts: SupabaseMockOptions = {}) {
 
   const signOut = vi.fn(async () => ({ error: null }))
 
+  const resetPasswordForEmail = vi.fn(async () => ({
+    data: {},
+    error: opts.resetPasswordError
+      ? { message: opts.resetPasswordError }
+      : null,
+  }))
+
+  const updateUser = vi.fn(
+    async (): Promise<AuthResult<{ user: MockUser | null }>> => ({
+      data: { user },
+      error: opts.updateUserError ? { message: opts.updateUserError } : null,
+    })
+  )
+
   const getUser = vi.fn(async (): Promise<AuthResult<{ user: MockUser | null }>> => ({
     data: { user },
     error: null,
@@ -57,7 +73,14 @@ export function createSupabaseMock(opts: SupabaseMockOptions = {}) {
   const from = vi.fn(() => ({ select, insert, eq, maybeSingle }))
 
   const client = {
-    auth: { signInWithPassword, signUp, signOut, getUser },
+    auth: {
+      signInWithPassword,
+      signUp,
+      signOut,
+      getUser,
+      resetPasswordForEmail,
+      updateUser,
+    },
     from,
   }
 
@@ -68,6 +91,8 @@ export function createSupabaseMock(opts: SupabaseMockOptions = {}) {
       signUp,
       signOut,
       getUser,
+      resetPasswordForEmail,
+      updateUser,
       from,
       select,
       insert,

@@ -110,4 +110,10 @@ describe('<LoginPage />', () => {
     const link = screen.getByRole('link', { name: /crear una cuenta/i })
     expect(link).toHaveAttribute('href', '/register')
   })
+
+  it('links to the forgot-password page', () => {
+    render(<LoginPage />)
+    const link = screen.getByRole('link', { name: /olvidaste tu contraseña/i })
+    expect(link).toHaveAttribute('href', '/forgot-password')
+  })
 })

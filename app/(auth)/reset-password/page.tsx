@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -18,31 +18,26 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
 
-    if (!email.trim() || !password) {
-      setError('Por favor completa todos los campos.')
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.')
       return
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setError('Ingresa un email válido.')
+    if (password !== confirm) {
+      setError('Las contraseñas no coinciden.')
       return
     }
 
     setLoading(true)
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error: authError } = await supabase.auth.updateUser({ password })
     setLoading(false)
 
     if (authError) {
-      setError('Credenciales incorrectas. Revisa tu email y contraseña.')
+      setError('No se pudo actualizar tu contraseña. El enlace puede haber expirado.')
       return
     }
 
-    router.push('/dashboard')
-    router.refresh()
+    router.push('/login')
   }
 
   return (
@@ -56,53 +51,45 @@ export default function LoginPage() {
             que<span className="text-emerald-700">Fluya</span>
           </Link>
           <h1 className="font-serif text-4xl text-stone-900 mt-10 mb-3">
-            Bienvenido de vuelta
+            Elige una nueva contraseña
           </h1>
           <p className="text-stone-500 text-sm">
-            Continúa donde lo dejaste.
+            Asegúrate de que tenga al menos 8 caracteres.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="password"
               className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
             >
-              Email
+              Contraseña nueva
             </label>
             <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
-              placeholder="tu@email.com"
+              placeholder="Mínimo 8 caracteres"
             />
           </div>
 
           <div>
-            <div className="flex items-baseline justify-between mb-2">
-              <label
-                htmlFor="password"
-                className="block text-xs font-medium tracking-wide uppercase text-stone-600"
-              >
-                Contraseña
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-xs text-stone-500 hover:text-emerald-700 transition-colors"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
+            <label
+              htmlFor="confirm"
+              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+            >
+              Confirmar contraseña
+            </label>
             <input
-              id="password"
+              id="confirm"
               type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
               className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="••••••••"
             />
@@ -119,19 +106,9 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-emerald-800 text-stone-50 py-3.5 text-sm font-medium tracking-wide hover:bg-emerald-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? 'Entrando…' : 'Iniciar sesión'}
+            {loading ? 'Guardando…' : 'Guardar'}
           </button>
         </form>
-
-        <p className="text-center text-sm text-stone-500 mt-10">
-          ¿Aún no tienes cuenta?{' '}
-          <Link
-            href="/register"
-            className="text-emerald-700 hover:text-emerald-900 underline underline-offset-4"
-          >
-            Crear una cuenta
-          </Link>
-        </p>
       </div>
     </main>
   )
