@@ -61,6 +61,26 @@ model TopicProgress {
   @@map("topic_progress")
 }
 
+// A learning topic — what the user sees on the dashboard and opens to study.
+// `language` is the language being PRACTICED (i.e. it matches a learner's
+// `target_language`, not their native one). `content` holds an array of
+// sections as JSON; the shape lives in lib/topics.ts so we can iterate it
+// without DB migrations while the content model stabilises.
+model Topic {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique
+  title       String
+  description String
+  language    Language
+  level       Level
+  position    Int      @default(0)
+  content     Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("topics")
+}
+
 model Recording {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   profileId       String   @map("profile_id") @db.Uuid
