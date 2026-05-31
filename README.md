@@ -67,10 +67,19 @@ Open [http://localhost:3000](http://localhost:3000).
 | Model           | Purpose                                                                 |
 | --------------- | ----------------------------------------------------------------------- |
 | `Profile`       | One per authenticated user. Native/target languages, level, avatar.     |
+| `Topic`         | Learning content — slug, title, target language, level, JSON sections.  |
 | `TopicProgress` | Per-section progress within a topic for a given profile.                |
 | `Recording`     | Audio submissions with transcription, corrected text, and corrected audio. |
 
 Enums: `Language` (`EN`, `ES`), `Level` (`BEGINNER`, `INTERMEDIATE`, `ADVANCED`).
+
+After `npx prisma db push` creates the table, apply the RLS policy and seed content with:
+
+```bash
+npx prisma db execute --file supabase/topics_setup.sql --schema prisma/schema.prisma
+```
+
+The script is idempotent — `ON CONFLICT (slug) DO UPDATE` lets you re-run after editing the seed without duplicates.
 
 ## Using the clients
 
