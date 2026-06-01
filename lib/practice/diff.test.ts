@@ -89,4 +89,38 @@ describe('comparePhrase', () => {
     expect(result.words).toEqual([])
     expect(result.score).toBe(0)
   })
+
+  it('treats [bracketed] placeholders as wildcards that match any single word', () => {
+    const result = comparePhrase(
+      'Hi, my name is [your name].',
+      'Hi my name is Ziuling'
+    )
+    // Five expected tokens (Hi, my, name, is, [your name].), all should match.
+    expect(result.matchCount).toBe(5)
+    expect(result.totalExpected).toBe(5)
+    expect(result.score).toBe(100)
+    // The placeholder retains its original display text.
+    const placeholder = result.words.find((w) => w.text.includes('['))
+    expect(placeholder?.state).toBe('match')
+  })
+
+  it('marks an unfilled placeholder as missing when the user skips the slot', () => {
+    const result = comparePhrase(
+      'Hi, my name is [your name].',
+      'Hi my name is'
+    )
+    const placeholder = result.words.find((w) => w.text.includes('['))
+    expect(placeholder?.state).toBe('missing')
+    expect(result.matchCount).toBe(4)
+    expect(result.totalExpected).toBe(5)
+  })
+
+  it('handles multiple placeholders in one phrase', () => {
+    const result = comparePhrase(
+      "I'll have the [dish] with [drink].",
+      "I'll have the pizza with water"
+    )
+    expect(result.score).toBe(100)
+    expect(result.matchCount).toBe(6)
+  })
 })

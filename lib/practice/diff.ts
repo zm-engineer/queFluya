@@ -13,16 +13,28 @@ export type DiffResult = {
   score: number
 }
 
-type Token = { display: string; norm: string }
+type Token = { display: string; norm: string; placeholder?: boolean }
 
+/**
+ * Split on whitespace, but keep `[bracketed groups]` (with any trailing
+ * punctuation) together as one token flagged as a placeholder. Placeholders
+ * are treated as wildcards by `comparePhrase` so users filling them with
+ * personal info ("[your name]" → "Ziuling") still score correctly.
+ */
 function tokenize(input: string): Token[] {
-  return input
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => ({
-      display: word,
-      norm: word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''),
-    }))
+  const tokens: Token[] = []
+  const regex = /\[[^\]]*\][^\s]*|\S+/g
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(input)) !== null) {
+    const text = match[0]
+    const placeholder = text.startsWith('[')
+    tokens.push({
+      display: text,
+      norm: text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''),
+      placeholder,
+    })
+  }
+  return tokens
 }
 
 /**
@@ -49,9 +61,14 @@ export function comparePhrase(expected: string, actual: string): DiffResult {
   for (let i = 0; i <= m; i++) dp[i][0] = i
   for (let j = 0; j <= n; j++) dp[0][j] = j
 
+  // Placeholders always match the actual token at the same alignment position
+  // — they're "free" substitutions with cost 0.
+  const matches = (expected: Token, actual: Token) =>
+    expected.placeholder || expected.norm === actual.norm
+
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      if (E[i - 1].norm === A[j - 1].norm) {
+      if (matches(E[i - 1], A[j - 1])) {
         dp[i][j] = dp[i - 1][j - 1]
       } else {
         dp[i][j] =
@@ -69,7 +86,21 @@ export function comparePhrase(expected: string, actual: string): DiffResult {
   let i = m
   let j = n
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && E[i - 1].norm === A[j - 1].norm) {
+    // Placeholder corner case: when an unfilled slot can be either "match
+    // against the last available actual" or "missing" at the same DP cost,
+    // prefer missing — otherwise the placeholder greedily eats a literal
+    // word that should have aligned earlier in the sequence.
+    if (
+      i > 0 &&
+      E[i - 1].placeholder &&
+      dp[i][j] === dp[i - 1][j] + 1
+    ) {
+      words.unshift({ text: E[i - 1].display, state: 'missing' })
+      i--
+      continue
+    }
+
+    if (i > 0 && j > 0 && matches(E[i - 1], A[j - 1])) {
       words.unshift({ text: E[i - 1].display, state: 'match' })
       i--
       j--

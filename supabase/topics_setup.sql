@@ -44,33 +44,33 @@ values
           ],
           "dialogue": [
             { "speaker": "A", "text": "Hi, how are you?" },
-            { "speaker": "B", "text": "I''m good, thanks. And you?" },
+            { "speaker": "B", "text": "I'm good, thanks. And you?" },
             { "speaker": "A", "text": "Pretty good." }
           ],
           "practicePhrases": [
             "Hi, how are you?",
             "Good morning, nice to see you.",
-            "I''m doing well, thank you."
+            "I'm doing well, thank you."
           ]
         },
         {
           "title": "Introducing yourself",
-          "intro": "Once you''ve said hello, the next step is usually to share your name and a little about yourself.",
+          "intro": "Once you've said hello, the next step is usually to share your name and a little about yourself.",
           "vocabulary": [
             { "term": "My name is...", "translation": "Me llamo..." },
-            { "term": "I''m from...", "translation": "Soy de..." },
+            { "term": "I'm from...", "translation": "Soy de..." },
             { "term": "Nice to meet you", "translation": "Encantado/a de conocerte" },
             { "term": "What about you?", "translation": "¿Y tú?" }
           ],
           "dialogue": [
             { "speaker": "A", "text": "Hi, my name is Sarah." },
-            { "speaker": "B", "text": "Nice to meet you, Sarah. I''m Diego." },
+            { "speaker": "B", "text": "Nice to meet you, Sarah. I'm Diego." },
             { "speaker": "A", "text": "Where are you from?" },
-            { "speaker": "B", "text": "I''m from Madrid. What about you?" }
+            { "speaker": "B", "text": "I'm from Madrid. What about you?" }
           ],
           "practicePhrases": [
             "Hi, my name is [your name].",
-            "I''m from [your city].",
+            "I'm from [your city].",
             "Nice to meet you."
           ]
         }
@@ -96,13 +96,13 @@ values
           ],
           "dialogue": [
             { "speaker": "Host", "text": "Hi there! Do you have a reservation?" },
-            { "speaker": "Guest", "text": "No, we don''t. Do you have a table for two?" },
+            { "speaker": "Guest", "text": "No, we don't. Do you have a table for two?" },
             { "speaker": "Host", "text": "Sure, follow me. Inside or outside?" },
             { "speaker": "Guest", "text": "Outside, please." }
           ],
           "practicePhrases": [
             "A table for two, please.",
-            "We don''t have a reservation.",
+            "We don't have a reservation.",
             "Outside, please."
           ]
         },
@@ -110,7 +110,7 @@ values
           "title": "Ordering food",
           "intro": "How to ask for what you want — politely.",
           "vocabulary": [
-            { "term": "I''ll have...", "translation": "Tomaré..." },
+            { "term": "I'll have...", "translation": "Tomaré..." },
             { "term": "Could I get...?", "translation": "¿Podría pedir...?" },
             { "term": "What do you recommend?", "translation": "¿Qué recomienda?" },
             { "term": "The bill, please", "translation": "La cuenta, por favor" }
@@ -119,11 +119,11 @@ values
             { "speaker": "Server", "text": "Are you ready to order?" },
             { "speaker": "Guest", "text": "Yes. What do you recommend?" },
             { "speaker": "Server", "text": "The grilled salmon is excellent." },
-            { "speaker": "Guest", "text": "Great, I''ll have that. And a glass of water, please." }
+            { "speaker": "Guest", "text": "Great, I'll have that. And a glass of water, please." }
           ],
           "practicePhrases": [
             "Could I get the menu, please?",
-            "I''ll have the [dish name].",
+            "I'll have the [dish name].",
             "The bill, please."
           ]
         }
@@ -143,21 +143,21 @@ values
           "title": "Talking about your experience",
           "intro": "Interviewers will ask you to walk them through your background. Keep it concise and relevant.",
           "vocabulary": [
-            { "term": "I''ve been working as...", "translation": "He estado trabajando como..." },
+            { "term": "I've been working as...", "translation": "He estado trabajando como..." },
             { "term": "I led a team of...", "translation": "Lideré un equipo de..." },
-            { "term": "I''m responsible for...", "translation": "Soy responsable de..." },
+            { "term": "I'm responsible for...", "translation": "Soy responsable de..." },
             { "term": "I specialise in...", "translation": "Me especializo en..." }
           ],
           "dialogue": [
             { "speaker": "Interviewer", "text": "Tell me a bit about yourself." },
-            { "speaker": "You", "text": "Sure. I''ve been working as a backend engineer for five years, mostly with Node.js and Postgres. At my current company, I lead a team of three." },
+            { "speaker": "You", "text": "Sure. I've been working as a backend engineer for five years, mostly with Node.js and Postgres. At my current company, I lead a team of three." },
             { "speaker": "Interviewer", "text": "What kind of projects?" },
             { "speaker": "You", "text": "Mostly real-time systems — chat, notifications, that kind of thing." }
           ],
           "practicePhrases": [
-            "I''ve been working as a [role] for [number] years.",
+            "I've been working as a [role] for [number] years.",
             "I specialise in [field].",
-            "I''m currently responsible for [task]."
+            "I'm currently responsible for [task]."
           ]
         }
       ]
@@ -211,7 +211,7 @@ values
           "intro": "Cómo decir tu nombre, de dónde eres y a qué te dedicas.",
           "vocabulary": [
             { "term": "Me llamo...", "translation": "My name is..." },
-            { "term": "Soy de...", "translation": "I''m from..." },
+            { "term": "Soy de...", "translation": "I'm from..." },
             { "term": "Mucho gusto", "translation": "Nice to meet you" },
             { "term": "¿Y tú?", "translation": "And you?" }
           ],
@@ -263,7 +263,7 @@ values
           "title": "Pedir la comida",
           "intro": "Cómo pedir educadamente.",
           "vocabulary": [
-            { "term": "Voy a pedir...", "translation": "I''ll have..." },
+            { "term": "Voy a pedir...", "translation": "I'll have..." },
             { "term": "¿Qué me recomienda?", "translation": "What do you recommend?" },
             { "term": "La cuenta, por favor", "translation": "The bill, please" }
           ],
