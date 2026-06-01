@@ -2,8 +2,10 @@
 
 import { Fragment, useState } from 'react'
 import Link from 'next/link'
-import { PracticeCard } from '@/components/practice/practice-card'
 import { Button } from '@/components/ui/button'
+import { DialogueViewer } from '@/components/topic/dialogue-viewer'
+import { PhraseDeck } from '@/components/topic/phrase-deck'
+import { VocabularyDeck } from '@/components/topic/vocabulary-deck'
 import { cn } from '@/lib/utils'
 import type { Language, TopicSection } from '@/lib/topics'
 
@@ -106,21 +108,11 @@ export function TopicSections({
             <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
               📖 Vocabulario
             </h3>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-              {section.vocabulary.map((v) => (
-                <div
-                  key={v.term}
-                  className="flex items-baseline justify-between bg-stone-50 rounded-2xl px-4 py-3"
-                >
-                  <dt className="text-base font-black text-stone-900">
-                    {v.term}
-                  </dt>
-                  <dd className="text-sm font-semibold text-stone-500 ml-4 text-right">
-                    {v.translation}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <VocabularyDeck
+              key={`vocab-${currentIdx}`}
+              vocabulary={section.vocabulary}
+              language={language}
+            />
           </div>
         )}
 
@@ -129,18 +121,10 @@ export function TopicSections({
             <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
               💬 Diálogo
             </h3>
-            <div className="bg-stone-50 rounded-2xl px-5 py-4 space-y-3">
-              {section.dialogue.map((line, lineIdx) => (
-                <div key={lineIdx} className="flex gap-4">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 pt-1.5 min-w-[5rem]">
-                    {line.speaker}
-                  </span>
-                  <p className="text-stone-800 font-semibold leading-relaxed flex-1">
-                    {line.text}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <DialogueViewer
+              dialogue={section.dialogue}
+              language={language}
+            />
           </div>
         )}
 
@@ -149,17 +133,13 @@ export function TopicSections({
             <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
               🎤 Frases para practicar
             </h3>
-            <div className="space-y-4">
-              {section.practicePhrases.map((phrase, phraseIdx) => (
-                <PracticeCard
-                  key={`${currentIdx}-${phraseIdx}`}
-                  phrase={phrase}
-                  language={language}
-                  topicSlug={topicSlug}
-                  profileId={profileId}
-                />
-              ))}
-            </div>
+            <PhraseDeck
+              key={`phrases-${currentIdx}`}
+              phrases={section.practicePhrases}
+              language={language}
+              topicSlug={topicSlug}
+              profileId={profileId}
+            />
           </div>
         )}
       </article>

@@ -31,6 +31,7 @@ export type PracticeCardProps = {
   language: Language
   topicSlug: string
   profileId: string
+  onPracticed?: () => void
 }
 
 export function PracticeCard({
@@ -38,11 +39,16 @@ export function PracticeCard({
   language,
   topicSlug,
   profileId,
+  onPracticed,
 }: PracticeCardProps) {
   const recognition = useSpeechRecognition(language)
   const synthesis = useSpeechSynthesis()
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const saveTriggeredRef = useRef(false)
+  const onPracticedRef = useRef(onPracticed)
+  useEffect(() => {
+    onPracticedRef.current = onPracticed
+  }, [onPracticed])
 
   const diff = useMemo(
     () =>
@@ -58,6 +64,7 @@ export function PracticeCard({
     if (recognition.status !== 'stopped' || !diff) return
     if (saveTriggeredRef.current) return
     saveTriggeredRef.current = true
+    onPracticedRef.current?.()
     setSaveState('saving')
     supabase
       .from('recordings')
