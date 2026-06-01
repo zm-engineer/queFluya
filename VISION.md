@@ -41,7 +41,7 @@ Funcionando end-to-end:
 - **DB + Auth + Storage:** Supabase (PostgreSQL)
 - **ORM:** Prisma — schema canónico en `prisma/schema.prisma`
 - **Tests:** Vitest (unitarios + componentes) + Playwright (e2e)
-- **IA/voz (fases posteriores):** Claude API, OpenAI Whisper, ElevenLabs
+- **IA/voz:** OpenAI (Whisper para transcripción, GPT-4o-mini para correcciones de gramática, TTS para voces). ElevenLabs reservado para voice cloning (sección 3 ampliada)
 - **Tiempo real (sección 4):** WebRTC + LiveKit/Agora, Socket.io
 - **Hosting:** Vercel (todavía no desplegado, dev local)
 

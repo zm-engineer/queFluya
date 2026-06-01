@@ -11,6 +11,18 @@ export type TopicSection = {
   vocabulary: TopicVocab[]
   dialogue: TopicDialogueLine[]
   practicePhrases: string[]
+  /**
+   * When present, the section is a free-recording exercise: the user is
+   * asked to speak on this prompt (typically using the topic's vocabulary
+   * and phrases). The guided fields above are ignored for these sections.
+   */
+  freeRecordingPrompt?: string
+  /**
+   * When present, the section is a placeholder for a feature that hasn't
+   * shipped yet. The UI shows a "Próximamente" card and the completion
+   * gate is open so the user can advance past it.
+   */
+  comingSoon?: 'video' | 'tandem'
 }
 export type TopicContent = { sections: TopicSection[] }
 

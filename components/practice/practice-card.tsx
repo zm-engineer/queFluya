@@ -199,7 +199,7 @@ export function PracticeCard({
       {transcribing && (
         <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-emerald-700">
           <span className="inline-block animate-pulse mr-2">🤖</span>
-          Transcribiendo con Whisper…
+          Transcribiendo…
         </div>
       )}
 

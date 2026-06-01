@@ -94,6 +94,8 @@ export default async function TopicPage({
           sections={sections}
           language={topic.language}
           topicSlug={topic.slug}
+          topicTitle={topic.title}
+          topicDescription={topic.description}
           profileId={profile.id}
         />
       </section>
