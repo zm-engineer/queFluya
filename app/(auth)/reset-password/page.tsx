@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -43,36 +45,35 @@ export default function ResetPasswordPage() {
   return (
     <main className="min-h-screen bg-stone-50 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-md">
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <Link
             href="/"
-            className="font-serif text-3xl tracking-tight text-stone-900"
+            className="text-3xl font-black tracking-tight text-stone-900"
           >
-            que<span className="text-emerald-700">Fluya</span>
+            que<span className="text-emerald-500">Fluya</span>
           </Link>
-          <h1 className="font-serif text-4xl text-stone-900 mt-10 mb-3">
-            Elige una nueva contraseña
+          <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
+            Nueva contraseña 🔐
           </h1>
-          <p className="text-stone-500 text-sm">
-            Asegúrate de que tenga al menos 8 caracteres.
+          <p className="text-stone-500 font-semibold">
+            Mínimo 8 caracteres.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="password"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Contraseña nueva
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="Mínimo 8 caracteres"
             />
           </div>
@@ -80,34 +81,34 @@ export default function ResetPasswordPage() {
           <div>
             <label
               htmlFor="confirm"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Confirmar contraseña
             </label>
-            <input
+            <Input
               id="confirm"
               type="password"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-100 px-4 py-3 rounded">
+            <p className="text-sm font-bold text-red-700 bg-red-50 border-2 border-red-100 px-4 py-3 rounded-2xl">
               {error}
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-800 text-stone-50 py-3.5 text-sm font-medium tracking-wide hover:bg-emerald-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            size="lg"
+            className="w-full"
           >
             {loading ? 'Guardando…' : 'Guardar'}
-          </button>
+          </Button>
         </form>
       </div>
     </main>
