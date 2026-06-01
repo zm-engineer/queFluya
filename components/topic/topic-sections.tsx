@@ -30,6 +30,7 @@ export function TopicSections({
 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
+  const [practicedInCurrent, setPracticedInCurrent] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const supabase = useMemo(() => createClient(), [])
@@ -62,6 +63,9 @@ export function TopicSections({
   const isLast = currentIdx === total - 1
   const isCurrentCompleted = completed.has(currentIdx)
   const allDone = completed.size === total
+  const totalPhrases = section.practicePhrases.length
+  const phraseGateOpen =
+    totalPhrases === 0 || practicedInCurrent >= totalPhrases
 
   function canJumpTo(idx: number): boolean {
     return idx === currentIdx || completed.has(idx)
@@ -174,6 +178,7 @@ export function TopicSections({
               language={language}
               topicSlug={topicSlug}
               profileId={profileId}
+              onPracticedCountChange={setPracticedInCurrent}
             />
           </div>
         )}
@@ -197,11 +202,23 @@ export function TopicSections({
             Siguiente sección →
           </Button>
         ) : (
-          <Button size="lg" onClick={complete}>
+          <Button size="lg" onClick={complete} disabled={!phraseGateOpen}>
             {isLast ? '¡Terminar tema! 🎉' : 'Completar sección ✓'}
           </Button>
         )}
       </div>
+
+      {!isCurrentCompleted && !phraseGateOpen && (
+        <div className="mt-4 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+          <span className="text-2xl">🔒</span>
+          <p className="text-sm font-bold text-amber-900 flex-1">
+            Practica las {totalPhrases} frases para completar la sección
+            <span className="text-amber-700 font-black ml-2">
+              ({practicedInCurrent}/{totalPhrases})
+            </span>
+          </p>
+        </div>
+      )}
     </>
   )
 }
