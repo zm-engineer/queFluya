@@ -185,9 +185,14 @@ export function PracticeCard({
       )}
 
       {isRecording && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-red-700">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse mr-2 align-middle" />
-          Grabando… habla con claridad.
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-red-700 flex items-center justify-between gap-3">
+          <div>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse mr-2 align-middle" />
+            Grabando… habla con claridad.
+          </div>
+          <div className="font-black tabular-nums">
+            {Math.floor(recorder.elapsedMs / 1000)}s / {recorder.maxDurationMs / 1000}s
+          </div>
         </div>
       )}
 
