@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSpeechSynthesis } from '@/lib/practice/use-speech-synthesis'
+import { useTTS } from '@/lib/practice/use-tts'
 import { cn } from '@/lib/utils'
 import type { Language, TopicDialogueLine } from '@/lib/topics'
 
@@ -11,7 +11,7 @@ type Props = {
 }
 
 export function DialogueViewer({ dialogue, language }: Props) {
-  const synthesis = useSpeechSynthesis()
+  const synthesis = useTTS()
   const [activeLine, setActiveLine] = useState<number | null>(null)
 
   if (dialogue.length === 0) return null

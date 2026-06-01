@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSpeechSynthesis } from '@/lib/practice/use-speech-synthesis'
+import { useTTS } from '@/lib/practice/use-tts'
 import { cn } from '@/lib/utils'
 import type { Language, TopicVocab } from '@/lib/topics'
 
@@ -14,7 +14,7 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [done, setDone] = useState(false)
-  const synthesis = useSpeechSynthesis()
+  const synthesis = useTTS()
 
   if (vocabulary.length === 0) return null
 
