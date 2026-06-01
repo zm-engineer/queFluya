@@ -1,11 +1,17 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DialogueViewer } from '@/components/topic/dialogue-viewer'
 import { PhraseDeck } from '@/components/topic/phrase-deck'
 import { VocabularyDeck } from '@/components/topic/vocabulary-deck'
+import { createClient } from '@/lib/supabase/client'
+import {
+  currentSectionFor,
+  loadCompletedSections,
+  markSectionCompleted,
+} from '@/lib/topic-progress'
 import { cn } from '@/lib/utils'
 import type { Language, TopicSection } from '@/lib/topics'
 
@@ -24,8 +30,32 @@ export function TopicSections({
 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
+  const [loading, setLoading] = useState(true)
+
+  const supabase = useMemo(() => createClient(), [])
+
+  useEffect(() => {
+    let cancelled = false
+    loadCompletedSections(supabase, profileId, topicSlug).then((loaded) => {
+      if (cancelled) return
+      setCompleted(loaded)
+      setCurrentIdx(currentSectionFor(loaded, sections.length))
+      setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, profileId, topicSlug, sections.length])
 
   if (sections.length === 0) return null
+
+  if (loading) {
+    return (
+      <div className="bg-white border-2 border-stone-100 rounded-3xl p-12 text-center">
+        <p className="text-sm font-bold text-stone-400">Cargando progreso…</p>
+      </div>
+    )
+  }
 
   const section = sections[currentIdx]
   const total = sections.length
@@ -47,6 +77,11 @@ export function TopicSections({
       next.add(currentIdx)
       return next
     })
+    markSectionCompleted(supabase, profileId, topicSlug, currentIdx).catch(
+      (err) => {
+        console.error('Failed to persist topic progress', err)
+      }
+    )
     if (!isLast) {
       setCurrentIdx(currentIdx + 1)
     }
