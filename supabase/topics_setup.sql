@@ -19,21 +19,27 @@ for select
 to authenticated
 using (true);
 
+-- ─── Remove pre-split combined topics ──────────────────────────────────────
+-- Old topics that bundled multiple study units into one entry. The new
+-- per-topic structure splits them apart (greetings vs introductions, etc.).
+delete from public.topics
+where slug in ('greetings-and-introductions', 'saludos-y-presentaciones');
+
 -- ─── Seed: English topics (for native Spanish speakers learning English) ────
 
 insert into public.topics (slug, title, description, language, level, position, content)
 values
   (
-    'greetings-and-introductions',
-    'Greetings and Introductions',
-    'Learn how to greet people and introduce yourself in everyday situations.',
+    'greetings',
+    'Greetings',
+    'Learn how to greet people in everyday English situations.',
     'EN',
     'BEGINNER',
     1,
     $${
       "sections": [
         {
-          "title": "Basic greetings",
+          "title": "Saludos básicos",
           "intro": "These are the most common ways to greet someone in English. Pay attention to how casual or formal each one feels.",
           "vocabulary": [
             { "term": "Hi", "translation": "Hola (informal)" },
@@ -54,7 +60,43 @@ values
           ]
         },
         {
-          "title": "Introducing yourself",
+          "title": "Video y shadowing",
+          "intro": "Ver a dos hablantes nativos saludándose y repetir las frases.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "video"
+        },
+        {
+          "title": "Pon en práctica",
+          "intro": "Graba un saludo natural usando lo que aprendiste. La IA te dará feedback.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "freeRecordingPrompt": "Saluda a alguien y pregúntale cómo está. Usa los saludos que aprendiste."
+        },
+        {
+          "title": "Conectar",
+          "intro": "Practica el saludo con otro usuario en vivo.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "tandem"
+        }
+      ]
+    }$$::jsonb
+  ),
+  (
+    'introductions',
+    'Introductions',
+    'Introduce yourself in English: name, origin, a little about you.',
+    'EN',
+    'BEGINNER',
+    2,
+    $${
+      "sections": [
+        {
+          "title": "Presentándote",
           "intro": "Once you've said hello, the next step is usually to share your name and a little about yourself.",
           "vocabulary": [
             { "term": "My name is...", "translation": "Me llamo..." },
@@ -73,6 +115,30 @@ values
             "I'm from [your city].",
             "Nice to meet you."
           ]
+        },
+        {
+          "title": "Video y shadowing",
+          "intro": "Ver a dos personas presentándose y repetir las frases.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "video"
+        },
+        {
+          "title": "Pon en práctica",
+          "intro": "Preséntate libremente. La IA te dará feedback.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "freeRecordingPrompt": "Preséntate a un extraño en 30 segundos. Di tu nombre, de dónde eres y algo breve sobre ti."
+        },
+        {
+          "title": "Conectar",
+          "intro": "Preséntate a otro usuario en vivo.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "tandem"
         }
       ]
     }$$::jsonb
@@ -83,7 +149,7 @@ values
     'Order food and drinks, ask about the menu, and pay the bill.',
     'EN',
     'INTERMEDIATE',
-    2,
+    3,
     $${
       "sections": [
         {
@@ -136,7 +202,7 @@ values
     'Talk about your experience, answer common questions, and ask smart ones.',
     'EN',
     'ADVANCED',
-    3,
+    4,
     $${
       "sections": [
         {
@@ -177,9 +243,9 @@ on conflict (slug) do update set
 insert into public.topics (slug, title, description, language, level, position, content)
 values
   (
-    'saludos-y-presentaciones',
-    'Saludos y presentaciones',
-    'Aprende a saludar y presentarte en distintas situaciones del día a día.',
+    'saludos',
+    'Saludos',
+    'Aprende a saludar en distintas situaciones del día a día en español.',
     'ES',
     'BEGINNER',
     1,
@@ -207,6 +273,42 @@ values
           ]
         },
         {
+          "title": "Video y shadowing",
+          "intro": "Ver a dos hablantes nativos saludándose y repetir las frases.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "video"
+        },
+        {
+          "title": "Pon en práctica",
+          "intro": "Graba un saludo natural usando lo que aprendiste. La IA te dará feedback.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "freeRecordingPrompt": "Saluda a alguien y pregúntale cómo está. Usa los saludos que aprendiste."
+        },
+        {
+          "title": "Conectar",
+          "intro": "Practica el saludo con otro usuario en vivo.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "tandem"
+        }
+      ]
+    }$$::jsonb
+  ),
+  (
+    'presentaciones',
+    'Presentaciones',
+    'Aprende a presentarte en español: nombre, origen y un poco sobre ti.',
+    'ES',
+    'BEGINNER',
+    2,
+    $${
+      "sections": [
+        {
           "title": "Presentarse",
           "intro": "Cómo decir tu nombre, de dónde eres y a qué te dedicas.",
           "vocabulary": [
@@ -226,6 +328,30 @@ values
             "Soy de [tu ciudad].",
             "Mucho gusto."
           ]
+        },
+        {
+          "title": "Video y shadowing",
+          "intro": "Ver a dos personas presentándose y repetir las frases.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "video"
+        },
+        {
+          "title": "Pon en práctica",
+          "intro": "Preséntate libremente. La IA te dará feedback.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "freeRecordingPrompt": "Preséntate a un extraño en 30 segundos. Di tu nombre, de dónde eres y algo breve sobre ti."
+        },
+        {
+          "title": "Conectar",
+          "intro": "Preséntate a otro usuario en vivo.",
+          "vocabulary": [],
+          "dialogue": [],
+          "practicePhrases": [],
+          "comingSoon": "tandem"
         }
       ]
     }$$::jsonb
@@ -236,7 +362,7 @@ values
     'Pide comida y bebidas, pregunta por el menú y paga la cuenta.',
     'ES',
     'INTERMEDIATE',
-    2,
+    3,
     $${
       "sections": [
         {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { DialogueViewer } from '@/components/topic/dialogue-viewer'
 import { PhraseDeck } from '@/components/topic/phrase-deck'
 import { VocabularyDeck } from '@/components/topic/vocabulary-deck'
+import { FreeRecordingPractice } from '@/components/practice/free-recording-practice'
 import { createClient } from '@/lib/supabase/client'
 import {
   currentSectionFor,
@@ -19,6 +20,8 @@ type Props = {
   sections: TopicSection[]
   language: Language
   topicSlug: string
+  topicTitle: string
+  topicDescription: string
   profileId: string
 }
 
@@ -26,12 +29,24 @@ export function TopicSections({
   sections,
   language,
   topicSlug,
+  topicTitle,
+  topicDescription,
   profileId,
 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const [practicedInCurrent, setPracticedInCurrent] = useState(0)
+  const [freeRecordingDone, setFreeRecordingDone] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  const allVocabulary = useMemo(
+    () => sections.flatMap((s) => s.vocabulary),
+    [sections]
+  )
+  const allPhrases = useMemo(
+    () => sections.flatMap((s) => s.practicePhrases),
+    [sections]
+  )
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -48,6 +63,13 @@ export function TopicSections({
     }
   }, [supabase, profileId, topicSlug, sections.length])
 
+  // Reset per-section transient state when the user navigates between
+  // sections. PhraseDeck remounts via its own key prop, but
+  // freeRecordingDone lives here so we clear it explicitly.
+  useEffect(() => {
+    setFreeRecordingDone(false)
+  }, [currentIdx])
+
   if (sections.length === 0) return null
 
   if (loading) {
@@ -63,9 +85,16 @@ export function TopicSections({
   const isLast = currentIdx === total - 1
   const isCurrentCompleted = completed.has(currentIdx)
   const allDone = completed.size === total
+  const isFreeSection = Boolean(section.freeRecordingPrompt)
+  const isComingSoonSection = Boolean(section.comingSoon)
   const totalPhrases = section.practicePhrases.length
   const phraseGateOpen =
     totalPhrases === 0 || practicedInCurrent >= totalPhrases
+  const gateOpen = isComingSoonSection
+    ? true
+    : isFreeSection
+      ? freeRecordingDone
+      : phraseGateOpen
 
   function canJumpTo(idx: number): boolean {
     return idx === currentIdx || completed.has(idx)
@@ -142,45 +171,62 @@ export function TopicSections({
           {section.intro}
         </p>
 
-        {section.vocabulary.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-              📖 Vocabulario
-            </h3>
-            <VocabularyDeck
-              key={`vocab-${currentIdx}`}
-              vocabulary={section.vocabulary}
-              language={language}
-            />
-          </div>
-        )}
+        {isComingSoonSection ? (
+          <ComingSoonCard kind={section.comingSoon as 'video' | 'tandem'} />
+        ) : isFreeSection ? (
+          <FreeRecordingPractice
+            key={`free-${currentIdx}`}
+            language={language}
+            topicTitle={topicTitle}
+            topicDescription={topicDescription}
+            vocabulary={allVocabulary}
+            practicePhrases={allPhrases}
+            freePrompt={section.freeRecordingPrompt as string}
+            onCorrected={() => setFreeRecordingDone(true)}
+          />
+        ) : (
+          <>
+            {section.vocabulary.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
+                  📖 Vocabulario
+                </h3>
+                <VocabularyDeck
+                  key={`vocab-${currentIdx}`}
+                  vocabulary={section.vocabulary}
+                  language={language}
+                />
+              </div>
+            )}
 
-        {section.dialogue.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-              💬 Diálogo
-            </h3>
-            <DialogueViewer
-              dialogue={section.dialogue}
-              language={language}
-            />
-          </div>
-        )}
+            {section.dialogue.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
+                  💬 Diálogo
+                </h3>
+                <DialogueViewer
+                  dialogue={section.dialogue}
+                  language={language}
+                />
+              </div>
+            )}
 
-        {section.practicePhrases.length > 0 && (
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-              🎤 Frases para practicar
-            </h3>
-            <PhraseDeck
-              key={`phrases-${currentIdx}`}
-              phrases={section.practicePhrases}
-              language={language}
-              topicSlug={topicSlug}
-              profileId={profileId}
-              onPracticedCountChange={setPracticedInCurrent}
-            />
-          </div>
+            {section.practicePhrases.length > 0 && (
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
+                  🎤 Frases para practicar
+                </h3>
+                <PhraseDeck
+                  key={`phrases-${currentIdx}`}
+                  phrases={section.practicePhrases}
+                  language={language}
+                  topicSlug={topicSlug}
+                  profileId={profileId}
+                  onPracticedCountChange={setPracticedInCurrent}
+                />
+              </div>
+            )}
+          </>
         )}
       </article>
 
@@ -202,24 +248,67 @@ export function TopicSections({
             Siguiente sección →
           </Button>
         ) : (
-          <Button size="lg" onClick={complete} disabled={!phraseGateOpen}>
-            {isLast ? '¡Terminar tema! 🎉' : 'Completar sección ✓'}
+          <Button size="lg" onClick={complete} disabled={!gateOpen}>
+            {isLast
+              ? '¡Terminar tema! 🎉'
+              : isComingSoonSection
+                ? 'Saltar sección →'
+                : 'Completar sección ✓'}
           </Button>
         )}
       </div>
 
-      {!isCurrentCompleted && !phraseGateOpen && (
+      {!isCurrentCompleted && !gateOpen && (
         <div className="mt-4 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
           <span className="text-2xl">🔒</span>
           <p className="text-sm font-bold text-amber-900 flex-1">
-            Practica las {totalPhrases} frases para completar la sección
-            <span className="text-amber-700 font-black ml-2">
-              ({practicedInCurrent}/{totalPhrases})
-            </span>
+            {isFreeSection ? (
+              <>Graba al menos una vez para completar la sección</>
+            ) : (
+              <>
+                Practica las {totalPhrases} frases para completar la sección
+                <span className="text-amber-700 font-black ml-2">
+                  ({practicedInCurrent}/{totalPhrases})
+                </span>
+              </>
+            )}
           </p>
         </div>
       )}
     </>
+  )
+}
+
+type ComingSoonCardProps = { kind: 'video' | 'tandem' }
+
+function ComingSoonCard({ kind }: ComingSoonCardProps) {
+  const meta =
+    kind === 'video'
+      ? {
+          emoji: '🎬',
+          title: 'Video + shadowing',
+          description:
+            'Verás un video con dos hablantes nativos y repetirás las frases varias veces. Construcción en curso.',
+        }
+      : {
+          emoji: '👥',
+          title: 'Conectar con otro usuario',
+          description:
+            'Hablarás en vivo con otra persona aprendiendo el idioma contrario. Construcción en curso.',
+        }
+  return (
+    <div className="bg-stone-100 border-2 border-dashed border-stone-300 rounded-2xl p-8 text-center">
+      <p className="text-6xl mb-3">{meta.emoji}</p>
+      <p className="text-xl font-black text-stone-700 mb-2">
+        Próximamente: {meta.title}
+      </p>
+      <p className="text-sm font-semibold text-stone-500 max-w-md mx-auto leading-relaxed">
+        {meta.description}
+      </p>
+      <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mt-5">
+        Por ahora puedes saltar esta sección
+      </p>
+    </div>
   )
 }
 
