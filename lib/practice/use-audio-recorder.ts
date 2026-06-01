@@ -18,7 +18,7 @@ export type UseAudioRecorder = {
   maxDurationMs: number
 }
 
-const DEFAULT_MAX_DURATION_MS = 15_000
+const DEFAULT_MAX_DURATION_MS = 10_000
 
 /**
  * Records audio from the microphone into a Blob using MediaRecorder. The
@@ -26,8 +26,8 @@ const DEFAULT_MAX_DURATION_MS = 15_000
  *
  * `maxDurationMs` is a hard cap that auto-stops recording — it exists to
  * protect against runaway Whisper bills if a user (or a bug) holds the
- * recorder open. Defaults to 15s, which comfortably covers any single
- * practice phrase.
+ * recorder open. Defaults to 10s, which comfortably covers any single
+ * practice phrase. Free-recording sections override this with 60s.
  */
 export function useAudioRecorder(
   maxDurationMs: number = DEFAULT_MAX_DURATION_MS
