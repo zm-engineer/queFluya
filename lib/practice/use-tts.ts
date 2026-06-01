@@ -33,7 +33,6 @@ export function useTTS(): UseTTS {
 
   const speak = useCallback(
     (text: string, _language: Language) => {
-      // Cancel any in-flight or playing audio first.
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current.src = ''
@@ -49,11 +48,12 @@ export function useTTS(): UseTTS {
       })
         .then(async (response) => {
           if (!response.ok) throw new Error('tts_failed')
-          return response.blob()
+          const data = (await response.json()) as { url?: string }
+          if (!data.url) throw new Error('no_url')
+          return data.url
         })
-        .then((blob) => {
+        .then((url) => {
           if (requestIdRef.current !== requestId) return
-          const url = URL.createObjectURL(blob)
           const audio = new Audio(url)
           audioRef.current = audio
 
@@ -62,7 +62,6 @@ export function useTTS(): UseTTS {
               audioRef.current = null
               setIsSpeaking(false)
             }
-            URL.revokeObjectURL(url)
           }
 
           audio.onended = cleanup
