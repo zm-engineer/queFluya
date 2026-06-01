@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PracticeCard } from '@/components/practice/practice-card'
 import { Button } from '@/components/ui/button'
 import type { Language } from '@/lib/topics'
@@ -10,6 +10,7 @@ type Props = {
   language: Language
   topicSlug: string
   profileId: string
+  onPracticedCountChange?: (count: number) => void
 }
 
 export function PhraseDeck({
@@ -17,10 +18,20 @@ export function PhraseDeck({
   language,
   topicSlug,
   profileId,
+  onPracticedCountChange,
 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [practiced, setPracticed] = useState<Set<number>>(new Set())
   const [done, setDone] = useState(false)
+
+  const onPracticedCountChangeRef = useRef(onPracticedCountChange)
+  useEffect(() => {
+    onPracticedCountChangeRef.current = onPracticedCountChange
+  }, [onPracticedCountChange])
+
+  useEffect(() => {
+    onPracticedCountChangeRef.current?.(practiced.size)
+  }, [practiced])
 
   const handlePracticed = useCallback(() => {
     setPracticed((prev) => {
