@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { comparePhrase, type DiffState } from '@/lib/practice/diff'
-import { useSpeechRecognition } from '@/lib/practice/use-speech-recognition'
-import { useSpeechSynthesis } from '@/lib/practice/use-speech-synthesis'
+import { useAudioRecorder } from '@/lib/practice/use-audio-recorder'
+import { useTTS } from '@/lib/practice/use-tts'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { Language } from '@/lib/topics'
@@ -41,8 +41,11 @@ export function PracticeCard({
   profileId,
   onPracticed,
 }: PracticeCardProps) {
-  const recognition = useSpeechRecognition(language)
-  const synthesis = useSpeechSynthesis()
+  const recorder = useAudioRecorder()
+  const synthesis = useTTS()
+  const [transcript, setTranscript] = useState('')
+  const [transcribing, setTranscribing] = useState(false)
+  const [transcribeError, setTranscribeError] = useState<string | null>(null)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const saveTriggeredRef = useRef(false)
   const onPracticedRef = useRef(onPracticed)
@@ -51,17 +54,51 @@ export function PracticeCard({
   }, [onPracticed])
 
   const diff = useMemo(
-    () =>
-      recognition.status === 'stopped' || recognition.status === 'recording'
-        ? comparePhrase(phrase, recognition.transcript)
-        : null,
-    [phrase, recognition.status, recognition.transcript]
+    () => (transcript ? comparePhrase(phrase, transcript) : null),
+    [phrase, transcript]
   )
 
   const supabase = useMemo(() => createClient(), [])
 
+  // When the audio blob is ready, send it to /api/transcribe.
   useEffect(() => {
-    if (recognition.status !== 'stopped' || !diff) return
+    if (!recorder.audioBlob) return
+    if (transcript || transcribing) return
+
+    setTranscribing(true)
+    setTranscribeError(null)
+
+    const formData = new FormData()
+    formData.append('audio', recorder.audioBlob, 'recording.webm')
+    formData.append('language', language)
+    // Strip [placeholders] so Whisper isn't biased to repeat the literal
+    // bracket text; it just gets context about the surrounding vocabulary.
+    formData.append(
+      'prompt',
+      phrase.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim()
+    )
+
+    fetch('/api/transcribe', { method: 'POST', body: formData })
+      .then(async (r) => {
+        const data = await r.json()
+        if (!r.ok || data.error) {
+          throw new Error(data.message || data.error || 'transcription_failed')
+        }
+        setTranscript(data.transcript ?? '')
+      })
+      .catch((err) => {
+        setTranscribeError(
+          err instanceof Error ? err.message : 'No se pudo transcribir'
+        )
+      })
+      .finally(() => {
+        setTranscribing(false)
+      })
+  }, [recorder.audioBlob, language, transcript, transcribing])
+
+  // Auto-save the result once we have a transcript + diff.
+  useEffect(() => {
+    if (!transcript || !diff) return
     if (saveTriggeredRef.current) return
     saveTriggeredRef.current = true
     onPracticedRef.current?.()
@@ -71,36 +108,33 @@ export function PracticeCard({
       .insert({
         profile_id: profileId,
         topic_slug: topicSlug,
-        transcription: recognition.transcript,
+        transcription: transcript,
         corrected_text: `score=${diff.score}; expected="${phrase}"`,
       })
       .then(({ error }) => {
         setSaveState(error ? 'error' : 'saved')
       })
-  }, [
-    diff,
-    phrase,
-    profileId,
-    recognition.status,
-    recognition.transcript,
-    supabase,
-    topicSlug,
-  ])
+  }, [diff, phrase, profileId, supabase, topicSlug, transcript])
 
   const onRetry = () => {
-    recognition.reset()
+    recorder.reset()
+    setTranscript('')
+    setTranscribeError(null)
     setSaveState('idle')
     saveTriggeredRef.current = false
   }
 
-  if (!recognition.isSupported && !synthesis.isSupported) {
+  if (!recorder.isSupported && !synthesis.isSupported) {
     return (
       <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 text-sm font-bold text-amber-900">
-        ⚠️ Tu navegador no soporta reconocimiento ni síntesis de voz. Prueba en
+        ⚠️ Tu navegador no soporta grabación ni síntesis de voz. Prueba en
         Chrome o Safari.
       </div>
     )
   }
+
+  const isRecording = recorder.status === 'recording'
+  const showRetry = transcript !== '' || transcribeError !== null
 
   return (
     <div className="bg-stone-50 border-2 border-stone-200 rounded-2xl p-5">
@@ -120,57 +154,64 @@ export function PracticeCard({
             🔊 {synthesis.isSpeaking ? 'Sonando…' : 'Escuchar'}
           </Button>
         )}
-        {recognition.isSupported && recognition.status !== 'recording' && (
+        {recorder.isSupported && !isRecording && (
           <Button
             type="button"
             variant="primary"
             size="sm"
-            onClick={
-              recognition.status === 'stopped' ? onRetry : recognition.start
-            }
+            onClick={showRetry ? onRetry : recorder.start}
+            disabled={transcribing}
           >
-            🎤 {recognition.status === 'stopped' ? 'Reintentar' : 'Grabar'}
+            🎤 {showRetry ? 'Reintentar' : 'Grabar'}
           </Button>
         )}
-        {recognition.isSupported && recognition.status === 'recording' && (
+        {recorder.isSupported && isRecording && (
           <Button
             type="button"
             variant="danger"
             size="sm"
-            onClick={recognition.stop}
+            onClick={recorder.stop}
           >
             ⏹ Parar
           </Button>
         )}
       </div>
 
-      {!recognition.isSupported && (
+      {!recorder.isSupported && (
         <p className="text-xs font-bold text-amber-700 mt-3">
-          ⚠️ Tu navegador no soporta el reconocimiento de voz — usa Chrome o
+          ⚠️ Tu navegador no soporta la grabación de audio — usa Chrome o
           Safari para grabarte.
         </p>
       )}
 
-      {recognition.status === 'recording' && (
+      {isRecording && (
         <div className="bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-red-700">
           <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse mr-2 align-middle" />
-          Grabando…{' '}
-          {recognition.transcript && (
-            <span className="text-stone-600 font-semibold">
-              «{recognition.transcript}»
-            </span>
-          )}
+          Grabando… habla con claridad.
         </div>
       )}
 
-      {recognition.status === 'stopped' && diff && (
+      {transcribing && (
+        <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-emerald-700">
+          <span className="inline-block animate-pulse mr-2">🤖</span>
+          Transcribiendo con Whisper…
+        </div>
+      )}
+
+      {transcribeError && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-red-700">
+          ⚠️ {transcribeError}
+        </div>
+      )}
+
+      {transcript !== '' && diff && (
         <div className="mt-5 space-y-4">
           <div className="bg-white border-2 border-stone-100 rounded-2xl p-4">
             <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2">
               Lo que dijiste
             </p>
             <p className="text-stone-700 font-semibold">
-              {recognition.transcript || '(silencio)'}
+              {transcript || '(silencio)'}
             </p>
           </div>
 
@@ -235,9 +276,9 @@ export function PracticeCard({
         </div>
       )}
 
-      {recognition.error && (
+      {recorder.error && (
         <p className="text-sm font-bold text-red-700 mt-3">
-          Error: {recognition.error}. Asegúrate de haber dado permiso al
+          Error: {recorder.error}. Asegúrate de haber dado permiso al
           micrófono.
         </p>
       )}
