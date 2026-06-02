@@ -23,6 +23,12 @@ export type TopicSection = {
    * gate is open so the user can advance past it.
    */
   comingSoon?: 'video' | 'tandem'
+  /**
+   * When true, the section is an audio-shadowing practice: the topic's
+   * dialogue is played line-by-line with pauses for the user to repeat.
+   * Uses the dialogue aggregated across all sections of the topic.
+   */
+  shadowing?: boolean
 }
 export type TopicContent = { sections: TopicSection[] }
 
