@@ -182,7 +182,11 @@ export function TopicSections({
         </p>
 
         {isComingSoonSection ? (
-          <ComingSoonCard kind={section.comingSoon as 'video' | 'tandem'} />
+          section.comingSoon === 'tandem' ? (
+            <TandemConnectCard topicSlug={topicSlug} />
+          ) : (
+            <ComingSoonCard />
+          )
         ) : isShadowingSection ? (
           <AudioShadowing
             key={`shadow-${currentIdx}`}
@@ -298,23 +302,34 @@ export function TopicSections({
   )
 }
 
-type ComingSoonCardProps = { kind: 'video' | 'tandem' }
+function TandemConnectCard({ topicSlug }: { topicSlug: string }) {
+  return (
+    <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-8 text-center">
+      <p className="text-6xl mb-3">👥</p>
+      <p className="text-xl font-black text-stone-800 mb-2">
+        Conectar con otra persona
+      </p>
+      <p className="text-sm font-semibold text-stone-500 max-w-md mx-auto leading-relaxed mb-6">
+        Practica este tema por chat con alguien más: 5 minutos en inglés y 5 en
+        español, con el vocabulario del tema a mano.
+      </p>
+      <Link
+        href={`/topics/${topicSlug}/tandem`}
+        className="inline-block bg-emerald-500 text-white border-b-4 border-emerald-700 rounded-2xl px-8 py-3.5 text-sm font-black uppercase tracking-wide hover:bg-emerald-400 active:translate-y-1 active:border-b-0 transition-transform duration-150"
+      >
+        Conectar en vivo →
+      </Link>
+    </div>
+  )
+}
 
-function ComingSoonCard({ kind }: ComingSoonCardProps) {
-  const meta =
-    kind === 'video'
-      ? {
-          emoji: '🎬',
-          title: 'Video + shadowing',
-          description:
-            'Verás un video con dos hablantes nativos y repetirás las frases varias veces. Construcción en curso.',
-        }
-      : {
-          emoji: '👥',
-          title: 'Conectar con otro usuario',
-          description:
-            'Hablarás en vivo con otra persona aprendiendo el idioma contrario. Construcción en curso.',
-        }
+function ComingSoonCard() {
+  const meta = {
+    emoji: '🎬',
+    title: 'Video + shadowing',
+    description:
+      'Verás un video con dos hablantes nativos y repetirás las frases varias veces. Construcción en curso.',
+  }
   return (
     <div className="bg-stone-100 border-2 border-dashed border-stone-300 rounded-2xl p-8 text-center">
       <p className="text-6xl mb-3">{meta.emoji}</p>
