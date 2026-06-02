@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { AudioShadowing } from '@/components/topic/audio-shadowing'
 import { Button } from '@/components/ui/button'
 import { DialogueViewer } from '@/components/topic/dialogue-viewer'
 import { PhraseDeck } from '@/components/topic/phrase-deck'
@@ -37,6 +38,7 @@ export function TopicSections({
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const [practicedInCurrent, setPracticedInCurrent] = useState(0)
   const [freeRecordingDone, setFreeRecordingDone] = useState(false)
+  const [shadowingDone, setShadowingDone] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const allVocabulary = useMemo(
@@ -45,6 +47,10 @@ export function TopicSections({
   )
   const allPhrases = useMemo(
     () => sections.flatMap((s) => s.practicePhrases),
+    [sections]
+  )
+  const allDialogue = useMemo(
+    () => sections.flatMap((s) => s.dialogue),
     [sections]
   )
 
@@ -64,10 +70,11 @@ export function TopicSections({
   }, [supabase, profileId, topicSlug, sections.length])
 
   // Reset per-section transient state when the user navigates between
-  // sections. PhraseDeck remounts via its own key prop, but
-  // freeRecordingDone lives here so we clear it explicitly.
+  // sections. PhraseDeck remounts via its own key prop, but the booleans
+  // here are local so we clear them explicitly.
   useEffect(() => {
     setFreeRecordingDone(false)
+    setShadowingDone(false)
   }, [currentIdx])
 
   if (sections.length === 0) return null
@@ -87,14 +94,17 @@ export function TopicSections({
   const allDone = completed.size === total
   const isFreeSection = Boolean(section.freeRecordingPrompt)
   const isComingSoonSection = Boolean(section.comingSoon)
+  const isShadowingSection = Boolean(section.shadowing)
   const totalPhrases = section.practicePhrases.length
   const phraseGateOpen =
     totalPhrases === 0 || practicedInCurrent >= totalPhrases
   const gateOpen = isComingSoonSection
     ? true
-    : isFreeSection
-      ? freeRecordingDone
-      : phraseGateOpen
+    : isShadowingSection
+      ? shadowingDone
+      : isFreeSection
+        ? freeRecordingDone
+        : phraseGateOpen
 
   function canJumpTo(idx: number): boolean {
     return idx === currentIdx || completed.has(idx)
@@ -173,6 +183,13 @@ export function TopicSections({
 
         {isComingSoonSection ? (
           <ComingSoonCard kind={section.comingSoon as 'video' | 'tandem'} />
+        ) : isShadowingSection ? (
+          <AudioShadowing
+            key={`shadow-${currentIdx}`}
+            dialogue={allDialogue}
+            language={language}
+            onCompleted={() => setShadowingDone(true)}
+          />
         ) : isFreeSection ? (
           <FreeRecordingPractice
             key={`free-${currentIdx}`}
@@ -262,7 +279,9 @@ export function TopicSections({
         <div className="mt-4 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
           <span className="text-2xl">🔒</span>
           <p className="text-sm font-bold text-amber-900 flex-1">
-            {isFreeSection ? (
+            {isShadowingSection ? (
+              <>Reproduce el diálogo completo al menos una vez</>
+            ) : isFreeSection ? (
               <>Graba al menos una vez para completar la sección</>
             ) : (
               <>

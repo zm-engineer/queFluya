@@ -65,12 +65,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a dos hablantes nativos saludándose y repetir las frases.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -122,12 +122,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a dos personas presentándose y repetir las frases.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -178,12 +178,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a un cliente y un host en una entrada típica de restaurante.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -235,12 +235,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a un cliente y un camarero durante un pedido típico.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -292,12 +292,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver una entrevista corta con dos hablantes nativos.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -362,12 +362,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a dos hablantes nativos saludándose y repetir las frases.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -419,12 +419,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a dos personas presentándose y repetir las frases.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -475,12 +475,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a un cliente y un anfitrión en la entrada de un restaurante.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
@@ -531,12 +531,12 @@ values
           ]
         },
         {
-          "title": "Video y shadowing",
-          "intro": "Ver a un cliente y un camarero durante un pedido típico.",
+          "title": "Shadowing del diálogo",
+          "intro": "Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.",
           "vocabulary": [],
           "dialogue": [],
           "practicePhrases": [],
-          "comingSoon": "video"
+          "shadowing": true
         },
         {
           "title": "Pon en práctica",
