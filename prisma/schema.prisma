@@ -83,6 +83,10 @@ model Topic {
   language    Language
   level       Level
   position    Int      @default(0)
+  // Links the two mirror topics of a language exchange (e.g. `greetings` EN
+  // and `saludos` ES share pair_key "greetings"). Lets the tandem show each
+  // side's vocabulary per timer phase, and will key the Phase-2 matchmaking.
+  pairKey     String?  @map("pair_key")
   content     Json
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")

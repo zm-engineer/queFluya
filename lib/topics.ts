@@ -39,13 +39,15 @@ export type TopicListItem = {
   language: Language
   level: Level
   position: number
+  pairKey: string | null
 }
 
 export type TopicDetail = TopicListItem & {
   content: TopicContent
 }
 
-const LIST_COLUMNS = 'slug, title, description, language, level, position'
+const LIST_COLUMNS =
+  'slug, title, description, language, level, position, pairKey:pair_key'
 const DETAIL_COLUMNS = `${LIST_COLUMNS}, content`
 
 export async function getTopicsForUser(
@@ -74,4 +76,22 @@ export async function getTopicBySlug(
 
   if (error || !data) return null
   return data as unknown as TopicDetail
+}
+
+/**
+ * All topics sharing a pair_key — i.e. the two mirror sides of a language
+ * exchange (e.g. `greetings` EN + `saludos` ES). Returns whatever exists; a
+ * topic with no ES/EN counterpart simply comes back as a single-element list.
+ */
+export async function getTopicsByPairKey(
+  supabase: SupabaseClient,
+  pairKey: string
+): Promise<TopicDetail[]> {
+  const { data, error } = await supabase
+    .from('topics')
+    .select(DETAIL_COLUMNS)
+    .eq('pair_key', pairKey)
+
+  if (error || !data) return []
+  return data as unknown as TopicDetail[]
 }

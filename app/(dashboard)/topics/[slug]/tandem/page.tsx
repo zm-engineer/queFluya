@@ -3,7 +3,12 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { TandemRoom } from '@/components/tandem/tandem-room'
-import { getTopicBySlug } from '@/lib/topics'
+import {
+  getTopicBySlug,
+  getTopicsByPairKey,
+  type Language,
+  type TopicVocab,
+} from '@/lib/topics'
 
 export default async function TandemPage({
   params,
@@ -30,7 +35,18 @@ export default async function TandemPage({
   const topic = await getTopicBySlug(supabase, slug)
   if (!topic) notFound()
 
-  const vocabulary = (topic.content.sections ?? []).flatMap((s) => s.vocabulary)
+  // A tandem is an exchange, so we want BOTH languages' vocabulary: the panel
+  // shows English during the EN phase and Spanish during the ES phase. Resolve
+  // the mirror topic via pair_key; fall back to just this topic if unpaired.
+  const pairTopics = topic.pairKey
+    ? await getTopicsByPairKey(supabase, topic.pairKey)
+    : [topic]
+  const vocabByLanguage: Record<Language, TopicVocab[]> = { EN: [], ES: [] }
+  for (const t of pairTopics.length > 0 ? pairTopics : [topic]) {
+    vocabByLanguage[t.language] = (t.content.sections ?? []).flatMap(
+      (s) => s.vocabulary
+    )
+  }
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -70,10 +86,11 @@ export default async function TandemPage({
 
         <TandemRoom
           profileId={profile.id}
+          username={profile.username}
           topicSlug={topic.slug}
           topicTitle={topic.title}
           language={topic.language}
-          vocabulary={vocabulary}
+          vocabByLanguage={vocabByLanguage}
         />
       </section>
     </main>

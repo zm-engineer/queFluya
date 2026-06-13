@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import {
   computeTimerState,
@@ -25,10 +26,11 @@ import type { Language, TopicVocab } from '@/lib/topics'
 
 type Props = {
   profileId: string
+  username: string
   topicSlug: string
   topicTitle: string
   language: Language
-  vocabulary: TopicVocab[]
+  vocabByLanguage: Record<Language, TopicVocab[]>
 }
 
 /** Union two message lists by id, ordered chronologically (ISO strings sort). */
@@ -50,15 +52,17 @@ const JOIN_ERRORS: Record<string, string> = {
 
 export function TandemRoom({
   profileId,
+  username,
   topicSlug,
   topicTitle,
   language,
-  vocabulary,
+  vocabByLanguage,
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
 
   const [session, setSession] = useState<SessionRow | null>(null)
   const [messages, setMessages] = useState<MessageRow[]>([])
+  const [partnerUsername, setPartnerUsername] = useState<string | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [lobbyError, setLobbyError] = useState<string | null>(null)
@@ -84,23 +88,25 @@ export function TandemRoom({
       await supabase.realtime.setAuth(data.session?.access_token ?? null)
       if (cancelled) return
 
-      channel = supabase
-        .channel(`tandem:${sessionId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'chat_messages',
-            filter: `session_id=eq.${sessionId}`,
-          },
-          (payload) => {
-            const row = payload.new as MessageRow
-            setMessages((prev) =>
-              prev.some((m) => m.id === row.id) ? prev : [...prev, row]
-            )
-          }
-        )
+      const ch = supabase.channel(`tandem:${sessionId}`, {
+        config: { presence: { key: profileId } },
+      })
+
+      ch.on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const row = payload.new as MessageRow
+          setMessages((prev) =>
+            prev.some((m) => m.id === row.id) ? prev : [...prev, row]
+          )
+        }
+      )
         .on(
           'postgres_changes',
           {
@@ -115,25 +121,37 @@ export function TandemRoom({
             )
           }
         )
-        .subscribe((status, err) => {
-          console.log('[tandem] realtime status:', status, err ?? '')
-          // Once the channel is truly live, re-load the history and merge it.
-          // This backfills anything inserted during the subscribe handshake —
-          // the window where the first message used to be lost for the peer.
+        // Presence carries each peer's username live, so we can show who you're
+        // talking to without reading the other person's profile row (RLS only
+        // exposes your own participant/profile data).
+        .on('presence', { event: 'sync' }, () => {
+          const state = ch.presenceState<{ username: string }>()
+          const partner = Object.entries(state)
+            .filter(([key]) => key !== profileId)
+            .flatMap(([, entries]) => entries)[0]
+          setPartnerUsername(partner?.username ?? null)
+        })
+        .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
+            ch.track({ username })
+            // Re-load history and merge once the channel is truly live: this
+            // backfills anything inserted during the subscribe handshake — the
+            // window where the first message used to be lost for the peer.
             loadMessages(supabase, sessionId).then((rows) => {
               if (cancelled) return
               setMessages((prev) => mergeMessages(prev, rows))
             })
           }
         })
+
+      channel = ch
     })()
 
     return () => {
       cancelled = true
       if (channel) supabase.removeChannel(channel)
     }
-  }, [supabase, session?.id])
+  }, [supabase, session?.id, profileId, username])
 
   // --- Timer tick (only while the session is live) -----------------------
   const startedAtMs = session?.started_at ? parseDbTimestamp(session.started_at) : null
@@ -207,7 +225,8 @@ export function TandemRoom({
       session={session}
       messages={messages}
       timer={timer}
-      vocabulary={vocabulary}
+      vocabByLanguage={vocabByLanguage}
+      partnerUsername={partnerUsername}
       onSend={async (body) => {
         const { row, error } = await sendMessage(
           supabase,
@@ -223,6 +242,7 @@ export function TandemRoom({
         endedRef.current = false
         setSession(null)
         setMessages([])
+        setPartnerUsername(null)
         setCodeInput('')
       }}
     />
@@ -314,7 +334,8 @@ type ChatViewProps = {
   session: SessionRow
   messages: MessageRow[]
   timer: ReturnType<typeof computeTimerState> | null
-  vocabulary: TopicVocab[]
+  vocabByLanguage: Record<Language, TopicVocab[]>
+  partnerUsername: string | null
   onSend: (body: string) => Promise<{ error: string | null }>
   onRestart: () => void
 }
@@ -324,7 +345,8 @@ function ChatView({
   session,
   messages,
   timer,
-  vocabulary,
+  vocabByLanguage,
+  partnerUsername,
   onSend,
   onRestart,
 }: ChatViewProps) {
@@ -332,6 +354,8 @@ function ChatView({
   const [sending, setSending] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const ended = session.status === 'ENDED' || timer?.phase === 'ended'
+  // Panel follows the timer phase: English vocab during EN, Spanish during ES.
+  const panelLang: Language = timer?.phase === 'ES' ? 'ES' : 'EN'
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
@@ -348,6 +372,22 @@ function ChatView({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
       <div className="bg-white border-2 border-stone-100 rounded-3xl overflow-hidden flex flex-col h-[34rem]">
+        <div className="px-5 py-2.5 border-b-2 border-stone-100 flex items-center gap-2 text-sm font-bold text-stone-600">
+          <span
+            className={cn(
+              'h-2 w-2 rounded-full',
+              partnerUsername ? 'bg-emerald-500' : 'bg-stone-300'
+            )}
+          />
+          {partnerUsername ? (
+            <>
+              Hablando con{' '}
+              <span className="text-stone-900 font-black">@{partnerUsername}</span>
+            </>
+          ) : (
+            <span className="text-stone-400">Tu pareja está conectándose…</span>
+          )}
+        </div>
         <TimerBanner timer={timer} ended={ended} />
 
         <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-3">
@@ -405,7 +445,7 @@ function ChatView({
         )}
       </div>
 
-      <VocabPanel vocabulary={vocabulary} />
+      <VocabPanel vocabulary={vocabByLanguage[panelLang]} language={panelLang} />
     </div>
   )
 }
@@ -437,12 +477,19 @@ function TimerBanner({
   )
 }
 
-function VocabPanel({ vocabulary }: { vocabulary: TopicVocab[] }) {
+function VocabPanel({
+  vocabulary,
+  language,
+}: {
+  vocabulary: TopicVocab[]
+  language: Language
+}) {
   if (vocabulary.length === 0) return null
+  const label = language === 'EN' ? 'Inglés 🇬🇧' : 'Español 🇪🇸'
   return (
     <aside className="bg-white border-2 border-stone-100 rounded-3xl p-5 h-fit lg:max-h-[34rem] lg:overflow-y-auto">
       <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-        📖 Vocabulario útil
+        📖 Vocabulario — {label}
       </h3>
       <ul className="space-y-2.5">
         {vocabulary.map((v) => (
