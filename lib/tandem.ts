@@ -65,6 +65,30 @@ export function computeTimerState(
 }
 
 /**
+ * New `started_at` (epoch ms) so the session jumps to the START of the next
+ * phase, giving that phase its full duration. Since the timer is derived purely
+ * from `started_at`, shifting the start is all we need — both clients recompute
+ * the same phase, no tick broadcast required.
+ *
+ * Returns null when there is no next phase (already in the last phase, or the
+ * session has ended) — in that case the caller should end the session instead.
+ */
+export function skipToNextPhaseStart(
+  startedAtMs: number,
+  nowMs: number,
+  opts: TimerOpts = {}
+): number | null {
+  const phaseMs = opts.phaseMs ?? TANDEM_PHASE_MS
+  const order = opts.order ?? TANDEM_PHASE_ORDER
+  const { phaseIndex } = computeTimerState(startedAtMs, nowMs, opts)
+  const nextIndex = phaseIndex + 1
+  if (phaseIndex < 0 || nextIndex >= order.length) return null
+  // Place the start so that elapsed === phaseMs * nextIndex right now: we land
+  // exactly on the next phase's boundary, leaving it its full duration.
+  return nowMs - phaseMs * nextIndex
+}
+
+/**
  * Parse a timestamp coming from the DB into epoch milliseconds.
  *
  * Our timestamp columns are `timestamp` WITHOUT time zone (Prisma's default

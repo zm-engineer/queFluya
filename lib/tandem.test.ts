@@ -8,6 +8,7 @@ import {
   isValidInviteCode,
   normalizeInviteCode,
   parseDbTimestamp,
+  skipToNextPhaseStart,
   validateMessage,
   INVITE_CODE_LENGTH,
   MAX_MESSAGE_LENGTH,
@@ -59,6 +60,39 @@ describe('computeTimerState', () => {
     const s = computeTimerState(0, 0, { phaseMs: 1000, order: ['ES', 'EN'] })
     expect(s.phase).toBe('ES')
     expect(s.totalSecondsLeft).toBe(2)
+  })
+})
+
+describe('skipToNextPhaseStart', () => {
+  it('skips from EN to ES, giving ES its full duration', () => {
+    // 2 minutes into the EN phase, then skip.
+    const start = 0
+    const now = 2 * 60 * 1000
+    const newStart = skipToNextPhaseStart(start, now)
+    expect(newStart).not.toBeNull()
+    // From the new start, ES should be active with the full phase remaining.
+    const s = computeTimerState(newStart as number, now)
+    expect(s.phase).toBe('ES')
+    expect(s.secondsLeftInPhase).toBe(TANDEM_PHASE_MS / 1000)
+  })
+
+  it('returns null when already in the last phase (nothing to skip to)', () => {
+    const now = TANDEM_PHASE_MS + 1000 // inside ES, the last phase
+    expect(skipToNextPhaseStart(0, now)).toBeNull()
+  })
+
+  it('returns null when the session has already ended', () => {
+    const now = TANDEM_PHASE_MS * 2 + 1000
+    expect(skipToNextPhaseStart(0, now)).toBeNull()
+  })
+
+  it('honours a custom phase order/duration', () => {
+    // 3-phase order at 1s each; skipping from phase 0 lands on phase 1.
+    const order = ['EN', 'ES', 'EN'] as const
+    const newStart = skipToNextPhaseStart(0, 0, { phaseMs: 1000, order })
+    const s = computeTimerState(newStart as number, 0, { phaseMs: 1000, order })
+    expect(s.phaseIndex).toBe(1)
+    expect(s.secondsLeftInPhase).toBe(1)
   })
 })
 

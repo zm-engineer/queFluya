@@ -3,6 +3,7 @@ import {
   generateInviteCode,
   isValidInviteCode,
   normalizeInviteCode,
+  skipToNextPhaseStart,
   validateMessage,
 } from './tandem'
 import type { Language } from './topics'
@@ -138,6 +139,32 @@ export async function joinByCode(
     .eq('status', 'WAITING')
 
   return { session: { ...session, status: 'ACTIVE', started_at: startedAt } }
+}
+
+/**
+ * Move the session to the next language phase early. We shift `started_at` so
+ * both clients recompute the timer into the next phase (with its full duration);
+ * the change propagates via the same tandem_sessions UPDATE realtime listener.
+ * Returns the new `started_at` ISO string, or null if there is no next phase
+ * (caller should end the session instead).
+ */
+export async function skipToNextPhase(
+  supabase: SupabaseClient,
+  sessionId: string,
+  startedAtMs: number,
+  nowMs: number = Date.now()
+): Promise<{ startedAt: string } | null> {
+  const newStartMs = skipToNextPhaseStart(startedAtMs, nowMs)
+  if (newStartMs === null) return null
+
+  const startedAt = new Date(newStartMs).toISOString()
+  await supabase
+    .from('tandem_sessions')
+    .update({ started_at: startedAt })
+    .eq('id', sessionId)
+    .eq('status', 'ACTIVE')
+
+  return { startedAt }
 }
 
 export async function loadMessages(

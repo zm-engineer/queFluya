@@ -19,6 +19,7 @@ import {
   joinByCode,
   loadMessages,
   sendMessage,
+  skipToNextPhase,
   type MessageRow,
   type SessionRow,
 } from '@/lib/tandem-session'
@@ -201,6 +202,26 @@ export function TandemRoom({
     setSession(result.session)
   }, [supabase, profileId, codeInput])
 
+  // Skip the rest of the current language and jump to the next phase (EN→ES).
+  // Shifting started_at recomputes the timer on both clients (via the
+  // tandem_sessions UPDATE listener); we also set it locally for instant feedback.
+  const handleSkipPhase = useCallback(async () => {
+    if (!session?.id || startedAtMs === null) return
+    const result = await skipToNextPhase(supabase, session.id, startedAtMs)
+    if (result) {
+      setSession((prev) => (prev ? { ...prev, started_at: result.startedAt } : prev))
+    }
+  }, [supabase, session?.id, startedAtMs])
+
+  // End the conversation early. endSession flips status to ENDED, which reaches
+  // the peer through the same tandem_sessions UPDATE listener.
+  const handleEndEarly = useCallback(async () => {
+    if (!session?.id) return
+    endedRef.current = true
+    await endSession(supabase, session.id)
+    setSession((prev) => (prev ? { ...prev, status: 'ENDED' } : prev))
+  }, [supabase, session?.id])
+
   // --- Views -------------------------------------------------------------
   if (!session) {
     return (
@@ -227,6 +248,8 @@ export function TandemRoom({
       timer={timer}
       vocabByLanguage={vocabByLanguage}
       partnerUsername={partnerUsername}
+      onSkipPhase={handleSkipPhase}
+      onEndEarly={handleEndEarly}
       onSend={async (body) => {
         const { row, error } = await sendMessage(
           supabase,
@@ -336,6 +359,8 @@ type ChatViewProps = {
   timer: ReturnType<typeof computeTimerState> | null
   vocabByLanguage: Record<Language, TopicVocab[]>
   partnerUsername: string | null
+  onSkipPhase: () => void
+  onEndEarly: () => void
   onSend: (body: string) => Promise<{ error: string | null }>
   onRestart: () => void
 }
@@ -347,13 +372,18 @@ function ChatView({
   timer,
   vocabByLanguage,
   partnerUsername,
+  onSkipPhase,
+  onEndEarly,
   onSend,
   onRestart,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [confirmingEnd, setConfirmingEnd] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const ended = session.status === 'ENDED' || timer?.phase === 'ended'
+  // "Skip language" only makes sense while there's a next phase to skip to.
+  const canSkip = timer?.phase === 'EN'
   // Panel follows the timer phase: English vocab during EN, Spanish during ES.
   const panelLang: Language = timer?.phase === 'ES' ? 'ES' : 'EN'
 
@@ -389,6 +419,41 @@ function ChatView({
           )}
         </div>
         <TimerBanner timer={timer} ended={ended} />
+
+        {!ended && (
+          <div className="px-5 py-2 border-b-2 border-stone-100 flex items-center justify-end gap-2">
+            {canSkip && (
+              <Button size="sm" variant="secondary" onClick={onSkipPhase}>
+                Pasar al español 🇪🇸
+              </Button>
+            )}
+            {confirmingEnd ? (
+              <>
+                <span className="text-xs font-bold text-stone-500 mr-1">
+                  ¿Terminar la conversación?
+                </span>
+                <Button size="sm" variant="danger" onClick={onEndEarly}>
+                  Sí, terminar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setConfirmingEnd(false)}
+                >
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => setConfirmingEnd(true)}
+              >
+                Terminar
+              </Button>
+            )}
+          </div>
+        )}
 
         <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-3">
           {messages.length === 0 && !ended && (
