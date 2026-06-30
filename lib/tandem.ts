@@ -5,8 +5,19 @@
 // the hook/route handlers; this module only decides *rules*: the language
 // timer, invite-code shape, message validity, and session capacity.
 
+import type { Language } from './topics'
+
 export type SessionStatus = 'WAITING' | 'ACTIVE' | 'ENDED'
 export type SessionPhase = 'EN' | 'ES' | 'ended'
+
+/**
+ * A tandem is an exchange, so your match practises the OPPOSITE language: if you
+ * study English (so you can be the native-Spanish helper during the ES phase),
+ * your partner studies Spanish. Matchmaking pairs same-pair_key + opposite-language.
+ */
+export function oppositeLanguage(language: Language): Language {
+  return language === 'EN' ? 'ES' : 'EN'
+}
 
 /** Each language phase lasts 5 minutes (5 min EN + 5 min ES = the tandem). */
 export const TANDEM_PHASE_MS = 5 * 60 * 1000

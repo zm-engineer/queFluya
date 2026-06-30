@@ -7,6 +7,7 @@ import {
   generateInviteCode,
   isValidInviteCode,
   normalizeInviteCode,
+  oppositeLanguage,
   parseDbTimestamp,
   skipToNextPhaseStart,
   validateMessage,
@@ -60,6 +61,13 @@ describe('computeTimerState', () => {
     const s = computeTimerState(0, 0, { phaseMs: 1000, order: ['ES', 'EN'] })
     expect(s.phase).toBe('ES')
     expect(s.totalSecondsLeft).toBe(2)
+  })
+})
+
+describe('oppositeLanguage', () => {
+  it('maps EN to ES and ES to EN (the exchange pairing)', () => {
+    expect(oppositeLanguage('EN')).toBe('ES')
+    expect(oppositeLanguage('ES')).toBe('EN')
   })
 })
 

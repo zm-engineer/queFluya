@@ -90,6 +90,7 @@ export default async function TandemPage({
           topicSlug={topic.slug}
           topicTitle={topic.title}
           language={topic.language}
+          pairKey={topic.pairKey}
           vocabByLanguage={vocabByLanguage}
         />
       </section>
