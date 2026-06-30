@@ -27,6 +27,7 @@ create table if not exists "tandem_sessions" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "topic_slug" TEXT NOT NULL,
     "language" "Language" NOT NULL,
+    "pair_key" TEXT,
     "invite_code" TEXT NOT NULL,
     "status" "SessionStatus" NOT NULL DEFAULT 'WAITING',
     "host_profile_id" UUID NOT NULL,
@@ -56,6 +57,7 @@ create table if not exists "chat_messages" (
 -- CreateIndex
 create unique index if not exists "tandem_sessions_invite_code_key" on "tandem_sessions"("invite_code");
 create index if not exists "tandem_sessions_invite_code_idx" on "tandem_sessions"("invite_code");
+create index if not exists "tandem_sessions_status_pair_key_language_idx" on "tandem_sessions"("status", "pair_key", "language");
 create unique index if not exists "session_participants_session_id_profile_id_key" on "session_participants"("session_id", "profile_id");
 create index if not exists "chat_messages_session_id_created_at_idx" on "chat_messages"("session_id", "created_at");
 

@@ -3,6 +3,7 @@ import {
   generateInviteCode,
   isValidInviteCode,
   normalizeInviteCode,
+  oppositeLanguage,
   skipToNextPhaseStart,
   validateMessage,
 } from './tandem'
@@ -39,7 +40,8 @@ export async function createSession(
   supabase: SupabaseClient,
   profileId: string,
   topicSlug: string,
-  language: Language
+  language: Language,
+  pairKey: string | null = null
 ): Promise<{ session: SessionRow } | { error: string }> {
   for (let attempt = 0; attempt < 3; attempt++) {
     const inviteCode = generateInviteCode()
@@ -48,6 +50,7 @@ export async function createSession(
       .insert({
         topic_slug: topicSlug,
         language,
+        pair_key: pairKey,
         invite_code: inviteCode,
         status: 'WAITING',
         host_profile_id: profileId,
@@ -139,6 +142,79 @@ export async function joinByCode(
     .eq('status', 'WAITING')
 
   return { session: { ...session, status: 'ACTIVE', started_at: startedAt } }
+}
+
+export type MatchResult =
+  | { session: SessionRow; matched: boolean }
+  | { error: string }
+
+/**
+ * Matchmaking entry point. Find someone already WAITING for the same pair_key in
+ * the OPPOSITE language (a tandem is an exchange) and pair with them; if nobody
+ * is waiting, create a WAITING session and queue up. `matched: false` means we
+ * are now the one waiting — the existing tandem_sessions UPDATE realtime
+ * listener flips us to ACTIVE when a partner arrives, so the caller just renders
+ * a "searching" state.
+ *
+ * pairKey is required to match; without a mirror topic (e.g. job-interview-basics
+ * has no ES side) there is nobody to pair with, so we can only wait.
+ */
+export async function findOrCreateMatch(
+  supabase: SupabaseClient,
+  profileId: string,
+  topicSlug: string,
+  language: Language,
+  pairKey: string | null
+): Promise<MatchResult> {
+  if (pairKey) {
+    const want = oppositeLanguage(language)
+
+    // Retry a few times: a candidate may be claimed by someone else between our
+    // read and our join (the capacity trigger rejects the 3rd participant).
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: candidates } = await supabase
+        .from('tandem_sessions')
+        .select(SESSION_COLUMNS)
+        .eq('status', 'WAITING')
+        .eq('pair_key', pairKey)
+        .eq('language', want)
+        .neq('host_profile_id', profileId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+
+      const candidate = candidates?.[0] as SessionRow | undefined
+      if (!candidate) break // nobody waiting → create our own queue entry below
+
+      const { error: joinError } = await supabase
+        .from('session_participants')
+        .insert({ session_id: candidate.id, profile_id: profileId })
+
+      if (joinError) {
+        // Lost the race (already full) or duplicate row → try another candidate.
+        if (joinError.code === '23505' || joinError.message.includes('full')) {
+          continue
+        }
+        return { error: 'unknown' }
+      }
+
+      const startedAt = new Date().toISOString()
+      await supabase
+        .from('tandem_sessions')
+        .update({ status: 'ACTIVE', started_at: startedAt })
+        .eq('id', candidate.id)
+        .eq('status', 'WAITING')
+
+      return {
+        session: { ...candidate, status: 'ACTIVE', started_at: startedAt },
+        matched: true,
+      }
+    }
+  }
+
+  // No partner waiting (or no pair_key) → queue up ourselves and wait.
+  const created = await createSession(supabase, profileId, topicSlug, language, pairKey)
+  if ('error' in created) return { error: created.error }
+  return { session: created.session, matched: false }
 }
 
 /**

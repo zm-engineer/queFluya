@@ -102,6 +102,7 @@ model TandemSession {
   id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   topicSlug     String               @map("topic_slug")
   language      Language
+  pairKey       String?              @map("pair_key")
   inviteCode    String               @unique @map("invite_code")
   status        SessionStatus        @default(WAITING)
   hostProfileId String               @map("host_profile_id") @db.Uuid
@@ -113,6 +114,8 @@ model TandemSession {
   messages      ChatMessage[]
 
   @@index([inviteCode])
+  // Matchmaking queue lookup: find a WAITING session by pair_key + language.
+  @@index([status, pairKey, language])
   @@map("tandem_sessions")
 }
 

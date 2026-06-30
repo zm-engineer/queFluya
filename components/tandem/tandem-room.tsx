@@ -16,6 +16,7 @@ import {
 import {
   createSession,
   endSession,
+  findOrCreateMatch,
   joinByCode,
   loadMessages,
   sendMessage,
@@ -31,6 +32,7 @@ type Props = {
   topicSlug: string
   topicTitle: string
   language: Language
+  pairKey: string | null
   vocabByLanguage: Record<Language, TopicVocab[]>
 }
 
@@ -57,6 +59,7 @@ export function TandemRoom({
   topicSlug,
   topicTitle,
   language,
+  pairKey,
   vocabByLanguage,
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
@@ -67,6 +70,9 @@ export function TandemRoom({
   const [codeInput, setCodeInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [lobbyError, setLobbyError] = useState<string | null>(null)
+  // True while we're queued via matchmaking (vs. hosting a code-shared room):
+  // it switches the WAITING view between "Buscando pareja…" and "share this code".
+  const [searching, setSearching] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
   // --- Realtime: new messages + session status changes -------------------
@@ -178,17 +184,40 @@ export function TandemRoom({
   }, [timer?.phase, session?.id, supabase])
 
   // --- Lobby actions -----------------------------------------------------
+  // Matchmaking: pair with a waiting peer (opposite language, same pair_key) or
+  // queue up. On `matched: false` we become the waiter; the realtime listener
+  // flips us to ACTIVE when someone joins, so we just show "Buscando pareja…".
+  const handleMatch = useCallback(async () => {
+    setBusy(true)
+    setLobbyError(null)
+    const result = await findOrCreateMatch(
+      supabase,
+      profileId,
+      topicSlug,
+      language,
+      pairKey
+    )
+    setBusy(false)
+    if ('error' in result) {
+      setLobbyError('No pudimos buscar pareja. Inténtalo de nuevo.')
+      return
+    }
+    setSearching(!result.matched)
+    setSession(result.session)
+  }, [supabase, profileId, topicSlug, language, pairKey])
+
   const handleCreate = useCallback(async () => {
     setBusy(true)
     setLobbyError(null)
-    const result = await createSession(supabase, profileId, topicSlug, language)
+    const result = await createSession(supabase, profileId, topicSlug, language, pairKey)
     setBusy(false)
     if ('error' in result) {
       setLobbyError('No pudimos crear la sala. Inténtalo de nuevo.')
       return
     }
+    setSearching(false)
     setSession(result.session)
-  }, [supabase, profileId, topicSlug, language])
+  }, [supabase, profileId, topicSlug, language, pairKey])
 
   const handleJoin = useCallback(async () => {
     setBusy(true)
@@ -211,7 +240,7 @@ export function TandemRoom({
     if (result) {
       setSession((prev) => (prev ? { ...prev, started_at: result.startedAt } : prev))
     }
-  }, [supabase, session?.id, startedAtMs])
+  }, [supabase, session, startedAtMs])
 
   // End the conversation early. endSession flips status to ENDED, which reaches
   // the peer through the same tandem_sessions UPDATE listener.
@@ -220,7 +249,15 @@ export function TandemRoom({
     endedRef.current = true
     await endSession(supabase, session.id)
     setSession((prev) => (prev ? { ...prev, status: 'ENDED' } : prev))
-  }, [supabase, session?.id])
+  }, [supabase, session])
+
+  // Leave the matchmaking queue: end our WAITING session so it stops being a
+  // candidate for others, then drop back to the lobby.
+  const handleCancelSearch = useCallback(async () => {
+    if (session?.id) await endSession(supabase, session.id)
+    setSearching(false)
+    setSession(null)
+  }, [supabase, session])
 
   // --- Views -------------------------------------------------------------
   if (!session) {
@@ -230,6 +267,8 @@ export function TandemRoom({
         setCodeInput={setCodeInput}
         busy={busy}
         error={lobbyError}
+        canMatch={pairKey !== null}
+        onMatch={handleMatch}
         onCreate={handleCreate}
         onJoin={handleJoin}
       />
@@ -237,7 +276,14 @@ export function TandemRoom({
   }
 
   if (session.status === 'WAITING') {
-    return <WaitingRoom inviteCode={session.invite_code} topicTitle={topicTitle} />
+    return (
+      <WaitingRoom
+        inviteCode={session.invite_code}
+        topicTitle={topicTitle}
+        searching={searching}
+        onCancel={handleCancelSearch}
+      />
+    )
   }
 
   return (
@@ -267,6 +313,7 @@ export function TandemRoom({
         setMessages([])
         setPartnerUsername(null)
         setCodeInput('')
+        setSearching(false)
       }}
     />
   )
@@ -279,13 +326,47 @@ type LobbyProps = {
   setCodeInput: (v: string) => void
   busy: boolean
   error: string | null
+  canMatch: boolean
+  onMatch: () => void
   onCreate: () => void
   onJoin: () => void
 }
 
-function Lobby({ codeInput, setCodeInput, busy, error, onCreate, onJoin }: LobbyProps) {
+function Lobby({
+  codeInput,
+  setCodeInput,
+  busy,
+  error,
+  canMatch,
+  onMatch,
+  onCreate,
+  onJoin,
+}: LobbyProps) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2">
+    <div className="space-y-6">
+      {canMatch && (
+        <div className="bg-emerald-500 rounded-3xl p-8 text-center text-white">
+          <p className="text-5xl mb-3">🔍</p>
+          <h2 className="text-2xl font-black mb-2">Buscar pareja</h2>
+          <p className="text-sm font-semibold text-emerald-50 leading-relaxed mb-6 max-w-md mx-auto">
+            Te emparejamos al instante con alguien que practica el otro idioma.
+            Sin coordinar nada: un clic y a hablar.
+          </p>
+          <Button variant="secondary" size="lg" onClick={onMatch} disabled={busy}>
+            {busy ? 'Buscando…' : 'Buscar pareja 🔍'}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex items-center gap-4 text-stone-400">
+        <span className="h-px flex-1 bg-stone-200" />
+        <span className="text-xs font-black uppercase tracking-wider">
+          o conecta con alguien que conoces
+        </span>
+        <span className="h-px flex-1 bg-stone-200" />
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 flex flex-col">
         <p className="text-5xl mb-3">🎙️</p>
         <h2 className="text-xl font-black text-stone-900 mb-2">Crear una sala</h2>
@@ -324,11 +405,40 @@ function Lobby({ codeInput, setCodeInput, busy, error, onCreate, onJoin }: Lobby
           <p className="mt-4 text-sm font-bold text-red-600">{error}</p>
         )}
       </div>
+      </div>
     </div>
   )
 }
 
-function WaitingRoom({ inviteCode, topicTitle }: { inviteCode: string; topicTitle: string }) {
+function WaitingRoom({
+  inviteCode,
+  topicTitle,
+  searching,
+  onCancel,
+}: {
+  inviteCode: string
+  topicTitle: string
+  searching: boolean
+  onCancel: () => void
+}) {
+  if (searching) {
+    return (
+      <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">
+        <p className="text-6xl mb-4 animate-pulse">🔍</p>
+        <h2 className="text-2xl font-black text-stone-900 mb-2">
+          Buscando pareja…
+        </h2>
+        <p className="text-sm font-semibold text-stone-500 mb-8">
+          En cuanto alguien busque practicar contigo, empezáis a hablar
+          automáticamente. Puedes dejar esta pestaña abierta.
+        </p>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
+          Cancelar búsqueda
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">
       <p className="text-6xl mb-4 animate-pulse">⏳</p>
