@@ -143,10 +143,20 @@ export function useWebRTCAudio({
       setStatus('connecting')
       setError(null)
 
-      // 1. Mic permission + local audio. A denial ends here with a clear status.
+      // 1. Mic permission + local audio. We explicitly ask the browser for
+      //    acoustic echo cancellation (plus noise suppression + auto gain):
+      //    without it, one peer's speaker leaks into their mic and the other
+      //    hears themselves. Headphones remove the loop entirely; this keeps it
+      //    usable on speakers too.
       let localStream: MediaStream
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        })
       } catch {
         if (cancelled) return
         setError('No pudimos acceder al micrófono. Revisa los permisos del navegador.')
