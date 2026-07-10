@@ -1,11 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { isOfferer } from '@/lib/webrtc'
+import { useWebRTCAudio, type VoiceStatus } from '@/components/tandem/use-webrtc-audio'
 import {
   computeTimerState,
   normalizeInviteCode,
@@ -17,6 +19,7 @@ import {
   createSession,
   endSession,
   findOrCreateMatch,
+  getSessionById,
   joinByCode,
   loadMessages,
   sendMessage,
@@ -141,12 +144,18 @@ export function TandemRoom({
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             ch.track({ username })
-            // Re-load history and merge once the channel is truly live: this
-            // backfills anything inserted during the subscribe handshake — the
-            // window where the first message used to be lost for the peer.
+            // Backfill anything that changed during the subscribe handshake —
+            // events fired before we were live never reach us. Two things:
+            //  * messages: the first line used to be lost for the peer.
+            //  * session status: a matchmaking partner can flip us to ACTIVE in
+            //    this window; without re-reading it the waiter is stuck forever.
             loadMessages(supabase, sessionId).then((rows) => {
               if (cancelled) return
               setMessages((prev) => mergeMessages(prev, rows))
+            })
+            getSessionById(supabase, sessionId).then((row) => {
+              if (cancelled || !row) return
+              setSession((prev) => (prev ? { ...prev, ...row } : prev))
             })
           }
         })
@@ -288,6 +297,7 @@ export function TandemRoom({
 
   return (
     <ChatView
+      supabase={supabase}
       profileId={profileId}
       session={session}
       messages={messages}
@@ -463,6 +473,7 @@ function WaitingRoom({
 // ---------------------------------------------------------------------------
 
 type ChatViewProps = {
+  supabase: SupabaseClient
   profileId: string
   session: SessionRow
   messages: MessageRow[]
@@ -476,6 +487,7 @@ type ChatViewProps = {
 }
 
 function ChatView({
+  supabase,
   profileId,
   session,
   messages,
@@ -490,8 +502,26 @@ function ChatView({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [confirmingEnd, setConfirmingEnd] = useState(false)
+  const [voiceOn, setVoiceOn] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement>(null)
   const ended = session.status === 'ENDED' || timer?.phase === 'ended'
+
+  // --- Voice (WebRTC) ----------------------------------------------------
+  const voice = useWebRTCAudio({
+    supabase,
+    sessionId: session.id,
+    profileId,
+    isOfferer: isOfferer(profileId, session.host_profile_id),
+    enabled: voiceOn && !ended,
+  })
+
+  // Pipe the partner's stream into the hidden <audio> so it actually plays.
+  useEffect(() => {
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = voice.remoteStream
+    }
+  }, [voice.remoteStream])
   // "Skip language" only makes sense while there's a next phase to skip to.
   const canSkip = timer?.phase === 'EN'
   // Panel follows the timer phase: English vocab during EN, Spanish during ES.
@@ -531,7 +561,17 @@ function ChatView({
         <TimerBanner timer={timer} ended={ended} />
 
         {!ended && (
-          <div className="px-5 py-2 border-b-2 border-stone-100 flex items-center justify-end gap-2">
+          <div className="px-5 py-2 border-b-2 border-stone-100 flex items-center justify-between gap-2">
+            <VoiceControls
+              voiceOn={voiceOn}
+              status={voice.status}
+              muted={voice.muted}
+              error={voice.error}
+              onActivate={() => setVoiceOn(true)}
+              onHangUp={() => setVoiceOn(false)}
+              onToggleMute={voice.toggleMute}
+            />
+            <div className="flex items-center gap-2">
             {canSkip && (
               <Button size="sm" variant="secondary" onClick={onSkipPhase}>
                 Pasar al español 🇪🇸
@@ -562,6 +602,7 @@ function ChatView({
                 Terminar
               </Button>
             )}
+            </div>
           </div>
         )}
 
@@ -621,6 +662,74 @@ function ChatView({
       </div>
 
       <VocabPanel vocabulary={vocabByLanguage[panelLang]} language={panelLang} />
+
+      {/* Partner audio. Hidden element; the hook feeds it via srcObject. */}
+      <audio ref={remoteAudioRef} autoPlay className="hidden" />
+    </div>
+  )
+}
+
+type VoiceControlsProps = {
+  voiceOn: boolean
+  status: VoiceStatus
+  muted: boolean
+  error: string | null
+  onActivate: () => void
+  onHangUp: () => void
+  onToggleMute: () => void
+}
+
+function VoiceControls({
+  voiceOn,
+  status,
+  muted,
+  error,
+  onActivate,
+  onHangUp,
+  onToggleMute,
+}: VoiceControlsProps) {
+  if (!voiceOn) {
+    return (
+      <Button size="sm" variant="secondary" onClick={onActivate}>
+        Activar voz 🎙️
+      </Button>
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold text-red-600 max-w-[16rem]">
+          {error ?? 'No se pudo conectar la voz.'}
+        </span>
+        <Button size="sm" variant="secondary" onClick={onHangUp}>
+          Cerrar
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="flex items-center gap-1.5 text-xs font-black">
+        <span
+          className={cn(
+            'h-2 w-2 rounded-full',
+            status === 'connected' ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'
+          )}
+        />
+        <span className={status === 'connected' ? 'text-emerald-600' : 'text-stone-500'}>
+          {status === 'connected' ? 'Voz conectada 🔊' : 'Conectando voz…'}
+        </span>
+      </span>
+      {status === 'connected' && (
+        <Button size="sm" variant="secondary" onClick={onToggleMute}>
+          {muted ? 'Activar micro 🔇' : 'Silenciar 🎙️'}
+        </Button>
+      )}
+      <Button size="sm" variant="danger" onClick={onHangUp}>
+        Colgar
+      </Button>
     </div>
   )
 }

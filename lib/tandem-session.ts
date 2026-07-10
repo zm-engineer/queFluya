@@ -243,6 +243,24 @@ export async function skipToNextPhase(
   return { startedAt }
 }
 
+/**
+ * Read one session by id (RLS lets you see it while you're a participant, or
+ * while it's still WAITING). Used to backfill the session status on subscribe:
+ * a matchmaking partner can flip us ACTIVE during the channel handshake, and
+ * that single UPDATE event is otherwise the only thing that would move us on.
+ */
+export async function getSessionById(
+  supabase: SupabaseClient,
+  sessionId: string
+): Promise<SessionRow | null> {
+  const { data } = await supabase
+    .from('tandem_sessions')
+    .select(SESSION_COLUMNS)
+    .eq('id', sessionId)
+    .maybeSingle()
+  return (data as SessionRow) ?? null
+}
+
 export async function loadMessages(
   supabase: SupabaseClient,
   sessionId: string
