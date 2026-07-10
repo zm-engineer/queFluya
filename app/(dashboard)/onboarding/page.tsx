@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 type Language = 'EN' | 'ES'
 type Level = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
@@ -108,7 +111,7 @@ export default function OnboardingPage() {
   if (checking) {
     return (
       <main className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <p className="text-stone-500 text-sm">Cargando…</p>
+        <p className="text-stone-500 font-bold">Cargando…</p>
       </main>
     )
   }
@@ -118,81 +121,79 @@ export default function OnboardingPage() {
       <div className="w-full max-w-lg">
         <Link
           href="/"
-          className="block text-center font-serif text-2xl tracking-tight text-stone-900 mb-16"
+          className="block text-center text-2xl font-black tracking-tight text-stone-900 mb-10"
         >
-          que<span className="text-emerald-700">Fluya</span>
+          que<span className="text-emerald-500">Fluya</span>
         </Link>
 
-        <div className="flex items-center justify-center gap-3 mb-14">
+        <div className="flex items-center justify-center gap-2 mb-10">
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className={`h-px w-12 transition-colors ${
-                step >= n ? 'bg-emerald-700' : 'bg-stone-300'
-              }`}
+              className={cn(
+                'h-2 w-16 rounded-full transition-colors',
+                step >= n ? 'bg-emerald-500' : 'bg-stone-200'
+              )}
             />
           ))}
         </div>
 
-        <div className="transition-opacity duration-500">
+        <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-10">
           {step === 1 && (
             <div className="animate-[fade_400ms_ease-out]">
-              <p className="text-xs uppercase tracking-widest text-stone-500 mb-4 text-center">
+              <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-3 text-center">
                 Paso 1 de 3
               </p>
-              <h2 className="font-serif text-4xl text-stone-900 text-center mb-10 leading-tight">
-                ¿Cuál es tu nombre de usuario?
+              <h2 className="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-8 leading-tight">
+                ¿Cómo te llamamos?
               </h2>
-              <input
+              <Input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && nextFromStep1()}
-                className="w-full bg-transparent border-b border-stone-300 py-4 text-center text-2xl font-serif text-stone-900 placeholder:text-stone-300 focus:border-emerald-700 focus:outline-none transition-colors"
+                className="text-center text-xl"
                 placeholder="maria_g"
                 autoFocus
               />
               {error && (
-                <p className="text-sm text-red-700 text-center mt-6">{error}</p>
+                <p className="text-sm font-bold text-red-700 text-center mt-4">
+                  {error}
+                </p>
               )}
-              <button
-                onClick={nextFromStep1}
-                className="block mx-auto mt-12 bg-emerald-800 text-stone-50 px-10 py-3.5 text-sm font-medium tracking-wide hover:bg-emerald-900 transition-colors"
-              >
-                Continuar
-              </button>
+              <div className="mt-8 flex justify-center">
+                <Button onClick={nextFromStep1} size="lg" className="px-12">
+                  Continuar →
+                </Button>
+              </div>
             </div>
           )}
 
           {step === 2 && (
             <div className="animate-[fade_400ms_ease-out]">
-              <p className="text-xs uppercase tracking-widest text-stone-500 mb-4 text-center">
+              <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-3 text-center">
                 Paso 2 de 3
               </p>
-              <h2 className="font-serif text-4xl text-stone-900 text-center mb-10 leading-tight">
-                ¿Cuál es tu idioma nativo?
+              <h2 className="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-8 leading-tight">
+                Tu idioma nativo
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => pickLanguage('EN')}
-                  className="border border-stone-300 bg-white py-10 hover:border-emerald-700 hover:bg-emerald-50/40 transition-colors group"
+                  className="bg-white border-2 border-b-4 border-stone-200 rounded-2xl py-10 hover:border-emerald-400 hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-2 transition-transform duration-150 group"
                 >
-                  <span className="block font-serif text-3xl text-stone-900 group-hover:text-emerald-800">
+                  <span className="block text-5xl mb-3">🇬🇧</span>
+                  <span className="block text-xl font-black text-stone-900 group-hover:text-emerald-700">
                     English
-                  </span>
-                  <span className="block text-xs uppercase tracking-widest text-stone-500 mt-2">
-                    Inglés
                   </span>
                 </button>
                 <button
                   onClick={() => pickLanguage('ES')}
-                  className="border border-stone-300 bg-white py-10 hover:border-emerald-700 hover:bg-emerald-50/40 transition-colors group"
+                  className="bg-white border-2 border-b-4 border-stone-200 rounded-2xl py-10 hover:border-emerald-400 hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-2 transition-transform duration-150 group"
                 >
-                  <span className="block font-serif text-3xl text-stone-900 group-hover:text-emerald-800">
+                  <span className="block text-5xl mb-3">🇪🇸</span>
+                  <span className="block text-xl font-black text-stone-900 group-hover:text-emerald-700">
                     Español
-                  </span>
-                  <span className="block text-xs uppercase tracking-widest text-stone-500 mt-2">
-                    Spanish
                   </span>
                 </button>
               </div>
@@ -201,45 +202,57 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <div className="animate-[fade_400ms_ease-out]">
-              <p className="text-xs uppercase tracking-widest text-stone-500 mb-4 text-center">
+              <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-3 text-center">
                 Paso 3 de 3
               </p>
-              <h2 className="font-serif text-4xl text-stone-900 text-center mb-3 leading-tight">
-                ¿Cuál es tu nivel?
+              <h2 className="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-2 leading-tight">
+                ¿Tu nivel?
               </h2>
-              <p className="text-stone-500 text-sm text-center mb-10">
+              <p className="text-stone-500 font-semibold text-center mb-8">
                 {nativeLanguage === 'EN' ? 'de español' : 'de inglés'}
               </p>
               <div className="space-y-3">
                 {(
                   [
-                    { value: 'BEGINNER' as Level, label: 'Principiante', hint: 'Apenas estoy empezando' },
-                    { value: 'INTERMEDIATE' as Level, label: 'Intermedio', hint: 'Puedo mantener conversaciones simples' },
-                    { value: 'ADVANCED' as Level, label: 'Avanzado', hint: 'Solo me falta práctica' },
+                    { value: 'BEGINNER' as Level, emoji: '🌱', label: 'Principiante', hint: 'Apenas estoy empezando' },
+                    { value: 'INTERMEDIATE' as Level, emoji: '🌿', label: 'Intermedio', hint: 'Puedo mantener conversaciones simples' },
+                    { value: 'ADVANCED' as Level, emoji: '🌳', label: 'Avanzado', hint: 'Solo me falta práctica' },
                   ]
                 ).map((opt) => (
                   <button
                     key={opt.value}
                     disabled={saving}
                     onClick={() => pickLevel(opt.value)}
-                    className={`w-full border bg-white px-6 py-5 text-left hover:border-emerald-700 hover:bg-emerald-50/40 transition-colors disabled:opacity-50 ${
-                      level === opt.value ? 'border-emerald-700' : 'border-stone-300'
-                    }`}
+                    className={cn(
+                      'w-full bg-white border-2 border-b-4 rounded-2xl px-5 py-4 text-left transition-transform duration-150',
+                      'hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-2',
+                      'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0',
+                      level === opt.value
+                        ? 'border-emerald-400'
+                        : 'border-stone-200 hover:border-emerald-300'
+                    )}
                   >
-                    <span className="block font-serif text-xl text-stone-900">
-                      {opt.label}
-                    </span>
-                    <span className="block text-sm text-stone-500 mt-1">
-                      {opt.hint}
-                    </span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-3xl">{opt.emoji}</span>
+                      <div>
+                        <span className="block text-lg font-black text-stone-900">
+                          {opt.label}
+                        </span>
+                        <span className="block text-sm font-semibold text-stone-500">
+                          {opt.hint}
+                        </span>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
               {error && (
-                <p className="text-sm text-red-700 text-center mt-6">{error}</p>
+                <p className="text-sm font-bold text-red-700 text-center mt-6">
+                  {error}
+                </p>
               )}
               {saving && (
-                <p className="text-stone-500 text-sm text-center mt-6">
+                <p className="text-stone-500 font-bold text-center mt-6">
                   Guardando…
                 </p>
               )}

@@ -34,7 +34,8 @@ export async function proxy(request: NextRequest) {
   const isProtected =
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
-    pathname === '/onboarding'
+    pathname === '/onboarding' ||
+    pathname.startsWith('/topics/')
 
   const isAuthRoute = pathname === '/login' || pathname === '/register'
 

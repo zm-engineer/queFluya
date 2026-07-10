@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function RegisterPage() {
   const supabase = createClient()
@@ -70,24 +72,25 @@ export default function RegisterPage() {
         <div className="w-full max-w-md text-center">
           <Link
             href="/"
-            className="font-serif text-3xl tracking-tight text-stone-900"
+            className="text-3xl font-black tracking-tight text-stone-900"
           >
-            que<span className="text-emerald-700">Fluya</span>
+            que<span className="text-emerald-500">Fluya</span>
           </Link>
-          <div className="mt-16 border-t border-stone-200 pt-12">
-            <h1 className="font-serif text-3xl text-stone-900 mb-4">
-              Casi listo
+          <div className="mt-12 bg-white border-2 border-stone-100 rounded-3xl p-10">
+            <p className="text-6xl mb-4">📬</p>
+            <h1 className="text-3xl font-black text-stone-900 mb-3">
+              ¡Casi listo!
             </h1>
-            <p className="text-stone-600 leading-relaxed">
+            <p className="text-stone-600 font-semibold leading-relaxed">
               Revisa tu email para confirmar tu cuenta y empezar a practicar.
             </p>
-            <Link
-              href="/login"
-              className="inline-block mt-10 text-sm text-emerald-700 hover:text-emerald-900 underline underline-offset-4"
-            >
-              Volver al inicio de sesión
-            </Link>
           </div>
+          <Link
+            href="/login"
+            className="inline-block mt-8 text-sm font-black text-emerald-600 hover:text-emerald-700 transition-colors"
+          >
+            ← Volver al inicio de sesión
+          </Link>
         </div>
       </main>
     )
@@ -96,36 +99,35 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-stone-50 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-md">
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <Link
             href="/"
-            className="font-serif text-3xl tracking-tight text-stone-900"
+            className="text-3xl font-black tracking-tight text-stone-900"
           >
-            que<span className="text-emerald-700">Fluya</span>
+            que<span className="text-emerald-500">Fluya</span>
           </Link>
-          <h1 className="font-serif text-4xl text-stone-900 mt-10 mb-3">
-            Crea tu cuenta
+          <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
+            Crea tu cuenta 🚀
           </h1>
-          <p className="text-stone-500 text-sm">
+          <p className="text-stone-500 font-semibold">
             Menos teoría, más práctica.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="fullName"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Nombre completo
             </label>
-            <input
+            <Input
               id="fullName"
               type="text"
               autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="María García"
             />
           </div>
@@ -133,17 +135,16 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Email
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="tu@email.com"
             />
           </div>
@@ -151,17 +152,16 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Contraseña
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="Mínimo 8 caracteres"
             />
           </div>
@@ -169,41 +169,41 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Confirmar contraseña
             </label>
-            <input
+            <Input
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-100 px-4 py-3 rounded">
+            <p className="text-sm font-bold text-red-700 bg-red-50 border-2 border-red-100 px-4 py-3 rounded-2xl">
               {error}
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-800 text-stone-50 py-3.5 text-sm font-medium tracking-wide hover:bg-emerald-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            size="lg"
+            className="w-full"
           >
             {loading ? 'Creando cuenta…' : 'Crear cuenta'}
-          </button>
+          </Button>
         </form>
 
-        <p className="text-center text-sm text-stone-500 mt-10">
+        <p className="text-center text-sm font-semibold text-stone-500 mt-10">
           ¿Ya tienes cuenta?{' '}
           <Link
             href="/login"
-            className="text-emerald-700 hover:text-emerald-900 underline underline-offset-4"
+            className="text-emerald-600 font-black hover:text-emerald-700 transition-colors"
           >
             Iniciar sesión
           </Link>

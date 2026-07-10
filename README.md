@@ -67,10 +67,31 @@ Open [http://localhost:3000](http://localhost:3000).
 | Model           | Purpose                                                                 |
 | --------------- | ----------------------------------------------------------------------- |
 | `Profile`       | One per authenticated user. Native/target languages, level, avatar.     |
+| `Topic`         | Learning content — slug, title, target language, level, JSON sections.  |
 | `TopicProgress` | Per-section progress within a topic for a given profile.                |
 | `Recording`     | Audio submissions with transcription, corrected text, and corrected audio. |
 
 Enums: `Language` (`EN`, `ES`), `Level` (`BEGINNER`, `INTERMEDIATE`, `ADVANCED`).
+
+After `npx prisma db push` creates the tables, apply the RLS policies and seed content with:
+
+```bash
+npx prisma db execute --file supabase/topics_setup.sql --schema prisma/schema.prisma
+npx prisma db execute --file supabase/recordings_setup.sql --schema prisma/schema.prisma
+```
+
+Both scripts are idempotent — re-running after edits is safe.
+
+## Practice flow (free version)
+
+Each practice phrase on `/topics/[slug]` renders a `PracticeCard` that uses two free browser APIs — no OpenAI, no cost:
+
+- **Web Speech API (`SpeechRecognition`)** transcribes the user's voice in real time. Chrome and Safari only; Firefox falls back to a graceful "not supported" notice.
+- **Speech Synthesis (`speechSynthesis.speak`)** reads the target phrase out loud with platform voices.
+
+The transcription is compared to the target with a word-level Wagner-Fischer alignment (`lib/practice/diff.ts`) that classifies every word as `match`, `mistake`, `missing`, or `extra` and produces a 0-100 score. Each attempt is auto-saved to the `recordings` table for history.
+
+This avoids cloud API costs entirely. The upgrade path to OpenAI Whisper + GPT corrections + premium TTS (better quality, more nuance) is documented in the C-roadmap but not implemented here.
 
 ## Using the clients
 

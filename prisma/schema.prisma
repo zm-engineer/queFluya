@@ -19,6 +19,12 @@ enum Level {
   ADVANCED
 }
 
+enum SessionStatus {
+  WAITING
+  ACTIVE
+  ENDED
+}
+
 // The `user_id` column has a manual foreign key to `auth.users(id)` with
 // `ON DELETE CASCADE`, added via raw SQL in Supabase:
 //
@@ -33,44 +39,121 @@ enum Level {
 // remember to model `auth.users` (and ignore the rest of Supabase's auth
 // tables) so Prisma does not drop this FK as drift.
 model Profile {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String          @unique @map("user_id") @db.Uuid
-  username       String          @unique
-  nativeLanguage Language        @map("native_language")
-  targetLanguage Language        @map("target_language")
-  level          Level           @default(BEGINNER)
-  avatarUrl      String?         @map("avatar_url")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at")
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String               @unique @map("user_id") @db.Uuid
+  username       String               @unique
+  nativeLanguage Language             @map("native_language")
+  targetLanguage Language             @map("target_language")
+  level          Level                @default(BEGINNER)
+  avatarUrl      String?              @map("avatar_url")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at")
   topicProgress  TopicProgress[]
   recordings     Recording[]
+  hostedSessions TandemSession[]      @relation("HostedSessions")
+  sessionMembers SessionParticipant[]
+  chatMessages   ChatMessage[]
 
   @@map("profiles")
 }
 
 model TopicProgress {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profileId   String   @map("profile_id") @db.Uuid
-  topicSlug   String   @map("topic_slug")
-  section     Int      @default(1)
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId   String    @map("profile_id") @db.Uuid
+  topicSlug   String    @map("topic_slug")
+  section     Int       @default(1)
   completedAt DateTime? @map("completed_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, topicSlug, section])
   @@map("topic_progress")
 }
 
+// A learning topic — what the user sees on the dashboard and opens to study.
+// `language` is the language being PRACTICED (i.e. it matches a learner's
+// `target_language`, not their native one). `content` holds an array of
+// sections as JSON; the shape lives in lib/topics.ts so we can iterate it
+// without DB migrations while the content model stabilises.
+model Topic {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique
+  title       String
+  description String
+  language    Language
+  level       Level
+  position    Int      @default(0)
+  // Links the two mirror topics of a language exchange (e.g. `greetings` EN
+  // and `saludos` ES share pair_key "greetings"). Lets the tandem show each
+  // side's vocabulary per timer phase, and will key the Phase-2 matchmaking.
+  pairKey     String?  @map("pair_key")
+  content     Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("topics")
+}
+
+// A 1:1 tandem text-chat session, scoped to a single topic. Phase 1 of the
+// "Conectar" section: two learners practise the topic's language together via
+// text, guided by a 5 min EN / 5 min ES timer. Entry is by shareable invite
+// code (matchmaking queue is a later phase).
+model TandemSession {
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topicSlug     String               @map("topic_slug")
+  language      Language
+  pairKey       String?              @map("pair_key")
+  inviteCode    String               @unique @map("invite_code")
+  status        SessionStatus        @default(WAITING)
+  hostProfileId String               @map("host_profile_id") @db.Uuid
+  startedAt     DateTime?            @map("started_at")
+  endedAt       DateTime?            @map("ended_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  host          Profile              @relation("HostedSessions", fields: [hostProfileId], references: [id], onDelete: Cascade)
+  participants  SessionParticipant[]
+  messages      ChatMessage[]
+
+  @@index([inviteCode])
+  // Matchmaking queue lookup: find a WAITING session by pair_key + language.
+  @@index([status, pairKey, language])
+  @@map("tandem_sessions")
+}
+
+model SessionParticipant {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String        @map("session_id") @db.Uuid
+  profileId String        @map("profile_id") @db.Uuid
+  joinedAt  DateTime      @default(now()) @map("joined_at")
+  session   TandemSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  profile   Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, profileId])
+  @@map("session_participants")
+}
+
+model ChatMessage {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String        @map("session_id") @db.Uuid
+  profileId String        @map("profile_id") @db.Uuid
+  body      String
+  createdAt DateTime      @default(now()) @map("created_at")
+  session   TandemSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  profile   Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
 model Recording {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profileId       String   @map("profile_id") @db.Uuid
-  topicSlug       String   @map("topic_slug")
-  originalUrl     String   @map("original_url")
-  transcription   String?
-  correctedText   String?  @map("corrected_text")
-  correctedAudioUrl String? @map("corrected_audio_url")
-  createdAt       DateTime @default(now()) @map("created_at")
-  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId         String   @map("profile_id") @db.Uuid
+  topicSlug         String   @map("topic_slug")
+  originalUrl       String?  @map("original_url")
+  transcription     String?
+  correctedText     String?  @map("corrected_text")
+  correctedAudioUrl String?  @map("corrected_audio_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+  profile           Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("recordings")
 }

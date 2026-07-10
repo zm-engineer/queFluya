@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -48,36 +50,35 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-stone-50 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-md">
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <Link
             href="/"
-            className="font-serif text-3xl tracking-tight text-stone-900"
+            className="text-3xl font-black tracking-tight text-stone-900"
           >
-            que<span className="text-emerald-700">Fluya</span>
+            que<span className="text-emerald-500">Fluya</span>
           </Link>
-          <h1 className="font-serif text-4xl text-stone-900 mt-10 mb-3">
-            Bienvenido de vuelta
+          <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
+            ¡Bienvenido de vuelta! 👋
           </h1>
-          <p className="text-stone-500 text-sm">
+          <p className="text-stone-500 font-semibold">
             Continúa donde lo dejaste.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
               htmlFor="email"
-              className="block text-xs font-medium tracking-wide uppercase text-stone-600 mb-2"
+              className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
               Email
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="tu@email.com"
             />
           </div>
@@ -86,50 +87,50 @@ export default function LoginPage() {
             <div className="flex items-baseline justify-between mb-2">
               <label
                 htmlFor="password"
-                className="block text-xs font-medium tracking-wide uppercase text-stone-600"
+                className="block text-xs font-black tracking-wider uppercase text-stone-500"
               >
                 Contraseña
               </label>
-              <button
-                type="button"
-                className="text-xs text-stone-500 hover:text-emerald-700 transition-colors"
+              <Link
+                href="/forgot-password"
+                className="text-xs font-bold text-stone-500 hover:text-emerald-600 transition-colors"
               >
-                ¿Olvidaste tu contraseña?
-              </button>
+                ¿La olvidaste?
+              </Link>
             </div>
-            <input
+            <Input
               id="password"
               type="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-transparent border-b border-stone-300 py-3 text-stone-900 placeholder:text-stone-400 focus:border-emerald-700 focus:outline-none transition-colors"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-100 px-4 py-3 rounded">
+            <p className="text-sm font-bold text-red-700 bg-red-50 border-2 border-red-100 px-4 py-3 rounded-2xl">
               {error}
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-800 text-stone-50 py-3.5 text-sm font-medium tracking-wide hover:bg-emerald-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            size="lg"
+            className="w-full"
           >
             {loading ? 'Entrando…' : 'Iniciar sesión'}
-          </button>
+          </Button>
         </form>
 
-        <p className="text-center text-sm text-stone-500 mt-10">
+        <p className="text-center text-sm font-semibold text-stone-500 mt-10">
           ¿Aún no tienes cuenta?{' '}
           <Link
             href="/register"
-            className="text-emerald-700 hover:text-emerald-900 underline underline-offset-4"
+            className="text-emerald-600 font-black hover:text-emerald-700 transition-colors"
           >
-            Crear una cuenta
+            Crea una
           </Link>
         </p>
       </div>
