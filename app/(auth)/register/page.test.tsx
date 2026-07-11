@@ -132,7 +132,10 @@ describe('<RegisterPage />', () => {
     expect(supabase.spies.signUp).toHaveBeenCalledWith({
       email: 'maria@example.com',
       password: 'longenough1',
-      options: { data: { full_name: 'María García' } },
+      options: {
+        emailRedirectTo: expect.stringContaining('/login'),
+        data: { full_name: 'María García' },
+      },
     })
   })
 
