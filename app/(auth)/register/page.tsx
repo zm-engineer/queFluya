@@ -47,6 +47,10 @@ export default function RegisterPage() {
       email,
       password,
       options: {
+        // Confirmation link must point back to wherever the user signed up
+        // (localhost in dev, the Vercel URL in prod) instead of Supabase's
+        // default Site URL — otherwise prod emails send users to localhost.
+        emailRedirectTo: `${window.location.origin}/login`,
         data: {
           full_name: fullName.trim(),
         },
