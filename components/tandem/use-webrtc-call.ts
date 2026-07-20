@@ -8,7 +8,13 @@ import {
   type SignalMessage,
 } from '@/lib/webrtc'
 
-export type VoiceStatus = 'off' | 'connecting' | 'connected' | 'failed'
+export type CallStatus = 'off' | 'connecting' | 'connected' | 'failed'
+
+const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+}
 
 type Options = {
   supabase: SupabaseClient
@@ -16,51 +22,74 @@ type Options = {
   profileId: string
   /** True for the peer that creates the offer (the session host). See isOfferer. */
   isOfferer: boolean
-  /** Flip to true to start the call (mic permission + connect), false to hang up. */
+  /** Flip to true to start the call (camera/mic permission + connect), false to hang up. */
   enabled: boolean
 }
 
 type Result = {
-  status: VoiceStatus
-  muted: boolean
-  toggleMute: () => void
-  /** The partner's audio, to feed an <audio> element. */
+  status: CallStatus
+  micMuted: boolean
+  toggleMic: () => void
+  cameraOff: boolean
+  toggleCamera: () => void
+  /** False when we fell back to audio-only (camera denied/absent). */
+  hasVideo: boolean
+  /** Your own stream, for the local preview <video>. */
+  localStream: MediaStream | null
+  /** The partner's stream (audio + video), for the main <video>. */
   remoteStream: MediaStream | null
   /** Human-friendly reason when status is 'failed' (e.g. mic denied). */
   error: string | null
 }
 
 /**
- * Peer-to-peer voice for an active tandem. Signaling (offer/answer/ICE) rides a
- * dedicated Supabase broadcast channel; the audio itself flows directly between
- * the two browsers. One side (the offerer) drives negotiation; both announce
- * "ready" on subscribe so whoever connects last kicks off the offer — no lost
- * handshake regardless of who pressed "Activar voz" first.
+ * Peer-to-peer video call for an active tandem. Signaling (offer/answer/ICE)
+ * rides a dedicated Supabase broadcast channel; the audio+video flows directly
+ * between the two browsers. One side (the offerer) drives negotiation; both
+ * announce "ready" on subscribe so whoever connects last kicks off the offer.
+ *
+ * Audio and video share one RTCPeerConnection, so adding video over the earlier
+ * audio-only version needed no signaling changes — just camera capture + extra
+ * <video> elements. If the camera is denied we fall back to audio-only so the
+ * call still works.
  */
-export function useWebRTCAudio({
+export function useWebRTCCall({
   supabase,
   sessionId,
   profileId,
   isOfferer,
   enabled,
 }: Options): Result {
-  const [status, setStatus] = useState<VoiceStatus>('off')
-  const [muted, setMuted] = useState(false)
+  const [status, setStatus] = useState<CallStatus>('off')
+  const [micMuted, setMicMuted] = useState(false)
+  const [cameraOff, setCameraOff] = useState(false)
+  const [hasVideo, setHasVideo] = useState(false)
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const localStreamRef = useRef<MediaStream | null>(null)
+  // Latest toggle values reachable from the handlers without re-creating them.
+  const micMutedRef = useRef(false)
+  const cameraOffRef = useRef(false)
 
-  function toggleMute() {
+  function toggleMic() {
     const stream = localStreamRef.current
     if (!stream) return
-    const next = !mutedRef.current
+    const next = !micMutedRef.current
     stream.getAudioTracks().forEach((t) => (t.enabled = !next))
-    mutedRef.current = next
-    setMuted(next)
+    micMutedRef.current = next
+    setMicMuted(next)
   }
-  // Keep the latest muted value reachable from toggleMute without re-creating it.
-  const mutedRef = useRef(false)
+
+  function toggleCamera() {
+    const stream = localStreamRef.current
+    if (!stream || stream.getVideoTracks().length === 0) return
+    const next = !cameraOffRef.current
+    stream.getVideoTracks().forEach((t) => (t.enabled = !next))
+    cameraOffRef.current = next
+    setCameraOff(next)
+  }
 
   useEffect(() => {
     if (!enabled) return
@@ -143,37 +172,42 @@ export function useWebRTCAudio({
       setStatus('connecting')
       setError(null)
 
-      // 1. Mic permission + local audio. We explicitly ask the browser for
-      //    acoustic echo cancellation (plus noise suppression + auto gain):
-      //    without it, one peer's speaker leaks into their mic and the other
-      //    hears themselves. Headphones remove the loop entirely; this keeps it
-      //    usable on speakers too.
-      let localStream: MediaStream
+      // 1. Camera + mic. Prefer video; if the camera is denied or missing, fall
+      //    back to audio-only so a call is still possible. Echo cancellation on
+      //    the mic keeps speakers usable.
+      let stream: MediaStream
+      let gotVideo = false
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: AUDIO_CONSTRAINTS,
         })
+        gotVideo = stream.getVideoTracks().length > 0
       } catch {
-        if (cancelled) return
-        setError('No pudimos acceder al micrófono. Revisa los permisos del navegador.')
-        setStatus('failed')
-        return
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS })
+        } catch {
+          if (cancelled) return
+          setError('No pudimos acceder a la cámara ni al micrófono. Revisa los permisos del navegador.')
+          setStatus('failed')
+          return
+        }
       }
       if (cancelled) {
-        localStream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach((t) => t.stop())
         return
       }
-      localStreamRef.current = localStream
-      mutedRef.current = false
-      setMuted(false)
+      localStreamRef.current = stream
+      micMutedRef.current = false
+      cameraOffRef.current = false
+      setMicMuted(false)
+      setCameraOff(false)
+      setHasVideo(gotVideo)
+      setLocalStream(stream)
 
-      // 2. Peer connection with the local mic added.
+      // 2. Peer connection with the local tracks added (audio + video share it).
       pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
-      localStream.getTracks().forEach((t) => pc!.addTrack(t, localStream))
+      stream.getTracks().forEach((t) => pc!.addTrack(t, stream))
 
       pc.ontrack = (e) => {
         if (!cancelled) setRemoteStream(e.streams[0] ?? new MediaStream([e.track]))
@@ -216,10 +250,21 @@ export function useWebRTCAudio({
       localStreamRef.current?.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
       if (channel) supabase.removeChannel(channel)
+      setLocalStream(null)
       setRemoteStream(null)
       setStatus('off')
     }
   }, [supabase, sessionId, profileId, isOfferer, enabled])
 
-  return { status, muted, toggleMute, remoteStream, error }
+  return {
+    status,
+    micMuted,
+    toggleMic,
+    cameraOff,
+    toggleCamera,
+    hasVideo,
+    localStream,
+    remoteStream,
+    error,
+  }
 }

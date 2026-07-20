@@ -1,13 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { isOfferer } from '@/lib/webrtc'
-import { useWebRTCAudio, type VoiceStatus } from '@/components/tandem/use-webrtc-audio'
+import { useWebRTCCall, type CallStatus } from '@/components/tandem/use-webrtc-call'
 import {
   computeTimerState,
   normalizeInviteCode,
@@ -502,26 +502,28 @@ function ChatView({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [confirmingEnd, setConfirmingEnd] = useState(false)
-  const [voiceOn, setVoiceOn] = useState(false)
+  const [inCall, setInCall] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
-  const remoteAudioRef = useRef<HTMLAudioElement>(null)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const localVideoRef = useRef<HTMLVideoElement>(null)
   const ended = session.status === 'ENDED' || timer?.phase === 'ended'
 
-  // --- Voice (WebRTC) ----------------------------------------------------
-  const voice = useWebRTCAudio({
+  // --- Video call (WebRTC) -----------------------------------------------
+  const call = useWebRTCCall({
     supabase,
     sessionId: session.id,
     profileId,
     isOfferer: isOfferer(profileId, session.host_profile_id),
-    enabled: voiceOn && !ended,
+    enabled: inCall && !ended,
   })
 
-  // Pipe the partner's stream into the hidden <audio> so it actually plays.
+  // Feed each stream into its <video> (the remote one carries audio too).
   useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = voice.remoteStream
-    }
-  }, [voice.remoteStream])
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = call.remoteStream
+  }, [call.remoteStream])
+  useEffect(() => {
+    if (localVideoRef.current) localVideoRef.current.srcObject = call.localStream
+  }, [call.localStream])
   // "Skip language" only makes sense while there's a next phase to skip to.
   const canSkip = timer?.phase === 'EN'
   // Panel follows the timer phase: English vocab during EN, Spanish during ES.
@@ -540,7 +542,17 @@ function ChatView({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
+    <div className="space-y-6">
+      {inCall && (
+        <CallStage
+          status={call.status}
+          error={call.error}
+          cameraOff={call.cameraOff}
+          remoteVideoRef={remoteVideoRef}
+          localVideoRef={localVideoRef}
+        />
+      )}
+      <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
       <div className="bg-white border-2 border-stone-100 rounded-3xl overflow-hidden flex flex-col h-[34rem]">
         <div className="px-5 py-2.5 border-b-2 border-stone-100 flex items-center gap-2 text-sm font-bold text-stone-600">
           <span
@@ -562,14 +574,17 @@ function ChatView({
 
         {!ended && (
           <div className="px-5 py-2 border-b-2 border-stone-100 flex items-center justify-between gap-2">
-            <VoiceControls
-              voiceOn={voiceOn}
-              status={voice.status}
-              muted={voice.muted}
-              error={voice.error}
-              onActivate={() => setVoiceOn(true)}
-              onHangUp={() => setVoiceOn(false)}
-              onToggleMute={voice.toggleMute}
+            <CallControls
+              inCall={inCall}
+              status={call.status}
+              micMuted={call.micMuted}
+              cameraOff={call.cameraOff}
+              hasVideo={call.hasVideo}
+              error={call.error}
+              onStart={() => setInCall(true)}
+              onHangUp={() => setInCall(false)}
+              onToggleMic={call.toggleMic}
+              onToggleCamera={call.toggleCamera}
             />
             <div className="flex items-center gap-2">
             {canSkip && (
@@ -662,36 +677,40 @@ function ChatView({
       </div>
 
       <VocabPanel vocabulary={vocabByLanguage[panelLang]} language={panelLang} />
-
-      {/* Partner audio. Hidden element; the hook feeds it via srcObject. */}
-      <audio ref={remoteAudioRef} autoPlay className="hidden" />
+      </div>
     </div>
   )
 }
 
-type VoiceControlsProps = {
-  voiceOn: boolean
-  status: VoiceStatus
-  muted: boolean
+type CallControlsProps = {
+  inCall: boolean
+  status: CallStatus
+  micMuted: boolean
+  cameraOff: boolean
+  hasVideo: boolean
   error: string | null
-  onActivate: () => void
+  onStart: () => void
   onHangUp: () => void
-  onToggleMute: () => void
+  onToggleMic: () => void
+  onToggleCamera: () => void
 }
 
-function VoiceControls({
-  voiceOn,
+function CallControls({
+  inCall,
   status,
-  muted,
+  micMuted,
+  cameraOff,
+  hasVideo,
   error,
-  onActivate,
+  onStart,
   onHangUp,
-  onToggleMute,
-}: VoiceControlsProps) {
-  if (!voiceOn) {
+  onToggleMic,
+  onToggleCamera,
+}: CallControlsProps) {
+  if (!inCall) {
     return (
-      <Button size="sm" variant="secondary" onClick={onActivate}>
-        Activar voz 🎙️
+      <Button size="sm" variant="secondary" onClick={onStart}>
+        Iniciar videollamada 🎥
       </Button>
     )
   }
@@ -700,7 +719,7 @@ function VoiceControls({
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs font-bold text-red-600 max-w-[16rem]">
-          {error ?? 'No se pudo conectar la voz.'}
+          {error ?? 'No se pudo conectar la llamada.'}
         </span>
         <Button size="sm" variant="secondary" onClick={onHangUp}>
           Cerrar
@@ -719,17 +738,76 @@ function VoiceControls({
           )}
         />
         <span className={status === 'connected' ? 'text-emerald-600' : 'text-stone-500'}>
-          {status === 'connected' ? 'Voz conectada 🔊' : 'Conectando voz…'}
+          {status === 'connected' ? 'En videollamada 🎥' : 'Conectando…'}
         </span>
       </span>
       {status === 'connected' && (
-        <Button size="sm" variant="secondary" onClick={onToggleMute}>
-          {muted ? 'Activar micro 🔇' : 'Silenciar 🎙️'}
-        </Button>
+        <>
+          <Button size="sm" variant="secondary" onClick={onToggleMic}>
+            {micMuted ? 'Micro 🔇' : 'Micro 🎙️'}
+          </Button>
+          {hasVideo && (
+            <Button size="sm" variant="secondary" onClick={onToggleCamera}>
+              {cameraOff ? 'Cámara 📷' : 'Cámara 🎥'}
+            </Button>
+          )}
+        </>
       )}
       <Button size="sm" variant="danger" onClick={onHangUp}>
         Colgar
       </Button>
+    </div>
+  )
+}
+
+function CallStage({
+  status,
+  error,
+  cameraOff,
+  remoteVideoRef,
+  localVideoRef,
+}: {
+  status: CallStatus
+  error: string | null
+  cameraOff: boolean
+  remoteVideoRef: RefObject<HTMLVideoElement | null>
+  localVideoRef: RefObject<HTMLVideoElement | null>
+}) {
+  return (
+    <div className="relative w-full max-h-[26rem] aspect-video bg-stone-900 rounded-3xl overflow-hidden">
+      {/* Partner (fills the stage; carries the remote audio too). */}
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        className="w-full h-full object-cover"
+      />
+
+      {status !== 'connected' && (
+        <div className="absolute inset-0 grid place-items-center bg-stone-900/80 text-center px-6">
+          <p className="text-sm font-black text-white">
+            {status === 'failed'
+              ? (error ?? 'No se pudo conectar la videollamada.')
+              : 'Conectando videollamada… tu pareja debe pulsar «Iniciar videollamada» también.'}
+          </p>
+        </div>
+      )}
+
+      {/* Your own camera, picture-in-picture. Muted so you don't hear yourself. */}
+      <div className="absolute bottom-3 right-3 w-28 sm:w-36 aspect-video rounded-xl overflow-hidden border-2 border-white/60 bg-stone-800">
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full h-full object-cover"
+        />
+        {cameraOff && (
+          <div className="absolute inset-0 grid place-items-center bg-stone-800 text-[10px] font-black text-white/80">
+            Cámara apagada
+          </div>
+        )}
+      </div>
     </div>
   )
 }
