@@ -100,6 +100,12 @@ export default async function DashboardPage() {
         <p className="text-stone-500 mt-4 text-lg font-semibold max-w-xl">
           Menos teoría, más práctica. ¡Que fluya!
         </p>
+        <Link
+          href="/agenda"
+          className="inline-flex items-center gap-2 mt-6 bg-emerald-500 text-white font-black text-sm px-5 py-3 rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-transform"
+        >
+          📅 Agenda de tándems
+        </Link>
       </section>
 
       <section className="max-w-5xl mx-auto px-6 pb-10">

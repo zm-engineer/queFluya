@@ -25,6 +25,12 @@ enum SessionStatus {
   ENDED
 }
 
+enum ReservationStatus {
+  OPEN
+  BOOKED
+  CANCELLED
+}
+
 // The `user_id` column has a manual foreign key to `auth.users(id)` with
 // `ON DELETE CASCADE`, added via raw SQL in Supabase:
 //
@@ -53,6 +59,8 @@ model Profile {
   hostedSessions TandemSession[]      @relation("HostedSessions")
   sessionMembers SessionParticipant[]
   chatMessages   ChatMessage[]
+  hostedReservations TandemReservation[] @relation("HostedReservations")
+  guestReservations  TandemReservation[] @relation("GuestReservations")
 
   @@map("profiles")
 }
@@ -112,11 +120,38 @@ model TandemSession {
   host          Profile              @relation("HostedSessions", fields: [hostProfileId], references: [id], onDelete: Cascade)
   participants  SessionParticipant[]
   messages      ChatMessage[]
+  reservation   TandemReservation?
 
   @@index([inviteCode])
   // Matchmaking queue lookup: find a WAITING session by pair_key + language.
   @@index([status, pairKey, language])
   @@map("tandem_sessions")
+}
+
+// A scheduled 1:1 tandem: a host publishes an OPEN slot (topic + time), a guest
+// books it (BOOKED), and at the time both join a TandemSession (session_id).
+// scheduled_at is Timestamptz (unlike the rest of the schema's naive timestamps)
+// because reservations do real future-time math — see parseDbTimestamp notes.
+model TandemReservation {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hostProfileId  String            @map("host_profile_id") @db.Uuid
+  hostUsername   String?           @map("host_username")
+  topicSlug      String            @map("topic_slug")
+  language       Language
+  pairKey        String?           @map("pair_key")
+  scheduledAt    DateTime          @map("scheduled_at") @db.Timestamptz(3)
+  status         ReservationStatus @default(OPEN)
+  guestProfileId String?           @map("guest_profile_id") @db.Uuid
+  guestUsername  String?           @map("guest_username")
+  sessionId      String?           @unique @map("session_id") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  host           Profile           @relation("HostedReservations", fields: [hostProfileId], references: [id], onDelete: Cascade)
+  guest          Profile?          @relation("GuestReservations", fields: [guestProfileId], references: [id], onDelete: SetNull)
+  session        TandemSession?    @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  // Browse-open-slots lookup: OPEN reservations by pair_key + language + time.
+  @@index([status, pairKey, language, scheduledAt])
+  @@map("tandem_reservations")
 }
 
 model SessionParticipant {
