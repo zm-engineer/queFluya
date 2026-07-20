@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { joinReservation } from '@/lib/reservations-db'
 import { isOfferer } from '@/lib/webrtc'
 import { useWebRTCCall, type CallStatus } from '@/components/tandem/use-webrtc-call'
 import {
@@ -37,6 +38,8 @@ type Props = {
   language: Language
   pairKey: string | null
   vocabByLanguage: Record<Language, TopicVocab[]>
+  /** When arriving from a scheduled reservation, open its session directly. */
+  initialReservationId?: string | null
 }
 
 /** Union two message lists by id, ordered chronologically (ISO strings sort). */
@@ -64,6 +67,7 @@ export function TandemRoom({
   language,
   pairKey,
   vocabByLanguage,
+  initialReservationId = null,
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
 
@@ -76,7 +80,26 @@ export function TandemRoom({
   // True while we're queued via matchmaking (vs. hosting a code-shared room):
   // it switches the WAITING view between "Buscando pareja…" and "share this code".
   const [searching, setSearching] = useState(false)
+  // True when we opened this session from a scheduled reservation (waiting on a
+  // known partner, not a code or the queue) — for the right WAITING copy.
+  const [fromReservation, setFromReservation] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+
+  // Arriving from a scheduled reservation: open its session directly, skipping
+  // the lobby. The ref guards the dev StrictMode double-mount.
+  const reservationJoinRef = useRef(false)
+  useEffect(() => {
+    if (!initialReservationId || reservationJoinRef.current) return
+    reservationJoinRef.current = true
+    joinReservation(supabase, profileId, initialReservationId).then((result) => {
+      if ('session' in result) {
+        setFromReservation(true)
+        setSession(result.session)
+      } else {
+        setLobbyError('No pudimos abrir la sesión de tu reserva. Vuelve a intentarlo.')
+      }
+    })
+  }, [supabase, profileId, initialReservationId])
 
   // --- Realtime: new messages + session status changes -------------------
   useEffect(() => {
@@ -168,6 +191,24 @@ export function TandemRoom({
       if (channel) supabase.removeChannel(channel)
     }
   }, [supabase, session?.id, profileId, username])
+
+  // Fallback while WAITING: re-check the session every few seconds until it goes
+  // ACTIVE. The realtime UPDATE + the subscribe-gap backfill usually flip us, but
+  // when both peers join within the same second (reservations especially) a
+  // single backfill read can hit a lagging replica and miss the flip. Polling
+  // guarantees the waiter self-heals. Stops as soon as the status changes.
+  useEffect(() => {
+    if (session?.status !== 'WAITING' || !session.id) return
+    const sessionId = session.id
+    const id = setInterval(() => {
+      getSessionById(supabase, sessionId).then((row) => {
+        if (row && row.status !== 'WAITING') {
+          setSession((prev) => (prev ? { ...prev, ...row } : prev))
+        }
+      })
+    }, 2500)
+    return () => clearInterval(id)
+  }, [supabase, session?.status, session?.id])
 
   // --- Timer tick (only while the session is live) -----------------------
   const startedAtMs = session?.started_at ? parseDbTimestamp(session.started_at) : null
@@ -290,6 +331,7 @@ export function TandemRoom({
         inviteCode={session.invite_code}
         topicTitle={topicTitle}
         searching={searching}
+        fromReservation={fromReservation}
         onCancel={handleCancelSearch}
       />
     )
@@ -424,13 +466,33 @@ function WaitingRoom({
   inviteCode,
   topicTitle,
   searching,
+  fromReservation,
   onCancel,
 }: {
   inviteCode: string
   topicTitle: string
   searching: boolean
+  fromReservation: boolean
   onCancel: () => void
 }) {
+  if (fromReservation) {
+    return (
+      <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">
+        <p className="text-6xl mb-4 animate-pulse">⏳</p>
+        <h2 className="text-2xl font-black text-stone-900 mb-2">
+          Esperando a tu pareja…
+        </h2>
+        <p className="text-sm font-semibold text-stone-500 mb-8">
+          Tienes una reserva a esta hora. En cuanto tu pareja entre, empezáis
+          automáticamente.
+        </p>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
+          Salir
+        </Button>
+      </div>
+    )
+  }
+
   if (searching) {
     return (
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">

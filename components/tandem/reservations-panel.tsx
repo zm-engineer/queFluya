@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
@@ -48,6 +49,7 @@ function countdownLabel(scheduledAtMs: number, nowMs: number): string {
 }
 
 export function ReservationsPanel({ profileId, username, topics, titleBySlug }: Props) {
+  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [open, setOpen] = useState<ReservationRow[]>([])
   const [mine, setMine] = useState<ReservationRow[]>([])
@@ -237,10 +239,15 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
                           ? 'Esperando'
                           : 'Reservada'}
                     </span>
-                    {isJoinable(ms, now) && (
-                      <span className="text-xs font-black text-stone-400">
-                        (unirse: fase 5b)
-                      </span>
+                    {isJoinable(ms, now) && r.status === 'BOOKED' && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          router.push(`/topics/${r.topic_slug}/tandem?reservation=${r.id}`)
+                        }
+                      >
+                        Únete →
+                      </Button>
                     )}
                     {iAmHost && r.status === 'OPEN' && (
                       <Button

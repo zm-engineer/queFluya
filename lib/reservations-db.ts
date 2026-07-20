@@ -1,6 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Language } from './topics'
 import type { ReservationStatus } from './reservations'
+import {
+  createSession,
+  joinSessionById,
+  type SessionRow,
+} from './tandem-session'
 
 export type ReservationRow = {
   id: string
@@ -8,6 +13,7 @@ export type ReservationRow = {
   host_username: string | null
   topic_slug: string
   language: Language
+  pair_key: string | null
   // timestamptz → PostgREST returns it WITH a zone, so Date.parse is correct
   // directly (no parseDbTimestamp dance needed, unlike the naive columns).
   scheduled_at: string
@@ -18,7 +24,7 @@ export type ReservationRow = {
 }
 
 const COLUMNS =
-  'id, host_profile_id, host_username, topic_slug, language, scheduled_at, status, guest_profile_id, guest_username, session_id'
+  'id, host_profile_id, host_username, topic_slug, language, pair_key, scheduled_at, status, guest_profile_id, guest_username, session_id'
 
 /** Publish an OPEN slot for a future time. */
 export async function createReservation(
@@ -120,4 +126,71 @@ export async function cancelReservation(
     .eq('host_profile_id', hostProfileId)
 
   return { error: error ? error.message : null }
+}
+
+async function getReservationById(
+  supabase: SupabaseClient,
+  reservationId: string
+): Promise<ReservationRow | null> {
+  const { data } = await supabase
+    .from('tandem_reservations')
+    .select(COLUMNS)
+    .eq('id', reservationId)
+    .maybeSingle()
+  return (data as ReservationRow) ?? null
+}
+
+/**
+ * Enter the tandem session for a reservation at its scheduled time. The first of
+ * the two peers to arrive creates the session and pins it onto the reservation
+ * (compare-and-set on session_id, which is UNIQUE); the second joins that same
+ * session. Returns the session for the caller to open the tandem room with.
+ *
+ * The CAS handles the near-simultaneous race: if we lose it, we re-read the
+ * winner's session_id and join theirs instead (our just-created session is left
+ * as a harmless empty WAITING row).
+ */
+export async function joinReservation(
+  supabase: SupabaseClient,
+  profileId: string,
+  reservationId: string
+): Promise<{ session: SessionRow } | { error: string }> {
+  const res = await getReservationById(supabase, reservationId)
+  if (!res) return { error: 'not_found' }
+
+  // Someone already opened the session → just join it.
+  if (res.session_id) {
+    const session = await joinSessionById(supabase, profileId, res.session_id)
+    return session ? { session } : { error: 'unknown' }
+  }
+
+  // We're (maybe) first: create a session and try to claim the reservation.
+  const created = await createSession(
+    supabase,
+    profileId,
+    res.topic_slug,
+    res.language,
+    res.pair_key
+  )
+  if ('error' in created) return { error: created.error }
+
+  const { data: claimed } = await supabase
+    .from('tandem_reservations')
+    .update({ session_id: created.session.id })
+    .eq('id', reservationId)
+    .is('session_id', null)
+    .select('session_id')
+
+  if (claimed && claimed.length > 0) {
+    // We won the claim → our WAITING session is the shared one.
+    return { session: created.session }
+  }
+
+  // Lost the race → join whatever session the other peer pinned.
+  const fresh = await getReservationById(supabase, reservationId)
+  if (fresh?.session_id) {
+    const session = await joinSessionById(supabase, profileId, fresh.session_id)
+    return session ? { session } : { error: 'unknown' }
+  }
+  return { error: 'unknown' }
 }

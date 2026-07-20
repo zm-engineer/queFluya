@@ -12,10 +12,13 @@ import {
 
 export default async function TandemPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ reservation?: string }>
 }) {
   const { slug } = await params
+  const { reservation } = await searchParams
 
   const supabase = await createClient()
   const {
@@ -92,6 +95,7 @@ export default async function TandemPage({
           language={topic.language}
           pairKey={topic.pairKey}
           vocabByLanguage={vocabByLanguage}
+          initialReservationId={reservation ?? null}
         />
       </section>
     </main>
