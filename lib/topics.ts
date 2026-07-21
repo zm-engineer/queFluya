@@ -3,6 +3,21 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type Language = 'EN' | 'ES'
 export type Level = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
 
+/** Level progression, low → high. Drives grouping and unlock gating. */
+export const LEVEL_ORDER: Record<Level, number> = {
+  BEGINNER: 0,
+  INTERMEDIATE: 1,
+  ADVANCED: 2,
+}
+
+/** Levels low → high, for iterating grouped topic lists in order. */
+export const LEVELS_IN_ORDER: Level[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
+
+/** A topic is unlocked when its level is at or below the user's level. */
+export function isLevelUnlocked(topicLevel: Level, userLevel: Level): boolean {
+  return LEVEL_ORDER[topicLevel] <= LEVEL_ORDER[userLevel]
+}
+
 export type TopicVocab = { term: string; translation: string }
 export type TopicDialogueLine = { speaker: string; text: string }
 export type TopicSection = {

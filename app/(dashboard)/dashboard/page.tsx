@@ -3,7 +3,14 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { cn } from '@/lib/utils'
-import { getTopicsForUser, type Language, type Level } from '@/lib/topics'
+import {
+  getTopicsForUser,
+  isLevelUnlocked,
+  LEVELS_IN_ORDER,
+  type Language,
+  type Level,
+  type TopicListItem,
+} from '@/lib/topics'
 
 const LANGUAGE_LABEL: Record<Language, string> = {
   EN: 'inglés',
@@ -153,51 +160,89 @@ export default async function DashboardPage() {
             </p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topics.map((topic) => {
-              const matchesLevel = topic.level === userLevel
+          <div className="space-y-10">
+            {LEVELS_IN_ORDER.map((level) => {
+              const items = topics.filter((t) => t.level === level)
+              if (items.length === 0) return null
+              const unlocked = isLevelUnlocked(level, userLevel)
+              const isCurrent = level === userLevel
               return (
-                <Link
-                  key={topic.slug}
-                  href={`/topics/${topic.slug}`}
-                  className={cn(
-                    'group block bg-white rounded-3xl border-2 p-6 transition-all duration-150',
-                    'hover:-translate-y-1 hover:shadow-lg',
-                    matchesLevel
-                      ? 'border-emerald-200 hover:border-emerald-400'
-                      : 'border-stone-100 hover:border-stone-300'
-                  )}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <span className="text-5xl leading-none">
-                      {emojiForSlug(topic.slug)}
-                    </span>
-                    {matchesLevel && (
+                <div key={level}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <h3 className="text-lg font-black text-stone-800">
+                      {LEVEL_LABEL[level]}
+                    </h3>
+                    {isCurrent && (
                       <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">
                         Tu nivel
                       </span>
                     )}
-                  </div>
-                  <p
-                    className={cn(
-                      'text-[11px] font-black uppercase tracking-wider mb-1.5',
-                      matchesLevel ? 'text-emerald-600' : 'text-stone-400'
+                    {!unlocked && (
+                      <span className="text-xs font-bold text-stone-400">
+                        🔒 Alcanza este nivel para desbloquear
+                      </span>
                     )}
-                  >
-                    {LEVEL_LABEL[topic.level]}
-                  </p>
-                  <h3 className="text-xl font-black text-stone-900 group-hover:text-emerald-700 transition-colors mb-2 leading-snug">
-                    {topic.title}
-                  </h3>
-                  <p className="text-sm text-stone-500 font-medium leading-relaxed">
-                    {topic.description}
-                  </p>
-                </Link>
+                  </div>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {items.map((topic) => (
+                      <TopicCard key={topic.slug} topic={topic} unlocked={unlocked} />
+                    ))}
+                  </div>
+                </div>
               )
             })}
           </div>
         )}
       </section>
     </main>
+  )
+}
+
+function TopicCard({ topic, unlocked }: { topic: TopicListItem; unlocked: boolean }) {
+  const body = (
+    <>
+      <div className="flex items-start justify-between mb-4">
+        <span className={cn('text-5xl leading-none', !unlocked && 'grayscale')}>
+          {emojiForSlug(topic.slug)}
+        </span>
+        {!unlocked && <span className="text-2xl">🔒</span>}
+      </div>
+      <p className="text-[11px] font-black uppercase tracking-wider mb-1.5 text-stone-400">
+        {LEVEL_LABEL[topic.level]}
+      </p>
+      <h3
+        className={cn(
+          'text-xl font-black mb-2 leading-snug',
+          unlocked
+            ? 'text-stone-900 group-hover:text-emerald-700 transition-colors'
+            : 'text-stone-400'
+        )}
+      >
+        {topic.title}
+      </h3>
+      <p className="text-sm text-stone-500 font-medium leading-relaxed">
+        {topic.description}
+      </p>
+    </>
+  )
+
+  if (!unlocked) {
+    return (
+      <div
+        aria-disabled
+        className="block bg-white rounded-3xl border-2 border-stone-100 p-6 opacity-60 cursor-not-allowed select-none"
+      >
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href={`/topics/${topic.slug}`}
+      className="group block bg-white rounded-3xl border-2 border-emerald-200 p-6 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg hover:border-emerald-400"
+    >
+      {body}
+    </Link>
   )
 }
