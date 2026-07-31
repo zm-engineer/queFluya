@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
-import { isJoinable, isValidScheduledTime, minutesUntil } from '@/lib/reservations'
+import {
+  isExpired,
+  isJoinable,
+  isValidScheduledTime,
+  minutesUntil,
+} from '@/lib/reservations'
 import {
   bookReservation,
   cancelReservation,
@@ -40,8 +45,9 @@ function formatWhen(iso: string): string {
 }
 
 function countdownLabel(scheduledAtMs: number, nowMs: number): string {
-  const mins = minutesUntil(scheduledAtMs, nowMs)
   if (isJoinable(scheduledAtMs, nowMs)) return '¡Es la hora!'
+  if (isExpired(scheduledAtMs, nowMs)) return 'Pasada'
+  const mins = minutesUntil(scheduledAtMs, nowMs)
   if (mins < 60) return `en ${mins} min`
   const hours = Math.round(mins / 60)
   if (hours < 24) return `en ${hours} h`
@@ -162,17 +168,25 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
               <span className="block text-xs font-black uppercase tracking-wider text-stone-400 mb-1.5">
                 Tema
               </span>
-              <select
-                value={topicSlug}
-                onChange={(e) => setTopicSlug(e.target.value)}
-                className="w-full rounded-2xl border-2 border-stone-200 bg-white px-4 py-2.5 text-sm font-bold text-stone-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              >
-                {topics.map((t) => (
-                  <option key={t.slug} value={t.slug}>
-                    {t.title} {FLAG[t.language]}
-                  </option>
-                ))}
-              </select>
+              {/* appearance-none (+ -webkit-) is required or Safari keeps the
+                  native OS select styling and ignores our rounded design; we
+                  supply our own chevron since removing appearance hides it. */}
+              <div className="relative">
+                <select
+                  value={topicSlug}
+                  onChange={(e) => setTopicSlug(e.target.value)}
+                  className="w-full appearance-none [-webkit-appearance:none] rounded-2xl border-2 border-stone-200 bg-white px-4 py-2.5 pr-10 text-sm font-bold text-stone-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                >
+                  {topics.map((t) => (
+                    <option key={t.slug} value={t.slug}>
+                      {t.title} {FLAG[t.language]}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-stone-400 text-xs">
+                  ▼
+                </span>
+              </div>
             </label>
             <label className="flex-1">
               <span className="block text-xs font-black uppercase tracking-wider text-stone-400 mb-1.5">
