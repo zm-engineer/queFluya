@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
 import { cn } from '@/lib/utils'
 import type { Language, TopicDialogueLine } from '@/lib/topics'
@@ -13,6 +13,11 @@ type Props = {
 export function DialogueViewer({ dialogue, language }: Props) {
   const synthesis = useTTS()
   const [activeLine, setActiveLine] = useState<number | null>(null)
+
+  const { prefetch } = synthesis
+  useEffect(() => {
+    dialogue.forEach((line) => prefetch(line.text))
+  }, [dialogue, prefetch])
 
   if (dialogue.length === 0) return null
 

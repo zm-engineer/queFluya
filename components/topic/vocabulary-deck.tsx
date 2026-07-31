@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
 import { cn } from '@/lib/utils'
 import type { Language, TopicVocab } from '@/lib/topics'
@@ -15,6 +15,11 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
   const [revealed, setRevealed] = useState(false)
   const [done, setDone] = useState(false)
   const synthesis = useTTS()
+
+  const { prefetch } = synthesis
+  useEffect(() => {
+    vocabulary.forEach((v) => prefetch(v.term))
+  }, [vocabulary, prefetch])
 
   if (vocabulary.length === 0) return null
 
