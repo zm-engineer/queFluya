@@ -79,6 +79,22 @@ export async function getTopicsForUser(
   return (data ?? []) as unknown as TopicListItem[]
 }
 
+/** Like getTopicsForUser but includes each topic's content (sections), for the
+ *  dashboard journey which renders the section list per topic. */
+export async function getTopicsWithContentForUser(
+  supabase: SupabaseClient,
+  options: { targetLanguage: Language }
+): Promise<TopicDetail[]> {
+  const { data, error } = await supabase
+    .from('topics')
+    .select(DETAIL_COLUMNS)
+    .eq('language', options.targetLanguage)
+    .order('position', { ascending: true })
+
+  if (error) return []
+  return (data ?? []) as unknown as TopicDetail[]
+}
+
 export async function getTopicBySlug(
   supabase: SupabaseClient,
   slug: string

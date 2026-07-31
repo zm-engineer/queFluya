@@ -2,15 +2,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/logout-button'
-import { cn } from '@/lib/utils'
 import {
-  getTopicsForUser,
-  isLevelUnlocked,
-  LEVELS_IN_ORDER,
+  getTopicsWithContentForUser,
   type Language,
   type Level,
-  type TopicListItem,
 } from '@/lib/topics'
+import { loadAllProgress } from '@/lib/topic-progress'
+import { LearningPath } from '@/components/dashboard/learning-path'
 
 const LANGUAGE_LABEL: Record<Language, string> = {
   EN: 'inglés',
@@ -28,33 +26,6 @@ const LEVEL_LABEL: Record<Level, string> = {
   ADVANCED: 'Avanzado',
 }
 
-const TOPIC_EMOJI_POOL = [
-  '👋',
-  '🌅',
-  '🍕',
-  '🗺️',
-  '🎯',
-  '☕',
-  '🎒',
-  '🌳',
-  '🎵',
-  '⚽',
-  '🎨',
-  '📚',
-  '🚀',
-  '🍳',
-  '🛒',
-  '🎬',
-]
-
-function emojiForSlug(slug: string): string {
-  let hash = 0
-  for (let i = 0; i < slug.length; i++) {
-    hash = (hash * 31 + slug.charCodeAt(i)) | 0
-  }
-  return TOPIC_EMOJI_POOL[Math.abs(hash) % TOPIC_EMOJI_POOL.length]
-}
-
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
@@ -67,7 +38,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, native_language, target_language, level')
+    .select('id, username, native_language, target_language, level')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -78,7 +49,10 @@ export default async function DashboardPage() {
   const targetLanguage = profile.target_language as Language
   const userLevel = profile.level as Level
 
-  const topics = await getTopicsForUser(supabase, { targetLanguage })
+  const [topics, progressBySlug] = await Promise.all([
+    getTopicsWithContentForUser(supabase, { targetLanguage }),
+    loadAllProgress(supabase, profile.id as string),
+  ])
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -101,8 +75,7 @@ export default async function DashboardPage() {
 
       <section className="max-w-5xl mx-auto px-6 pt-16 pb-8">
         <h1 className="text-5xl md:text-6xl font-black text-stone-900 leading-tight">
-          ¡Hola, {profile.username}!{' '}
-          <span className="inline-block">👋</span>
+          ¡Hola, {profile.username}! <span className="inline-block">👋</span>
         </h1>
         <p className="text-stone-500 mt-4 text-lg font-semibold max-w-xl">
           Menos teoría, más práctica. ¡Que fluya!
@@ -143,106 +116,13 @@ export default async function DashboardPage() {
       </section>
 
       <section className="max-w-5xl mx-auto px-6 pb-24">
-        <div className="flex items-baseline justify-between mb-6">
-          <h2 className="text-3xl font-black text-stone-900">Temas</h2>
-          {topics.length > 0 && (
-            <span className="text-sm font-bold text-stone-400">
-              {topics.length} disponibles
-            </span>
-          )}
-        </div>
-
-        {topics.length === 0 ? (
-          <div className="bg-white rounded-3xl border-2 border-stone-100 p-12 text-center">
-            <p className="text-6xl mb-4">📚</p>
-            <p className="text-stone-500 font-semibold">
-              Aún no tenemos temas para tu idioma objetivo. Vuelve pronto.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-10">
-            {LEVELS_IN_ORDER.map((level) => {
-              const items = topics.filter((t) => t.level === level)
-              if (items.length === 0) return null
-              const unlocked = isLevelUnlocked(level, userLevel)
-              const isCurrent = level === userLevel
-              return (
-                <div key={level}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-lg font-black text-stone-800">
-                      {LEVEL_LABEL[level]}
-                    </h3>
-                    {isCurrent && (
-                      <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">
-                        Tu nivel
-                      </span>
-                    )}
-                    {!unlocked && (
-                      <span className="text-xs font-bold text-stone-400">
-                        🔒 Alcanza este nivel para desbloquear
-                      </span>
-                    )}
-                  </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {items.map((topic) => (
-                      <TopicCard key={topic.slug} topic={topic} unlocked={unlocked} />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+        <h2 className="text-3xl font-black text-stone-900 mb-6">Tu camino</h2>
+        <LearningPath
+          topics={topics}
+          userLevel={userLevel}
+          progressBySlug={progressBySlug}
+        />
       </section>
     </main>
-  )
-}
-
-function TopicCard({ topic, unlocked }: { topic: TopicListItem; unlocked: boolean }) {
-  const body = (
-    <>
-      <div className="flex items-start justify-between mb-4">
-        <span className={cn('text-5xl leading-none', !unlocked && 'grayscale')}>
-          {emojiForSlug(topic.slug)}
-        </span>
-        {!unlocked && <span className="text-2xl">🔒</span>}
-      </div>
-      <p className="text-[11px] font-black uppercase tracking-wider mb-1.5 text-stone-400">
-        {LEVEL_LABEL[topic.level]}
-      </p>
-      <h3
-        className={cn(
-          'text-xl font-black mb-2 leading-snug',
-          unlocked
-            ? 'text-stone-900 group-hover:text-emerald-700 transition-colors'
-            : 'text-stone-400'
-        )}
-      >
-        {topic.title}
-      </h3>
-      <p className="text-sm text-stone-500 font-medium leading-relaxed">
-        {topic.description}
-      </p>
-    </>
-  )
-
-  if (!unlocked) {
-    return (
-      <div
-        aria-disabled
-        className="block bg-white rounded-3xl border-2 border-stone-100 p-6 opacity-60 cursor-not-allowed select-none"
-      >
-        {body}
-      </div>
-    )
-  }
-
-  return (
-    <Link
-      href={`/topics/${topic.slug}`}
-      className="group block bg-white rounded-3xl border-2 border-emerald-200 p-6 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg hover:border-emerald-400"
-    >
-      {body}
-    </Link>
   )
 }

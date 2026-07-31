@@ -19,10 +19,14 @@ const LEVEL_EMOJI: Record<Level, string> = {
 
 export default async function TopicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ section?: string }>
 }) {
   const { slug } = await params
+  const { section } = await searchParams
+  const initialSection = section != null ? Number(section) : undefined
 
   const supabase = await createClient()
   const {
@@ -97,6 +101,11 @@ export default async function TopicPage({
           topicTitle={topic.title}
           topicDescription={topic.description}
           profileId={profile.id}
+          initialSection={
+            initialSection != null && Number.isInteger(initialSection)
+              ? initialSection
+              : undefined
+          }
         />
       </section>
     </main>

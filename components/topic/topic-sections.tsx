@@ -15,6 +15,7 @@ import {
   markSectionCompleted,
 } from '@/lib/topic-progress'
 import { cn } from '@/lib/utils'
+import { isSectionAccessible } from '@/lib/topic-journey'
 import type { Language, TopicSection } from '@/lib/topics'
 
 type Props = {
@@ -24,6 +25,8 @@ type Props = {
   topicTitle: string
   topicDescription: string
   profileId: string
+  /** Section to open on load (from the dashboard journey's ?section=N). */
+  initialSection?: number
 }
 
 export function TopicSections({
@@ -33,6 +36,7 @@ export function TopicSections({
   topicTitle,
   topicDescription,
   profileId,
+  initialSection,
 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
@@ -61,21 +65,22 @@ export function TopicSections({
     loadCompletedSections(supabase, profileId, topicSlug).then((loaded) => {
       if (cancelled) return
       setCompleted(loaded)
-      setCurrentIdx(currentSectionFor(loaded, sections.length))
+      const wantsInitial =
+        initialSection != null &&
+        initialSection >= 0 &&
+        initialSection < sections.length &&
+        isSectionAccessible(sections, initialSection, loaded)
+      setCurrentIdx(
+        wantsInitial
+          ? (initialSection as number)
+          : currentSectionFor(loaded, sections.length)
+      )
       setLoading(false)
     })
     return () => {
       cancelled = true
     }
-  }, [supabase, profileId, topicSlug, sections.length])
-
-  // Reset per-section transient state when the user navigates between
-  // sections. PhraseDeck remounts via its own key prop, but the booleans
-  // here are local so we clear them explicitly.
-  useEffect(() => {
-    setFreeRecordingDone(false)
-    setShadowingDone(false)
-  }, [currentIdx])
+  }, [supabase, profileId, topicSlug, sections, initialSection])
 
   if (sections.length === 0) return null
 
@@ -106,27 +111,41 @@ export function TopicSections({
         ? freeRecordingDone
         : phraseGateOpen
 
+  // Free navigation: any section is reachable except a locked one (the tandem
+  // call, gated on completing the phrase practice). You can always stay put.
   function canJumpTo(idx: number): boolean {
-    return idx === currentIdx || completed.has(idx)
+    return idx === currentIdx || isSectionAccessible(sections, idx, completed)
+  }
+
+  // Navigate to a section, clearing the per-section transient gate flags (the
+  // decks remount via their key prop; these local booleans we reset by hand).
+  function goToSection(idx: number) {
+    setCurrentIdx(idx)
+    setFreeRecordingDone(false)
+    setShadowingDone(false)
   }
 
   function jumpTo(idx: number) {
-    if (canJumpTo(idx)) setCurrentIdx(idx)
+    if (canJumpTo(idx)) goToSection(idx)
   }
 
+  const nextIdx = currentIdx + 1
+  const canAdvance =
+    nextIdx < total && isSectionAccessible(sections, nextIdx, completed)
+
   function complete() {
-    setCompleted((prev) => {
-      const next = new Set(prev)
-      next.add(currentIdx)
-      return next
-    })
+    const nextCompleted = new Set(completed)
+    nextCompleted.add(currentIdx)
+    setCompleted(nextCompleted)
     markSectionCompleted(supabase, profileId, topicSlug, currentIdx).catch(
       (err) => {
         console.error('Failed to persist topic progress', err)
       }
     )
-    if (!isLast) {
-      setCurrentIdx(currentIdx + 1)
+    // Advance only if the next section is now reachable (completing the phrase
+    // practice unlocks the tandem, so this opens up naturally).
+    if (nextIdx < total && isSectionAccessible(sections, nextIdx, nextCompleted)) {
+      goToSection(nextIdx)
     }
   }
 
@@ -149,7 +168,7 @@ export function TopicSections({
         <button
           type="button"
           onClick={() => {
-            setCurrentIdx(0)
+            goToSection(0)
             setCompleted(new Set())
           }}
           className="block mx-auto mt-6 text-sm font-bold text-stone-500 hover:text-emerald-600 transition-colors"
@@ -254,7 +273,7 @@ export function TopicSections({
       <div className="mt-6 flex items-center justify-between gap-4">
         <button
           type="button"
-          onClick={() => currentIdx > 0 && setCurrentIdx(currentIdx - 1)}
+          onClick={() => currentIdx > 0 && goToSection(currentIdx - 1)}
           disabled={currentIdx === 0}
           className="text-sm font-black text-stone-500 hover:text-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
@@ -263,8 +282,8 @@ export function TopicSections({
         {isCurrentCompleted ? (
           <Button
             size="lg"
-            onClick={() => !isLast && setCurrentIdx(currentIdx + 1)}
-            disabled={isLast}
+            onClick={() => canAdvance && goToSection(nextIdx)}
+            disabled={!canAdvance}
           >
             Siguiente sección →
           </Button>
