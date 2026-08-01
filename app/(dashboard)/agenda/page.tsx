@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { ReservationsPanel } from '@/components/tandem/reservations-panel'
 import type { Language } from '@/lib/topics'
+import { getDict } from '@/lib/i18n/dictionaries'
 
 type TopicRow = { slug: string; title: string; language: Language; pairKey: string | null }
 
@@ -16,12 +17,13 @@ export default async function AgendaPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, target_language')
+    .select('id, username, target_language, native_language')
     .eq('user_id', user.id)
     .maybeSingle()
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language
+  const t = getDict(profile.native_language as Language)
 
   const { data: topicRows } = await supabase
     .from('topics')
@@ -57,18 +59,17 @@ export default async function AgendaPage() {
           href="/dashboard"
           className="text-sm font-black text-stone-500 hover:text-emerald-600 transition-colors inline-block mb-6"
         >
-          ← Volver al inicio
+          {t.back.home}
         </Link>
         <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full mb-4">
           <span>📅</span>
-          <span>Agenda de tándems</span>
+          <span>{t.agenda.badge}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-stone-900 leading-tight mb-3">
-          Reserva una conversación
+          {t.agenda.title}
         </h1>
         <p className="text-stone-600 text-base font-semibold leading-relaxed mb-10">
-          Publica un hueco para practicar más tarde, o reserva el de otra persona.
-          A la hora acordada entráis juntos a la sala de tándem.
+          {t.agenda.intro}
         </p>
 
         <ReservationsPanel

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDict } from '@/components/i18n/language-provider'
 import { cn } from '@/lib/utils'
 
 type Language = 'EN' | 'ES'
@@ -14,6 +15,7 @@ type Level = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
 export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
+  const t = useDict()
 
   const [checking, setChecking] = useState(true)
   const [step, setStep] = useState(1)
@@ -49,11 +51,11 @@ export default function OnboardingPage() {
   function nextFromStep1() {
     const trimmed = username.trim()
     if (trimmed.length < 3) {
-      setError('Tu nombre de usuario debe tener al menos 3 caracteres.')
+      setError(t.onboarding.usernameShort)
       return
     }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-      setError('Solo letras, números y guion bajo.')
+      setError(t.onboarding.usernameChars)
       return
     }
     setError(null)
@@ -96,7 +98,7 @@ export default function OnboardingPage() {
 
     if (insertError) {
       if (insertError.code === '23505') {
-        setError('Ese nombre de usuario ya está en uso. Vuelve al paso 1 y elige otro.')
+        setError(t.onboarding.usernameTaken)
       } else {
         setError(insertError.message)
       }
@@ -111,7 +113,7 @@ export default function OnboardingPage() {
   if (checking) {
     return (
       <main className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <p className="text-stone-500 font-bold">Cargando…</p>
+        <p className="text-stone-500 font-bold">{t.onboarding.loading}</p>
       </main>
     )
   }
@@ -142,10 +144,10 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="animate-[fade_400ms_ease-out]">
               <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-3 text-center">
-                Paso 1 de 3
+                {t.onboarding.stepOf(1)}
               </p>
               <h2 className="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-8 leading-tight">
-                ¿Cómo te llamamos?
+                {t.onboarding.q1}
               </h2>
               <Input
                 type="text"
@@ -163,7 +165,7 @@ export default function OnboardingPage() {
               )}
               <div className="mt-8 flex justify-center">
                 <Button onClick={nextFromStep1} size="lg" className="px-12">
-                  Continuar →
+                  {t.onboarding.continue}
                 </Button>
               </div>
             </div>
@@ -172,10 +174,10 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div className="animate-[fade_400ms_ease-out]">
               <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-3 text-center">
-                Paso 2 de 3
+                {t.onboarding.stepOf(2)}
               </p>
               <h2 className="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-8 leading-tight">
-                Tu idioma nativo
+                {t.onboarding.q2}
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <button
@@ -203,20 +205,22 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="animate-[fade_400ms_ease-out]">
               <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-3 text-center">
-                Paso 3 de 3
+                {t.onboarding.stepOf(3)}
               </p>
               <h2 className="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-2 leading-tight">
-                ¿Tu nivel?
+                {t.onboarding.q3}
               </h2>
               <p className="text-stone-500 font-semibold text-center mb-8">
-                {nativeLanguage === 'EN' ? 'de español' : 'de inglés'}
+                {t.onboarding.q3Sub(
+                  t.common.languages[nativeLanguage === 'EN' ? 'ES' : 'EN']
+                )}
               </p>
               <div className="space-y-3">
                 {(
                   [
-                    { value: 'BEGINNER' as Level, emoji: '🌱', label: 'Principiante', hint: 'Apenas estoy empezando' },
-                    { value: 'INTERMEDIATE' as Level, emoji: '🌿', label: 'Intermedio', hint: 'Puedo mantener conversaciones simples' },
-                    { value: 'ADVANCED' as Level, emoji: '🌳', label: 'Avanzado', hint: 'Solo me falta práctica' },
+                    { value: 'BEGINNER' as Level, emoji: '🌱' },
+                    { value: 'INTERMEDIATE' as Level, emoji: '🌿' },
+                    { value: 'ADVANCED' as Level, emoji: '🌳' },
                   ]
                 ).map((opt) => (
                   <button
@@ -236,10 +240,10 @@ export default function OnboardingPage() {
                       <span className="text-3xl">{opt.emoji}</span>
                       <div>
                         <span className="block text-lg font-black text-stone-900">
-                          {opt.label}
+                          {t.common.levels[opt.value]}
                         </span>
                         <span className="block text-sm font-semibold text-stone-500">
-                          {opt.hint}
+                          {t.onboarding.levelHints[opt.value]}
                         </span>
                       </div>
                     </div>
@@ -253,7 +257,7 @@ export default function OnboardingPage() {
               )}
               {saving && (
                 <p className="text-stone-500 font-bold text-center mt-6">
-                  Guardando…
+                  {t.onboarding.saving}
                 </p>
               )}
             </div>

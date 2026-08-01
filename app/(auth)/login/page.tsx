@@ -6,10 +6,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDict } from '@/components/i18n/language-provider'
 
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
+  const t = useDict()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,13 +23,13 @@ export default function LoginPage() {
     setError(null)
 
     if (!email.trim() || !password) {
-      setError('Por favor completa todos los campos.')
+      setError(t.auth.fillFields)
       return
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('Ingresa un email válido.')
+      setError(t.auth.invalidEmail)
       return
     }
 
@@ -39,7 +41,7 @@ export default function LoginPage() {
     setLoading(false)
 
     if (authError) {
-      setError('Credenciales incorrectas. Revisa tu email y contraseña.')
+      setError(t.auth.login.badCreds)
       return
     }
 
@@ -58,10 +60,10 @@ export default function LoginPage() {
             que<span className="text-emerald-500">Fluya</span>
           </Link>
           <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
-            ¡Bienvenido de vuelta! 👋
+            {t.auth.login.title}
           </h1>
           <p className="text-stone-500 font-semibold">
-            Continúa donde lo dejaste.
+            {t.auth.login.subtitle}
           </p>
         </div>
 
@@ -71,7 +73,7 @@ export default function LoginPage() {
               htmlFor="email"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Email
+              {t.auth.email}
             </label>
             <Input
               id="email"
@@ -89,13 +91,13 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-xs font-black tracking-wider uppercase text-stone-500"
               >
-                Contraseña
+                {t.auth.password}
               </label>
               <Link
                 href="/forgot-password"
                 className="text-xs font-bold text-stone-500 hover:text-emerald-600 transition-colors"
               >
-                ¿La olvidaste?
+                {t.auth.login.forgot}
               </Link>
             </div>
             <Input
@@ -120,17 +122,17 @@ export default function LoginPage() {
             size="lg"
             className="w-full"
           >
-            {loading ? 'Entrando…' : 'Iniciar sesión'}
+            {loading ? t.auth.login.loading : t.auth.signIn}
           </Button>
         </form>
 
         <p className="text-center text-sm font-semibold text-stone-500 mt-10">
-          ¿Aún no tienes cuenta?{' '}
+          {t.auth.login.noAccount}{' '}
           <Link
             href="/register"
             className="text-emerald-600 font-black hover:text-emerald-700 transition-colors"
           >
-            Crea una
+            {t.auth.login.createOne}
           </Link>
         </p>
       </div>

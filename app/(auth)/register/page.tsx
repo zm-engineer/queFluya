@@ -5,9 +5,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDict } from '@/components/i18n/language-provider'
 
 export default function RegisterPage() {
   const supabase = createClient()
+  const t = useDict()
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -22,23 +24,23 @@ export default function RegisterPage() {
     setError(null)
 
     if (!fullName.trim() || !email.trim() || !password || !confirmPassword) {
-      setError('Por favor completa todos los campos.')
+      setError(t.auth.fillFields)
       return
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('Ingresa un email válido.')
+      setError(t.auth.invalidEmail)
       return
     }
 
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.')
+      setError(t.auth.passwordMin)
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.')
+      setError(t.auth.passwordsNoMatch)
       return
     }
 
@@ -60,7 +62,7 @@ export default function RegisterPage() {
 
     if (authError) {
       if (authError.message.toLowerCase().includes('already')) {
-        setError('Este email ya está registrado. Intenta iniciar sesión.')
+        setError(t.auth.register.alreadyRegistered)
       } else {
         setError(authError.message)
       }
@@ -83,17 +85,17 @@ export default function RegisterPage() {
           <div className="mt-12 bg-white border-2 border-stone-100 rounded-3xl p-10">
             <p className="text-6xl mb-4">📬</p>
             <h1 className="text-3xl font-black text-stone-900 mb-3">
-              ¡Casi listo!
+              {t.auth.register.successTitle}
             </h1>
             <p className="text-stone-600 font-semibold leading-relaxed">
-              Revisa tu email para confirmar tu cuenta y empezar a practicar.
+              {t.auth.register.successBody}
             </p>
           </div>
           <Link
             href="/login"
             className="inline-block mt-8 text-sm font-black text-emerald-600 hover:text-emerald-700 transition-colors"
           >
-            ← Volver al inicio de sesión
+            {t.auth.backToLogin}
           </Link>
         </div>
       </main>
@@ -111,10 +113,10 @@ export default function RegisterPage() {
             que<span className="text-emerald-500">Fluya</span>
           </Link>
           <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
-            Crea tu cuenta 🚀
+            {t.auth.register.title}
           </h1>
           <p className="text-stone-500 font-semibold">
-            Menos teoría, más práctica.
+            {t.auth.register.subtitle}
           </p>
         </div>
 
@@ -124,7 +126,7 @@ export default function RegisterPage() {
               htmlFor="fullName"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Nombre completo
+              {t.auth.register.fullName}
             </label>
             <Input
               id="fullName"
@@ -141,7 +143,7 @@ export default function RegisterPage() {
               htmlFor="email"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Email
+              {t.auth.email}
             </label>
             <Input
               id="email"
@@ -158,7 +160,7 @@ export default function RegisterPage() {
               htmlFor="password"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Contraseña
+              {t.auth.password}
             </label>
             <Input
               id="password"
@@ -166,7 +168,7 @@ export default function RegisterPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
+              placeholder={t.auth.register.passwordPlaceholder}
             />
           </div>
 
@@ -175,7 +177,7 @@ export default function RegisterPage() {
               htmlFor="confirmPassword"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Confirmar contraseña
+              {t.auth.register.confirmPassword}
             </label>
             <Input
               id="confirmPassword"
@@ -199,17 +201,17 @@ export default function RegisterPage() {
             size="lg"
             className="w-full"
           >
-            {loading ? 'Creando cuenta…' : 'Crear cuenta'}
+            {loading ? t.auth.register.loading : t.auth.register.submit}
           </Button>
         </form>
 
         <p className="text-center text-sm font-semibold text-stone-500 mt-10">
-          ¿Ya tienes cuenta?{' '}
+          {t.auth.register.haveAccount}{' '}
           <Link
             href="/login"
             className="text-emerald-600 font-black hover:text-emerald-700 transition-colors"
           >
-            Iniciar sesión
+            {t.auth.signIn}
           </Link>
         </p>
       </div>

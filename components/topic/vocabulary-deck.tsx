@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
+import { useDict } from '@/components/i18n/language-provider'
 import { cn } from '@/lib/utils'
 import type { Language, TopicVocab } from '@/lib/topics'
 
@@ -15,6 +16,7 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
   const [revealed, setRevealed] = useState(false)
   const [done, setDone] = useState(false)
   const synthesis = useTTS()
+  const t = useDict()
 
   const { prefetch } = synthesis
   useEffect(() => {
@@ -50,18 +52,17 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
       <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 text-center">
         <p className="text-5xl mb-3">✅</p>
         <p className="text-xl font-black text-stone-900 mb-2">
-          ¡Vocabulario completado!
+          {t.deck.vocabDone}
         </p>
         <p className="text-sm font-semibold text-stone-600 mb-4">
-          Repasaste {vocabulary.length}{' '}
-          {vocabulary.length === 1 ? 'palabra' : 'palabras'}.
+          {t.deck.reviewedWords(vocabulary.length)}
         </p>
         <button
           type="button"
           onClick={restart}
           className="text-sm font-black text-emerald-600 hover:text-emerald-700 transition-colors"
         >
-          ↺ Repetir desde el inicio
+          {t.deck.restart}
         </button>
       </div>
     )
@@ -102,12 +103,12 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
           </p>
         ) : (
           <p className="mt-4 text-sm font-bold text-stone-400">
-            Toca para revelar 👀
+            {t.deck.tapReveal}
           </p>
         )}
         {revealed && (
           <p className="mt-6 text-[11px] font-black uppercase tracking-wider text-stone-400">
-            {isLast ? 'Toca para terminar ✓' : 'Toca para siguiente →'}
+            {isLast ? t.deck.tapFinish : t.deck.tapNext}
           </p>
         )}
       </button>
@@ -120,7 +121,7 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
             disabled={synthesis.isSpeaking}
             className="text-sm font-bold text-stone-500 hover:text-emerald-600 disabled:opacity-50 transition-colors"
           >
-            🔊 {synthesis.isSpeaking ? 'Sonando…' : 'Escuchar palabra'}
+            🔊 {synthesis.isSpeaking ? t.deck.playing : t.deck.listenWord}
           </button>
         </div>
       )}

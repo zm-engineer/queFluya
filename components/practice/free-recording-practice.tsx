@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAudioRecorder } from '@/lib/practice/use-audio-recorder'
 import { Button } from '@/components/ui/button'
+import { useDict } from '@/components/i18n/language-provider'
 import { cn } from '@/lib/utils'
 import type { Correction } from '@/lib/correction/types'
 import type { Language, TopicVocab } from '@/lib/topics'
@@ -29,6 +30,7 @@ export function FreeRecordingPractice({
   onCorrected,
 }: FreeRecordingPracticeProps) {
   const recorder = useAudioRecorder(FREE_RECORDING_CAP_MS)
+  const t = useDict()
   const [transcript, setTranscript] = useState('')
   const [transcribing, setTranscribing] = useState(false)
   const [transcribeError, setTranscribeError] = useState<string | null>(null)
@@ -44,71 +46,76 @@ export function FreeRecordingPractice({
   useEffect(() => {
     if (!recorder.audioBlob) return
     if (transcript || transcribing) return
+    const blob = recorder.audioBlob
 
-    setTranscribing(true)
-    setTranscribeError(null)
+    ;(async () => {
+      setTranscribing(true)
+      setTranscribeError(null)
 
-    // Bias the transcription toward the topic vocabulary (already in the
-    // target language). The free prompt is in Spanish instructions, so
-    // passing it would push the model toward Spanish output — exactly what
-    // we don't want when the user is practicing English.
-    const transcribeHint = vocabulary.map((v) => v.term).join('. ')
+      // Bias the transcription toward the topic vocabulary (already in the
+      // target language). The free prompt is in the native language, so passing
+      // it would push the model toward that language's output — exactly what we
+      // don't want when the user is practicing the target language.
+      const transcribeHint = vocabulary.map((v) => v.term).join('. ')
 
-    const formData = new FormData()
-    formData.append('audio', recorder.audioBlob, 'recording.webm')
-    formData.append('language', language)
-    if (transcribeHint) formData.append('prompt', transcribeHint)
+      const formData = new FormData()
+      formData.append('audio', blob, 'recording.webm')
+      formData.append('language', language)
+      if (transcribeHint) formData.append('prompt', transcribeHint)
 
-    fetch('/api/transcribe', { method: 'POST', body: formData })
-      .then(async (r) => {
+      try {
+        const r = await fetch('/api/transcribe', { method: 'POST', body: formData })
         const data = await r.json()
         if (!r.ok || data.error) {
           throw new Error(data.message || data.error || 'transcription_failed')
         }
         setTranscript(data.transcript ?? '')
-      })
-      .catch((err) => {
+      } catch (err) {
         setTranscribeError(
-          err instanceof Error ? err.message : 'No se pudo transcribir'
+          err instanceof Error ? err.message : t.practice.transcribeFail
         )
-      })
-      .finally(() => setTranscribing(false))
-  }, [recorder.audioBlob, language, freePrompt, transcript, transcribing])
+      } finally {
+        setTranscribing(false)
+      }
+    })()
+  }, [recorder.audioBlob, language, transcript, transcribing, vocabulary, t])
 
   // Step 2: when transcription is ready, ask Claude for feedback.
   useEffect(() => {
     if (!transcript || correction || correcting) return
 
-    setCorrecting(true)
-    setCorrectionError(null)
+    ;(async () => {
+      setCorrecting(true)
+      setCorrectionError(null)
 
-    fetch('/api/correct', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        language,
-        topicTitle,
-        topicDescription,
-        vocabulary,
-        practicePhrases,
-        freePrompt,
-        transcription: transcript,
-      }),
-    })
-      .then(async (r) => {
+      try {
+        const r = await fetch('/api/correct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            language,
+            topicTitle,
+            topicDescription,
+            vocabulary,
+            practicePhrases,
+            freePrompt,
+            transcription: transcript,
+          }),
+        })
         const data = await r.json()
         if (!r.ok || data.error) {
           throw new Error(data.message || data.error || 'correction_failed')
         }
         setCorrection(data as Correction)
         onCorrectedRef.current?.()
-      })
-      .catch((err) => {
+      } catch (err) {
         setCorrectionError(
-          err instanceof Error ? err.message : 'No se pudo corregir'
+          err instanceof Error ? err.message : t.practice.correctFail
         )
-      })
-      .finally(() => setCorrecting(false))
+      } finally {
+        setCorrecting(false)
+      }
+    })()
   }, [
     transcript,
     correction,
@@ -119,6 +126,7 @@ export function FreeRecordingPractice({
     vocabulary,
     practicePhrases,
     freePrompt,
+    t,
   ])
 
   function onRetry() {
@@ -137,14 +145,13 @@ export function FreeRecordingPractice({
   return (
     <div className="bg-stone-50 border-2 border-stone-200 rounded-2xl p-5">
       <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-2">
-        🎙️ Grabación libre
+        🎙️ {t.practice.freeTitle}
       </p>
       <p className="text-lg sm:text-xl font-black text-stone-900 leading-snug mb-2">
         {freePrompt}
       </p>
       <p className="text-sm font-semibold text-stone-500 mb-5">
-        Usa el vocabulario y las frases del tema. Tienes hasta{' '}
-        {FREE_RECORDING_CAP_MS / 1000} segundos.
+        {t.practice.freeHint(FREE_RECORDING_CAP_MS / 1000)}
       </p>
 
       <div className="flex flex-wrap gap-3">
@@ -157,7 +164,9 @@ export function FreeRecordingPractice({
             disabled={transcribing || correcting}
           >
             🎤{' '}
-            {hasResult || transcript ? 'Volver a intentar' : 'Empezar a grabar'}
+            {hasResult || transcript
+              ? t.practice.recordAgain
+              : t.practice.startRecording}
           </Button>
         )}
         {recorder.isSupported && isRecording && (
@@ -167,15 +176,14 @@ export function FreeRecordingPractice({
             size="sm"
             onClick={recorder.stop}
           >
-            ⏹ Parar
+            ⏹ {t.practice.stop}
           </Button>
         )}
       </div>
 
       {!recorder.isSupported && (
         <p className="text-xs font-bold text-amber-700 mt-3">
-          ⚠️ Tu navegador no soporta la grabación de audio — usa Chrome o
-          Safari.
+          ⚠️ {t.practice.noRecorder}
         </p>
       )}
 
@@ -183,7 +191,7 @@ export function FreeRecordingPractice({
         <div className="bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-red-700 flex items-center justify-between gap-3">
           <div>
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse mr-2 align-middle" />
-            Grabando… habla con calma y aplica lo que aprendiste.
+            {t.practice.recordingHintFree}
           </div>
           <div className="font-black tabular-nums">
             {Math.floor(recorder.elapsedMs / 1000)}s /{' '}
@@ -195,7 +203,7 @@ export function FreeRecordingPractice({
       {transcribing && (
         <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-emerald-700">
           <span className="inline-block animate-pulse mr-2">🤖</span>
-          Transcribiendo…
+          {t.practice.transcribing}
         </div>
       )}
 
@@ -208,7 +216,7 @@ export function FreeRecordingPractice({
       {correcting && (
         <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-4 py-3 mt-4 text-sm font-bold text-emerald-700">
           <span className="inline-block animate-pulse mr-2">✨</span>
-          Analizando tu respuesta…
+          {t.practice.analyzing}
         </div>
       )}
 
@@ -221,7 +229,7 @@ export function FreeRecordingPractice({
       {transcript && (
         <div className="mt-5 bg-white border-2 border-stone-100 rounded-2xl p-4">
           <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2">
-            Lo que dijiste
+            {t.practice.whatYouSaid}
           </p>
           <p className="text-stone-700 font-semibold leading-relaxed">
             {transcript}
@@ -233,7 +241,7 @@ export function FreeRecordingPractice({
         <div className="mt-4 space-y-3">
           <div className="bg-white border-2 border-emerald-200 rounded-2xl p-4">
             <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-2">
-              ✨ Versión corregida
+              ✨ {t.practice.correctedVersion}
             </p>
             <p className="text-stone-800 font-bold leading-relaxed">
               {correction.corrected}
@@ -243,7 +251,7 @@ export function FreeRecordingPractice({
           {correction.vocabUsed.length > 0 && (
             <div className="bg-white border-2 border-stone-100 rounded-2xl p-4">
               <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2">
-                Vocabulario del tema que usaste
+                {t.practice.vocabUsed}
               </p>
               <div className="flex flex-wrap gap-2">
                 {correction.vocabUsed.map((v) => (
@@ -261,7 +269,7 @@ export function FreeRecordingPractice({
           {correction.vocabSuggested.length > 0 && (
             <div className="bg-white border-2 border-stone-100 rounded-2xl p-4">
               <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2">
-                Lo que pudiste haber usado
+                {t.practice.vocabSuggested}
               </p>
               <div className="flex flex-wrap gap-2">
                 {correction.vocabSuggested.map((v) => (
@@ -279,7 +287,7 @@ export function FreeRecordingPractice({
           {correction.grammarTips.length > 0 && (
             <div className="bg-white border-2 border-stone-100 rounded-2xl p-4">
               <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2">
-                Tips de gramática
+                {t.practice.grammarTips}
               </p>
               <ul className="space-y-1.5">
                 {correction.grammarTips.map((tip, i) => (
@@ -299,7 +307,7 @@ export function FreeRecordingPractice({
 
           <div className="bg-white border-2 border-stone-100 rounded-2xl p-4">
             <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2">
-              Fluidez
+              {t.practice.fluency}
             </p>
             <p className="text-sm font-semibold text-stone-700 leading-relaxed">
               {correction.fluency}
@@ -310,8 +318,7 @@ export function FreeRecordingPractice({
 
       {recorder.error && (
         <p className="text-sm font-bold text-red-700 mt-3">
-          Error: {recorder.error}. Asegúrate de haber dado permiso al
-          micrófono.
+          {t.practice.micError(recorder.error)}
         </p>
       )}
     </div>

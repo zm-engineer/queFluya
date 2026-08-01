@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PracticeCard } from '@/components/practice/practice-card'
 import { Button } from '@/components/ui/button'
+import { useDict } from '@/components/i18n/language-provider'
 import type { Language } from '@/lib/topics'
 
 type Props = {
@@ -20,6 +21,7 @@ export function PhraseDeck({
   profileId,
   onPracticedCountChange,
 }: Props) {
+  const t = useDict()
   const [currentIdx, setCurrentIdx] = useState(0)
   const [practiced, setPracticed] = useState<Set<number>>(new Set())
   const [done, setDone] = useState(false)
@@ -65,17 +67,17 @@ export function PhraseDeck({
       <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 text-center">
         <p className="text-5xl mb-3">🎤</p>
         <p className="text-xl font-black text-stone-900 mb-2">
-          ¡Frases practicadas!
+          {t.deck.phrasesDone}
         </p>
         <p className="text-sm font-semibold text-stone-600 mb-4">
-          Practicaste {practiced.size} de {phrases.length}.
+          {t.deck.practicedOf(practiced.size, phrases.length)}
         </p>
         <button
           type="button"
           onClick={restart}
           className="text-sm font-black text-emerald-600 hover:text-emerald-700 transition-colors"
         >
-          ↺ Repetir desde el inicio
+          {t.deck.restart}
         </button>
       </div>
     )
@@ -113,16 +115,16 @@ export function PhraseDeck({
           disabled={currentIdx === 0}
           className="text-sm font-black text-stone-500 hover:text-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          ← Anterior
+          {t.deck.prev}
         </button>
         <Button size="md" onClick={next} disabled={!isPracticed}>
-          {isLast ? 'Terminar ✓' : 'Siguiente →'}
+          {isLast ? t.deck.finish : t.deck.next}
         </Button>
       </div>
 
       {!isPracticed && (
         <p className="text-xs font-bold text-stone-400 text-center">
-          Practica la frase para desbloquear el siguiente paso
+          {t.deck.practiceToUnlock}
         </p>
       )}
     </div>

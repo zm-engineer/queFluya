@@ -15,6 +15,7 @@ import {
   markSectionCompleted,
 } from '@/lib/topic-progress'
 import { cn } from '@/lib/utils'
+import { useDict } from '@/components/i18n/language-provider'
 import { isSectionAccessible } from '@/lib/topic-journey'
 import type { Language, TopicSection } from '@/lib/topics'
 
@@ -38,6 +39,7 @@ export function TopicSections({
   profileId,
   initialSection,
 }: Props) {
+  const t = useDict()
   const [currentIdx, setCurrentIdx] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const [practicedInCurrent, setPracticedInCurrent] = useState(0)
@@ -87,7 +89,7 @@ export function TopicSections({
   if (loading) {
     return (
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-12 text-center">
-        <p className="text-sm font-bold text-stone-400">Cargando progreso…</p>
+        <p className="text-sm font-bold text-stone-400">{t.lesson.loading}</p>
       </div>
     )
   }
@@ -154,16 +156,16 @@ export function TopicSections({
       <div className="bg-white border-2 border-emerald-200 rounded-3xl p-8 sm:p-12 text-center">
         <p className="text-7xl mb-4">🎉</p>
         <h2 className="text-3xl sm:text-4xl font-black text-stone-900 mb-3">
-          ¡Tema completado!
+          {t.lesson.completedTitle}
         </h2>
         <p className="text-stone-600 font-semibold mb-8">
-          Terminaste las {total} secciones. ¿Listo para el siguiente?
+          {t.lesson.completedBody(total)}
         </p>
         <Link
           href="/dashboard"
           className="inline-block bg-emerald-500 text-white border-b-4 border-emerald-700 rounded-2xl px-8 py-3.5 text-sm font-black uppercase tracking-wide hover:bg-emerald-400 active:translate-y-1 active:border-b-0 transition-transform duration-150"
         >
-          Volver a temas →
+          {t.lesson.backToTopics}
         </Link>
         <button
           type="button"
@@ -173,7 +175,7 @@ export function TopicSections({
           }}
           className="block mx-auto mt-6 text-sm font-bold text-stone-500 hover:text-emerald-600 transition-colors"
         >
-          Repetir este tema
+          {t.lesson.repeatTopic}
         </button>
       </div>
     )
@@ -191,7 +193,7 @@ export function TopicSections({
 
       <article className="bg-white border-2 border-stone-100 rounded-3xl p-6 sm:p-8">
         <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-2">
-          Sección {currentIdx + 1} de {total}
+          {t.lesson.sectionOf(currentIdx + 1, total)}
         </p>
         <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mb-3">
           {section.title}
@@ -229,7 +231,7 @@ export function TopicSections({
             {section.vocabulary.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-                  📖 Vocabulario
+                  {t.lesson.vocabulary}
                 </h3>
                 <VocabularyDeck
                   key={`vocab-${currentIdx}`}
@@ -242,7 +244,7 @@ export function TopicSections({
             {section.dialogue.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-                  💬 Diálogo
+                  {t.lesson.dialogue}
                 </h3>
                 <DialogueViewer
                   dialogue={section.dialogue}
@@ -254,7 +256,7 @@ export function TopicSections({
             {section.practicePhrases.length > 0 && (
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-                  🎤 Frases para practicar
+                  {t.lesson.phrases}
                 </h3>
                 <PhraseDeck
                   key={`phrases-${currentIdx}`}
@@ -277,7 +279,7 @@ export function TopicSections({
           disabled={currentIdx === 0}
           className="text-sm font-black text-stone-500 hover:text-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          ← Anterior
+          {t.lesson.prev}
         </button>
         {isCurrentCompleted ? (
           <Button
@@ -285,15 +287,15 @@ export function TopicSections({
             onClick={() => canAdvance && goToSection(nextIdx)}
             disabled={!canAdvance}
           >
-            Siguiente sección →
+            {t.lesson.next}
           </Button>
         ) : (
           <Button size="lg" onClick={complete} disabled={!gateOpen}>
             {isLast
-              ? '¡Terminar tema! 🎉'
+              ? t.lesson.finish
               : isComingSoonSection
-                ? 'Saltar sección →'
-                : 'Completar sección ✓'}
+                ? t.lesson.skip
+                : t.lesson.complete}
           </Button>
         )}
       </div>
@@ -303,12 +305,12 @@ export function TopicSections({
           <span className="text-2xl">🔒</span>
           <p className="text-sm font-bold text-amber-900 flex-1">
             {isShadowingSection ? (
-              <>Reproduce el diálogo completo al menos una vez</>
+              <>{t.lesson.gateShadowing}</>
             ) : isFreeSection ? (
-              <>Graba al menos una vez para completar la sección</>
+              <>{t.lesson.gateRecording}</>
             ) : (
               <>
-                Practica las {totalPhrases} frases para completar la sección
+                {t.lesson.gatePhrases(totalPhrases)}
                 <span className="text-amber-700 font-black ml-2">
                   ({practicedInCurrent}/{totalPhrases})
                 </span>
@@ -322,44 +324,39 @@ export function TopicSections({
 }
 
 function TandemConnectCard({ topicSlug }: { topicSlug: string }) {
+  const t = useDict()
   return (
     <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-8 text-center">
       <p className="text-6xl mb-3">👥</p>
       <p className="text-xl font-black text-stone-800 mb-2">
-        Conectar con otra persona
+        {t.lesson.tandemTitle}
       </p>
       <p className="text-sm font-semibold text-stone-500 max-w-md mx-auto leading-relaxed mb-6">
-        Practica este tema por chat con alguien más: 5 minutos en inglés y 5 en
-        español, con el vocabulario del tema a mano.
+        {t.lesson.tandemBody}
       </p>
       <Link
         href={`/topics/${topicSlug}/tandem`}
         className="inline-block bg-emerald-500 text-white border-b-4 border-emerald-700 rounded-2xl px-8 py-3.5 text-sm font-black uppercase tracking-wide hover:bg-emerald-400 active:translate-y-1 active:border-b-0 transition-transform duration-150"
       >
-        Conectar en vivo →
+        {t.lesson.tandemCta}
       </Link>
     </div>
   )
 }
 
 function ComingSoonCard() {
-  const meta = {
-    emoji: '🎬',
-    title: 'Video + shadowing',
-    description:
-      'Verás un video con dos hablantes nativos y repetirás las frases varias veces. Construcción en curso.',
-  }
+  const t = useDict()
   return (
     <div className="bg-stone-100 border-2 border-dashed border-stone-300 rounded-2xl p-8 text-center">
-      <p className="text-6xl mb-3">{meta.emoji}</p>
+      <p className="text-6xl mb-3">🎬</p>
       <p className="text-xl font-black text-stone-700 mb-2">
-        Próximamente: {meta.title}
+        {t.lesson.comingSoonPrefix} {t.lesson.comingSoonVideoTitle}
       </p>
       <p className="text-sm font-semibold text-stone-500 max-w-md mx-auto leading-relaxed">
-        {meta.description}
+        {t.lesson.comingSoonBody}
       </p>
       <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mt-5">
-        Por ahora puedes saltar esta sección
+        {t.lesson.comingSoonSkip}
       </p>
     </div>
   )

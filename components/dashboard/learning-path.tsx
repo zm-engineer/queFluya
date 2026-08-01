@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useDict } from '@/components/i18n/language-provider'
 import { type Level, type TopicDetail } from '@/lib/topics'
 import { isSectionAccessible, sectionKind, type SectionKind } from '@/lib/topic-journey'
 
@@ -12,13 +13,6 @@ const KIND_ICON: Record<SectionKind, string> = {
   recording: '⭐',
   video: '🎬',
   tandem: '🎥',
-}
-const KIND_LABEL: Record<SectionKind, string> = {
-  study: 'Estudio',
-  shadowing: 'Repetir',
-  recording: 'Grabación',
-  video: 'Vídeo',
-  tandem: 'Videollamada',
 }
 
 // Balanced serpentine offsets (px) — used only on mobile; centered on both ends.
@@ -45,15 +39,14 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
-  const levelTopics = topics.filter((t) => t.level === userLevel)
+  const t = useDict()
+  const levelTopics = topics.filter((topic) => topic.level === userLevel)
 
   if (levelTopics.length === 0) {
     return (
       <div className="bg-white rounded-3xl border-2 border-stone-100 p-12 text-center">
         <p className="text-6xl mb-4">📚</p>
-        <p className="text-stone-500 font-semibold">
-          Aún no tenemos temas para tu nivel. Vuelve pronto.
-        </p>
+        <p className="text-stone-500 font-semibold">{t.dashboard.empty}</p>
       </div>
     )
   }
@@ -91,7 +84,7 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
             >
               <div className="min-w-0">
                 <p className="text-[11px] font-black uppercase tracking-wider text-emerald-100">
-                  Tema {topicIdx + 1}
+                  {t.path.topic(topicIdx + 1)}
                 </p>
                 <p className="text-lg font-black leading-snug truncate">
                   {topic.title}
@@ -117,7 +110,7 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
                       slug={topic.slug}
                       index={i}
                       icon={KIND_ICON[kind]}
-                      label={KIND_LABEL[kind]}
+                      label={t.path.kinds[kind]}
                       isDone={done.has(i)}
                       accessible={isSectionAccessible(sections, i, done)}
                       isCurrent={currentKey === `${topic.slug}:${i}`}
@@ -152,11 +145,12 @@ function PathNode({
   accessible,
   isCurrent,
 }: NodeProps) {
+  const t = useDict()
   const content = (
     <div className="relative flex flex-col items-center">
       {isCurrent && (
         <span className="absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-white text-emerald-600 text-[11px] font-black uppercase tracking-wide px-3 py-1 rounded-xl border-2 border-emerald-200 shadow-sm animate-bounce">
-          Empieza
+          {t.path.start}
         </span>
       )}
       <span
@@ -189,8 +183,8 @@ function PathNode({
   if (!accessible) {
     return (
       <div
-        aria-label={`${label} (bloqueado)`}
-        title="Completa la práctica de frases primero"
+        aria-label={`${label} — ${t.path.tandemLocked}`}
+        title={t.path.tandemLocked}
         className="cursor-not-allowed"
       >
         {content}

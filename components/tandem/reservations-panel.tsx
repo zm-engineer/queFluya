@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDict } from '@/components/i18n/language-provider'
 import { createClient } from '@/lib/supabase/client'
 import {
   isExpired,
@@ -34,28 +35,9 @@ type Props = {
 
 const FLAG: Record<Language, string> = { EN: '🇬🇧', ES: '🇪🇸' }
 
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString('es', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function countdownLabel(scheduledAtMs: number, nowMs: number): string {
-  if (isJoinable(scheduledAtMs, nowMs)) return '¡Es la hora!'
-  if (isExpired(scheduledAtMs, nowMs)) return 'Pasada'
-  const mins = minutesUntil(scheduledAtMs, nowMs)
-  if (mins < 60) return `en ${mins} min`
-  const hours = Math.round(mins / 60)
-  if (hours < 24) return `en ${hours} h`
-  return `en ${Math.round(hours / 24)} d`
-}
-
 export function ReservationsPanel({ profileId, username, topics, titleBySlug }: Props) {
   const router = useRouter()
+  const t = useDict()
   const supabase = useMemo(() => createClient(), [])
   const [open, setOpen] = useState<ReservationRow[]>([])
   const [mine, setMine] = useState<ReservationRow[]>([])
@@ -64,6 +46,25 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
   const [when, setWhen] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const formatWhen = (iso: string): string =>
+    new Date(iso).toLocaleString(t.common.locale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+  function countdownLabel(scheduledAtMs: number, nowMs: number): string {
+    if (isJoinable(scheduledAtMs, nowMs)) return t.reservations.now
+    if (isExpired(scheduledAtMs, nowMs)) return t.reservations.past
+    const mins = minutesUntil(scheduledAtMs, nowMs)
+    if (mins < 60) return t.reservations.inMin(mins)
+    const hours = Math.round(mins / 60)
+    if (hours < 24) return t.reservations.inHours(hours)
+    return t.reservations.inDays(Math.round(hours / 24))
+  }
 
   const reload = useCallback(() => {
     const nowIso = new Date().toISOString()
@@ -100,7 +101,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
     if (!topic || !when) return
     const scheduledMs = new Date(when).getTime()
     if (!isValidScheduledTime(scheduledMs, Date.now())) {
-      setError('Elige una fecha y hora futuras.')
+      setError(t.reservations.futureRequired)
       return
     }
     setBusy(true)
@@ -115,7 +116,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
     )
     setBusy(false)
     if ('error' in result) {
-      setError('No pudimos publicar el hueco. Inténtalo de nuevo.')
+      setError(t.reservations.publishFail)
       return
     }
     setWhen('')
@@ -130,8 +131,8 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
     if ('error' in result) {
       setError(
         result.error === 'unavailable'
-          ? 'Ese hueco ya no está disponible.'
-          : 'No pudimos reservar. Inténtalo de nuevo.'
+          ? t.reservations.unavailable
+          : t.reservations.bookFail
       )
     }
     reload()
@@ -154,19 +155,21 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
     <div className="space-y-8">
       {/* Publish a slot */}
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-6 sm:p-8">
-        <h2 className="text-xl font-black text-stone-900 mb-1">Publicar un hueco</h2>
+        <h2 className="text-xl font-black text-stone-900 mb-1">
+          {t.reservations.publishTitle}
+        </h2>
         <p className="text-sm font-semibold text-stone-500 mb-5">
-          Elige un tema y una hora. Quien reserve practicará el idioma opuesto contigo.
+          {t.reservations.publishSubtitle}
         </p>
         {topics.length === 0 ? (
           <p className="text-sm font-bold text-stone-400">
-            No tienes temas disponibles para publicar todavía.
+            {t.reservations.noTopics}
           </p>
         ) : (
           <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
             <label className="flex-1">
               <span className="block text-xs font-black uppercase tracking-wider text-stone-400 mb-1.5">
-                Tema
+                {t.reservations.topic}
               </span>
               {/* appearance-none (+ -webkit-) is required or Safari keeps the
                   native OS select styling and ignores our rounded design; we
@@ -190,7 +193,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
             </label>
             <label className="flex-1">
               <span className="block text-xs font-black uppercase tracking-wider text-stone-400 mb-1.5">
-                Cuándo
+                {t.reservations.when}
               </span>
               <Input
                 type="datetime-local"
@@ -200,7 +203,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
               />
             </label>
             <Button onClick={handlePublish} disabled={busy || !when}>
-              Publicar
+              {t.reservations.publish}
             </Button>
           </div>
         )}
@@ -209,10 +212,12 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
 
       {/* My reservations */}
       <section>
-        <h2 className="text-lg font-black text-stone-900 mb-3">Mis reservas</h2>
+        <h2 className="text-lg font-black text-stone-900 mb-3">
+          {t.reservations.mine}
+        </h2>
         {mine.length === 0 ? (
           <p className="text-sm font-semibold text-stone-400">
-            Aún no tienes reservas. Publica un hueco o reserva uno de abajo.
+            {t.reservations.mineEmpty}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -233,7 +238,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
                       {formatWhen(r.scheduled_at)} · {countdownLabel(ms, now)}
                       {withWhom && (
                         <>
-                          {' · con '}
+                          {` · ${t.reservations.withWhom} `}
                           <span className="text-stone-700">@{withWhom}</span>
                         </>
                       )}
@@ -248,10 +253,10 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
                       }
                     >
                       {r.status === 'BOOKED'
-                        ? 'Confirmada'
+                        ? t.reservations.confirmed
                         : iAmHost
-                          ? 'Esperando'
-                          : 'Reservada'}
+                          ? t.reservations.waiting
+                          : t.reservations.reserved}
                     </span>
                     {isJoinable(ms, now) && r.status === 'BOOKED' && (
                       <Button
@@ -260,7 +265,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
                           router.push(`/topics/${r.topic_slug}/tandem?reservation=${r.id}`)
                         }
                       >
-                        Únete →
+                        {t.reservations.join}
                       </Button>
                     )}
                     {iAmHost && r.status === 'OPEN' && (
@@ -270,7 +275,7 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
                         onClick={() => handleCancel(r.id)}
                         disabled={busy}
                       >
-                        Cancelar
+                        {t.reservations.cancel}
                       </Button>
                     )}
                   </div>
@@ -283,10 +288,12 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
 
       {/* Open slots to book */}
       <section>
-        <h2 className="text-lg font-black text-stone-900 mb-3">Huecos disponibles</h2>
+        <h2 className="text-lg font-black text-stone-900 mb-3">
+          {t.reservations.open}
+        </h2>
         {open.length === 0 ? (
           <p className="text-sm font-semibold text-stone-400">
-            No hay huecos publicados ahora mismo. ¡Publica el primero!
+            {t.reservations.openEmpty}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -305,14 +312,14 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
                       {formatWhen(r.scheduled_at)} · {countdownLabel(ms, now)}
                       {r.host_username && (
                         <>
-                          {' · de '}
+                          {` · ${t.reservations.fromWhom} `}
                           <span className="text-stone-700">@{r.host_username}</span>
                         </>
                       )}
                     </p>
                   </div>
                   <Button size="sm" onClick={() => handleBook(r.id)} disabled={busy}>
-                    Reservar
+                    {t.reservations.book}
                   </Button>
                 </li>
               )
