@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { joinReservation } from '@/lib/reservations-db'
 import { isOfferer } from '@/lib/webrtc'
 import { useWebRTCCall, type CallStatus } from '@/components/tandem/use-webrtc-call'
+import { useDict } from '@/components/i18n/language-provider'
 import {
   computeTimerState,
   normalizeInviteCode,
@@ -52,13 +53,6 @@ function mergeMessages(a: MessageRow[], b: MessageRow[]): MessageRow[] {
   )
 }
 
-const JOIN_ERRORS: Record<string, string> = {
-  invalid_code: 'Ese código no tiene el formato correcto.',
-  not_found: 'No encontramos una sala con ese código.',
-  full: 'Esa sala ya está llena.',
-  unknown: 'No pudimos unirte. Inténtalo de nuevo.',
-}
-
 export function TandemRoom({
   profileId,
   username,
@@ -70,6 +64,7 @@ export function TandemRoom({
   initialReservationId = null,
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
+  const t = useDict()
 
   const [session, setSession] = useState<SessionRow | null>(null)
   const [messages, setMessages] = useState<MessageRow[]>([])
@@ -96,10 +91,10 @@ export function TandemRoom({
         setFromReservation(true)
         setSession(result.session)
       } else {
-        setLobbyError('No pudimos abrir la sesión de tu reserva. Vuelve a intentarlo.')
+        setLobbyError(t.room.reservationFail)
       }
     })
-  }, [supabase, profileId, initialReservationId])
+  }, [supabase, profileId, initialReservationId, t])
 
   // --- Realtime: new messages + session status changes -------------------
   useEffect(() => {
@@ -249,12 +244,12 @@ export function TandemRoom({
     )
     setBusy(false)
     if ('error' in result) {
-      setLobbyError('No pudimos buscar pareja. Inténtalo de nuevo.')
+      setLobbyError(t.room.matchFail)
       return
     }
     setSearching(!result.matched)
     setSession(result.session)
-  }, [supabase, profileId, topicSlug, language, pairKey])
+  }, [supabase, profileId, topicSlug, language, pairKey, t])
 
   const handleCreate = useCallback(async () => {
     setBusy(true)
@@ -262,12 +257,12 @@ export function TandemRoom({
     const result = await createSession(supabase, profileId, topicSlug, language, pairKey)
     setBusy(false)
     if ('error' in result) {
-      setLobbyError('No pudimos crear la sala. Inténtalo de nuevo.')
+      setLobbyError(t.room.createFail)
       return
     }
     setSearching(false)
     setSession(result.session)
-  }, [supabase, profileId, topicSlug, language, pairKey])
+  }, [supabase, profileId, topicSlug, language, pairKey, t])
 
   const handleJoin = useCallback(async () => {
     setBusy(true)
@@ -275,11 +270,14 @@ export function TandemRoom({
     const result = await joinByCode(supabase, profileId, codeInput)
     setBusy(false)
     if ('error' in result) {
-      setLobbyError(JOIN_ERRORS[result.error] ?? JOIN_ERRORS.unknown)
+      setLobbyError(
+        t.room.joinErrors[result.error as keyof typeof t.room.joinErrors] ??
+          t.room.joinErrors.unknown
+      )
       return
     }
     setSession(result.session)
-  }, [supabase, profileId, codeInput])
+  }, [supabase, profileId, codeInput, t])
 
   // Skip the rest of the current language and jump to the next phase (EN→ES).
   // Shifting started_at recomputes the timer on both clients (via the
@@ -394,18 +392,18 @@ function Lobby({
   onCreate,
   onJoin,
 }: LobbyProps) {
+  const t = useDict()
   return (
     <div className="space-y-6">
       {canMatch && (
         <div className="bg-emerald-500 rounded-3xl p-8 text-center text-white">
           <p className="text-5xl mb-3">🔍</p>
-          <h2 className="text-2xl font-black mb-2">Buscar pareja</h2>
+          <h2 className="text-2xl font-black mb-2">{t.room.match}</h2>
           <p className="text-sm font-semibold text-emerald-50 leading-relaxed mb-6 max-w-md mx-auto">
-            Te emparejamos al instante con alguien que practica el otro idioma.
-            Sin coordinar nada: un clic y a hablar.
+            {t.room.matchSubtitle}
           </p>
           <Button variant="secondary" size="lg" onClick={onMatch} disabled={busy}>
-            {busy ? 'Buscando…' : 'Buscar pareja 🔍'}
+            {busy ? t.room.searching : t.room.matchCta}
           </Button>
         </div>
       )}
@@ -413,7 +411,7 @@ function Lobby({
       <div className="flex items-center gap-4 text-stone-400">
         <span className="h-px flex-1 bg-stone-200" />
         <span className="text-xs font-black uppercase tracking-wider">
-          o conecta con alguien que conoces
+          {t.room.orKnown}
         </span>
         <span className="h-px flex-1 bg-stone-200" />
       </div>
@@ -421,26 +419,25 @@ function Lobby({
       <div className="grid gap-6 sm:grid-cols-2">
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 flex flex-col">
         <p className="text-5xl mb-3">🎙️</p>
-        <h2 className="text-xl font-black text-stone-900 mb-2">Crear una sala</h2>
+        <h2 className="text-xl font-black text-stone-900 mb-2">{t.room.createRoom}</h2>
         <p className="text-sm font-semibold text-stone-500 leading-relaxed mb-6 flex-1">
-          Te damos un código para compartir. Cuando tu pareja entre, empieza la
-          conversación: 5 min en inglés y 5 min en español.
+          {t.room.createRoomDesc}
         </p>
         <Button size="lg" onClick={onCreate} disabled={busy}>
-          {busy ? 'Creando…' : 'Crear sala →'}
+          {busy ? t.room.creating : t.room.createCta}
         </Button>
       </div>
 
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 flex flex-col">
         <p className="text-5xl mb-3">🔑</p>
-        <h2 className="text-xl font-black text-stone-900 mb-2">Unirme con código</h2>
+        <h2 className="text-xl font-black text-stone-900 mb-2">{t.room.joinWithCode}</h2>
         <p className="text-sm font-semibold text-stone-500 leading-relaxed mb-4">
-          ¿Tienes un código de tu pareja? Escríbelo aquí para entrar a su sala.
+          {t.room.joinWithCodeDesc}
         </p>
         <Input
           value={codeInput}
           onChange={(e) => setCodeInput(normalizeInviteCode(e.target.value))}
-          placeholder="Ej: AB2CD3"
+          placeholder={t.room.codePlaceholder}
           maxLength={6}
           className="mb-4 text-center tracking-[0.3em] font-black uppercase"
           disabled={busy}
@@ -451,7 +448,7 @@ function Lobby({
           onClick={onJoin}
           disabled={busy || codeInput.length < 6}
         >
-          {busy ? 'Entrando…' : 'Unirme →'}
+          {busy ? t.room.joining : t.room.joinCta}
         </Button>
         {error && (
           <p className="mt-4 text-sm font-bold text-red-600">{error}</p>
@@ -475,19 +472,19 @@ function WaitingRoom({
   fromReservation: boolean
   onCancel: () => void
 }) {
+  const t = useDict()
   if (fromReservation) {
     return (
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">
         <p className="text-6xl mb-4 animate-pulse">⏳</p>
         <h2 className="text-2xl font-black text-stone-900 mb-2">
-          Esperando a tu pareja…
+          {t.room.waitingTitle}
         </h2>
         <p className="text-sm font-semibold text-stone-500 mb-8">
-          Tienes una reserva a esta hora. En cuanto tu pareja entre, empezáis
-          automáticamente.
+          {t.room.waitReservation}
         </p>
         <Button variant="secondary" size="sm" onClick={onCancel}>
-          Salir
+          {t.room.exit}
         </Button>
       </div>
     )
@@ -498,14 +495,13 @@ function WaitingRoom({
       <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">
         <p className="text-6xl mb-4 animate-pulse">🔍</p>
         <h2 className="text-2xl font-black text-stone-900 mb-2">
-          Buscando pareja…
+          {t.room.searchingTitle}
         </h2>
         <p className="text-sm font-semibold text-stone-500 mb-8">
-          En cuanto alguien busque practicar contigo, empezáis a hablar
-          automáticamente. Puedes dejar esta pestaña abierta.
+          {t.room.searchingBody}
         </p>
         <Button variant="secondary" size="sm" onClick={onCancel}>
-          Cancelar búsqueda
+          {t.room.cancelSearch}
         </Button>
       </div>
     )
@@ -515,10 +511,10 @@ function WaitingRoom({
     <div className="bg-white border-2 border-stone-100 rounded-3xl p-8 sm:p-12 text-center">
       <p className="text-6xl mb-4 animate-pulse">⏳</p>
       <h2 className="text-2xl font-black text-stone-900 mb-2">
-        Esperando a tu pareja…
+        {t.room.waitingTitle}
       </h2>
       <p className="text-sm font-semibold text-stone-500 mb-8">
-        Comparte este código. Hablaréis sobre <strong>{topicTitle}</strong>.
+        {t.room.shareCodePre} <strong>{topicTitle}</strong>.
       </p>
       <div className="inline-flex items-center gap-3 bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-8 py-5">
         <span className="text-4xl font-black tracking-[0.3em] text-emerald-700">
@@ -526,7 +522,7 @@ function WaitingRoom({
         </span>
       </div>
       <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mt-8">
-        La conversación empieza sola cuando tu pareja entre
+        {t.room.autoStart}
       </p>
     </div>
   )
@@ -561,6 +557,7 @@ function ChatView({
   onSend,
   onRestart,
 }: ChatViewProps) {
+  const t = useDict()
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [confirmingEnd, setConfirmingEnd] = useState(false)
@@ -625,11 +622,11 @@ function ChatView({
           />
           {partnerUsername ? (
             <>
-              Hablando con{' '}
+              {t.room.talkingWith}{' '}
               <span className="text-stone-900 font-black">@{partnerUsername}</span>
             </>
           ) : (
-            <span className="text-stone-400">Tu pareja está conectándose…</span>
+            <span className="text-stone-400">{t.room.connecting}</span>
           )}
         </div>
         <TimerBanner timer={timer} ended={ended} />
@@ -651,23 +648,23 @@ function ChatView({
             <div className="flex items-center gap-2">
             {canSkip && (
               <Button size="sm" variant="secondary" onClick={onSkipPhase}>
-                Pasar al español 🇪🇸
+                {t.room.skip}
               </Button>
             )}
             {confirmingEnd ? (
               <>
                 <span className="text-xs font-bold text-stone-500 mr-1">
-                  ¿Terminar la conversación?
+                  {t.room.confirmEnd}
                 </span>
                 <Button size="sm" variant="danger" onClick={onEndEarly}>
-                  Sí, terminar
+                  {t.room.endYes}
                 </Button>
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => setConfirmingEnd(false)}
                 >
-                  Cancelar
+                  {t.room.cancel}
                 </Button>
               </>
             ) : (
@@ -676,7 +673,7 @@ function ChatView({
                 variant="danger"
                 onClick={() => setConfirmingEnd(true)}
               >
-                Terminar
+                {t.room.end}
               </Button>
             )}
             </div>
@@ -686,7 +683,7 @@ function ChatView({
         <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-3">
           {messages.length === 0 && !ended && (
             <p className="text-center text-sm font-semibold text-stone-400 mt-8">
-              Saluda para romper el hielo 👋
+              {t.room.icebreaker}
             </p>
           )}
           {messages.map((m) => {
@@ -710,10 +707,10 @@ function ChatView({
         {ended ? (
           <div className="border-t-2 border-stone-100 p-5 text-center">
             <p className="text-sm font-black text-stone-700 mb-3">
-              ¡Sesión terminada! 🎉 Practicaste los dos idiomas.
+              {t.room.sessionEnded}
             </p>
             <Button size="sm" onClick={onRestart}>
-              Nueva sesión
+              {t.room.newSession}
             </Button>
           </div>
         ) : (
@@ -727,12 +724,12 @@ function ChatView({
                   submit()
                 }
               }}
-              placeholder="Escribe un mensaje…"
+              placeholder={t.room.messagePlaceholder}
               maxLength={MAX_MESSAGE_LENGTH}
               className="flex-1"
             />
             <Button onClick={submit} disabled={sending || draft.trim().length === 0}>
-              Enviar
+              {t.room.send}
             </Button>
           </div>
         )}
@@ -769,10 +766,11 @@ function CallControls({
   onToggleMic,
   onToggleCamera,
 }: CallControlsProps) {
+  const t = useDict()
   if (!inCall) {
     return (
       <Button size="sm" variant="secondary" onClick={onStart}>
-        Iniciar videollamada 🎥
+        {t.room.startCall}
       </Button>
     )
   }
@@ -781,10 +779,10 @@ function CallControls({
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs font-bold text-red-600 max-w-[16rem]">
-          {error ?? 'No se pudo conectar la llamada.'}
+          {error ?? t.room.callFailed}
         </span>
         <Button size="sm" variant="secondary" onClick={onHangUp}>
-          Cerrar
+          {t.room.close}
         </Button>
       </div>
     )
@@ -800,23 +798,23 @@ function CallControls({
           )}
         />
         <span className={status === 'connected' ? 'text-emerald-600' : 'text-stone-500'}>
-          {status === 'connected' ? 'En videollamada 🎥' : 'Conectando…'}
+          {status === 'connected' ? t.room.inCall : t.room.connectingShort}
         </span>
       </span>
       {status === 'connected' && (
         <>
           <Button size="sm" variant="secondary" onClick={onToggleMic}>
-            {micMuted ? 'Micro 🔇' : 'Micro 🎙️'}
+            {micMuted ? t.room.micOff : t.room.micOn}
           </Button>
           {hasVideo && (
             <Button size="sm" variant="secondary" onClick={onToggleCamera}>
-              {cameraOff ? 'Cámara 📷' : 'Cámara 🎥'}
+              {cameraOff ? t.room.cameraOffBtn : t.room.cameraOn}
             </Button>
           )}
         </>
       )}
       <Button size="sm" variant="danger" onClick={onHangUp}>
-        Colgar
+        {t.room.hangUp}
       </Button>
     </div>
   )
@@ -835,6 +833,7 @@ function CallStage({
   remoteVideoRef: RefObject<HTMLVideoElement | null>
   localVideoRef: RefObject<HTMLVideoElement | null>
 }) {
+  const t = useDict()
   return (
     <div className="relative w-full max-h-[26rem] aspect-video bg-stone-900 rounded-3xl overflow-hidden">
       {/* Partner (fills the stage; carries the remote audio too). */}
@@ -849,8 +848,8 @@ function CallStage({
         <div className="absolute inset-0 grid place-items-center bg-stone-900/80 text-center px-6">
           <p className="text-sm font-black text-white">
             {status === 'failed'
-              ? (error ?? 'No se pudo conectar la videollamada.')
-              : 'Conectando videollamada… tu pareja debe pulsar «Iniciar videollamada» también.'}
+              ? (error ?? t.room.stageFailed)
+              : t.room.stageConnecting}
           </p>
         </div>
       )}
@@ -866,7 +865,7 @@ function CallStage({
         />
         {cameraOff && (
           <div className="absolute inset-0 grid place-items-center bg-stone-800 text-[10px] font-black text-white/80">
-            Cámara apagada
+            {t.room.cameraOffLabel}
           </div>
         )}
       </div>
@@ -881,16 +880,17 @@ function TimerBanner({
   timer: ReturnType<typeof computeTimerState> | null
   ended: boolean
 }) {
+  const t = useDict()
   if (ended || !timer || timer.phase === 'ended') {
     return (
       <div className="bg-stone-100 px-5 py-3 text-center text-sm font-black text-stone-500">
-        Sesión finalizada
+        {t.room.sessionFinished}
       </div>
     )
   }
   const mins = Math.floor(timer.secondsLeftInPhase / 60)
   const secs = timer.secondsLeftInPhase % 60
-  const speaking = timer.phase === 'EN' ? 'Habla en inglés 🇬🇧' : 'Habla en español 🇪🇸'
+  const speaking = timer.phase === 'EN' ? t.room.speakEN : t.room.speakES
   return (
     <div className="bg-emerald-500 text-white px-5 py-3 flex items-center justify-between">
       <span className="text-sm font-black uppercase tracking-wide">{speaking}</span>
@@ -908,12 +908,13 @@ function VocabPanel({
   vocabulary: TopicVocab[]
   language: Language
 }) {
+  const t = useDict()
   if (vocabulary.length === 0) return null
-  const label = language === 'EN' ? 'Inglés 🇬🇧' : 'Español 🇪🇸'
+  const label = language === 'EN' ? t.room.vocabLabelEN : t.room.vocabLabelES
   return (
     <aside className="bg-white border-2 border-stone-100 rounded-3xl p-5 h-fit lg:max-h-[34rem] lg:overflow-y-auto">
       <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-4">
-        📖 Vocabulario — {label}
+        📖 {t.room.vocab} — {label}
       </h3>
       <ul className="space-y-2.5">
         {vocabulary.map((v) => (
