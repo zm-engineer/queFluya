@@ -47,7 +47,7 @@ export const directions: TopicPair = {
     title: 'Cómo llegar',
     description: 'Pregunta y da indicaciones sencillas por la calle.',
     freeRecordingPrompt:
-      'Alguien te pregunta cómo llegar a un sitio. Dale indicaciones: recto, giros y alguna referencia.',
+      'Someone asks you how to get somewhere. Give directions: straight ahead, turns, and a landmark.',
     studySections: [
       {
         title: 'Cómo llegar',

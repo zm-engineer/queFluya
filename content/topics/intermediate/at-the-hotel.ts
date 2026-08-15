@@ -49,7 +49,7 @@ export const atTheHotel: TopicPair = {
     title: 'En el hotel',
     description: 'Haz el check-in y pregunta por tu habitación en español.',
     freeRecordingPrompt:
-      'Llegas a un hotel. Di que tienes una reserva, pregunta por el desayuno y la hora de salida.',
+      'You arrive at a hotel. Say you have a reservation, and ask about breakfast and check-out time.',
     studySections: [
       {
         title: 'En el hotel',

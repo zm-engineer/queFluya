@@ -73,7 +73,7 @@ export const numbersAndPrices: TopicPair = {
     title: 'Los números y los precios',
     description: 'Cuenta, di precios y paga cosas en español del día a día.',
     freeRecordingPrompt:
-      'Imagina que compras algo en una tienda. Pregunta cuánto cuesta, di el precio en voz alta y decide si pagas con tarjeta o en efectivo.',
+      "Imagine you're buying something at a shop. Ask how much it costs, say the price out loud, and decide whether to pay by card or cash.",
     studySections: [
       {
         title: 'Los números',

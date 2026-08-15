@@ -47,7 +47,7 @@ export const tellingTheTime: TopicPair = {
     title: '¿Qué hora es?',
     description: 'Pregunta y di la hora en español del día a día.',
     freeRecordingPrompt:
-      'Pregunta la hora y queda con alguien: di a qué hora os veis y dónde.',
+      "Ask the time and make plans with someone: say what time you'll meet and where.",
     studySections: [
       {
         title: 'La hora',

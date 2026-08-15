@@ -50,7 +50,7 @@ export const makingPlans: TopicPair = {
     title: 'Hacer planes',
     description: 'Invita, propón y organiza planes con la gente en español.',
     freeRecordingPrompt:
-      'Invita a alguien a hacer algo el fin de semana: propón una actividad, un día y una hora.',
+      'Invite someone to do something this weekend: suggest an activity, a day, and a time.',
     studySections: [
       {
         title: 'Hacer planes',

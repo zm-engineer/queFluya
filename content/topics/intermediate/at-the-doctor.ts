@@ -49,7 +49,7 @@ export const atTheDoctor: TopicPair = {
     title: 'En el médico',
     description: 'Describe síntomas y entiende al médico en español.',
     freeRecordingPrompt:
-      'Estás en el médico. Explica cómo te sientes, qué te duele y desde cuándo.',
+      "You're at the doctor. Explain how you feel, what hurts, and since when.",
     studySections: [
       {
         title: 'En el médico',

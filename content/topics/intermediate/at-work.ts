@@ -48,7 +48,7 @@ export const atWork: TopicPair = {
     title: 'En el trabajo',
     description: 'Habla de tu trabajo, reuniones y plazos en español.',
     freeRecordingPrompt:
-      'Habla de tu trabajo: qué haces, con quién trabajas y qué tienes pendiente esta semana.',
+      'Talk about your job: what you do, who you work with, and what you have to finish this week.',
     studySections: [
       {
         title: 'En el trabajo',

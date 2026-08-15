@@ -49,7 +49,7 @@ export const theWeather: TopicPair = {
     title: 'El tiempo',
     description: 'Habla del tiempo y del pronóstico en español.',
     freeRecordingPrompt:
-      'Describe el tiempo que hace hoy y el que crees que hará mañana. Di qué ropa te vas a poner.',
+      "Describe today's weather and what you think it'll be like tomorrow. Say what you're going to wear.",
     studySections: [
       {
         title: 'El tiempo',

@@ -47,7 +47,7 @@ export const familyAndPeople: TopicPair = {
     title: 'La familia',
     description: 'Habla de tu familia y de la gente cercana.',
     freeRecordingPrompt:
-      'Presenta a tu familia: di quiénes son y algo de cada uno (nombre, edad o dónde viven).',
+      'Introduce your family: say who they are and something about each one (name, age, or where they live).',
     studySections: [
       {
         title: 'La familia',

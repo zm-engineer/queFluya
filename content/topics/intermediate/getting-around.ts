@@ -50,7 +50,7 @@ export const gettingAround: TopicPair = {
     title: 'Por la ciudad',
     description: 'Usa el transporte público y pregunta rutas en español.',
     freeRecordingPrompt:
-      'Estás perdido en una ciudad. Pregunta cómo llegar a un sitio y qué transporte tomar.',
+      'You are lost in a city. Ask how to get somewhere and what transport to take.',
     studySections: [
       {
         title: 'Por la ciudad',

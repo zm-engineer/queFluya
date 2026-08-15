@@ -49,7 +49,7 @@ export const shoppingAndReturns: TopicPair = {
     title: 'De compras',
     description: 'Compra ropa, pruébatela y devuélvela en español.',
     freeRecordingPrompt:
-      'Estás en una tienda de ropa. Pregunta por una talla, di que te la quieres probar y que quieres devolver algo.',
+      "You're in a clothes shop. Ask about a size, say you want to try it on, and that you want to return something.",
     studySections: [
       {
         title: 'De compras',

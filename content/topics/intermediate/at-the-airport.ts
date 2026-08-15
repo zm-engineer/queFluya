@@ -50,7 +50,7 @@ export const atTheAirport: TopicPair = {
     title: 'En el aeropuerto',
     description: 'Factura, pasa el control y embarca tu vuelo en español.',
     freeRecordingPrompt:
-      'Estás facturando para un vuelo. Da tu destino, di cuántas maletas llevas y pregunta por la puerta de embarque.',
+      "You're checking in for a flight. Give your destination, say how many bags you have, and ask about your gate.",
     studySections: [
       {
         title: 'En el aeropuerto',

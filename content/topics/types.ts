@@ -3,13 +3,17 @@
 // full 4-section structure the app expects (study… + shadowing + free-recording
 // + tandem placeholder). scripts/build-topics.ts turns these into the seed SQL.
 //
-// Convention (matches the existing seed):
+// Convention:
 //  * Vocabulary: `term` in the topic's language, `translation` in the other.
-//  * Study intro/dialogue/phrases: in the topic's language.
-//  * Section titles, the practice-section intros and the recording prompt: in
-//    Spanish (the app's UI language).
+//  * Study intro/dialogue/phrases: in the topic's language (immersion).
+//  * The recording prompt + the boilerplate practice-section titles/intros: in
+//    the LEARNER'S NATIVE language, i.e. the OPPOSITE of the topic's language
+//    (an EN topic is for Spanish natives → Spanish; an ES topic is for English
+//    natives → English). So `freeRecordingPrompt` on the `en` side is Spanish,
+//    and on the `es` side is English.
 
 import type {
+  Language,
   Level,
   TopicDialogueLine,
   TopicSection,
@@ -29,7 +33,8 @@ export type AuthoredSide = {
   title: string
   description: string
   studySections: StudySection[]
-  /** Spanish instruction for the free-recording exercise. */
+  /** Free-recording instruction, in the learner's NATIVE language (opposite of
+   *  the topic's language): Spanish on the `en` side, English on the `es` side. */
   freeRecordingPrompt: string
 }
 
@@ -43,42 +48,65 @@ export type TopicPair = {
   es: AuthoredSide
 }
 
-const SHADOWING_SECTION: TopicSection = {
-  title: 'Shadowing del diálogo',
-  intro:
-    'Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.',
-  vocabulary: [],
-  dialogue: [],
-  practicePhrases: [],
-  shadowing: true,
-}
+// Boilerplate practice sections, keyed by the LEARNER'S NATIVE language.
+const BOILERPLATE = {
+  ES: {
+    shadowingTitle: 'Shadowing del diálogo',
+    shadowingIntro:
+      'Escucha y repite el diálogo del tema en voz alta. La repetición fija la pronunciación y el ritmo.',
+    recordingTitle: 'Pon en práctica',
+    recordingIntro:
+      'Graba tu respuesta usando lo que aprendiste. La IA te dará feedback.',
+    tandemTitle: 'Conectar',
+    tandemIntro: 'Practica este tema con otro usuario en vivo.',
+  },
+  EN: {
+    shadowingTitle: 'Shadow the dialogue',
+    shadowingIntro:
+      'Listen and repeat the dialogue out loud. Repetition locks in your pronunciation and rhythm.',
+    recordingTitle: 'Put it into practice',
+    recordingIntro:
+      'Record your answer using what you learned. The AI will give you feedback.',
+    tandemTitle: 'Connect',
+    tandemIntro: 'Practice this topic live with another person.',
+  },
+} satisfies Record<Language, Record<string, string>>
 
-const TANDEM_SECTION: TopicSection = {
-  title: 'Conectar',
-  intro: 'Practica este tema con otro usuario en vivo.',
-  vocabulary: [],
-  dialogue: [],
-  practicePhrases: [],
-  comingSoon: 'tandem',
-}
-
-function recordingSection(prompt: string): TopicSection {
-  return {
-    title: 'Pon en práctica',
-    intro: 'Graba tu respuesta usando lo que aprendiste. La IA te dará feedback.',
-    vocabulary: [],
-    dialogue: [],
-    practicePhrases: [],
-    freeRecordingPrompt: prompt,
-  }
-}
-
-/** Expand an authored side into the full section list the app renders. */
-export function buildSections(side: AuthoredSide): TopicSection[] {
+/**
+ * Expand an authored side into the full section list the app renders. The
+ * boilerplate practice sections are emitted in the learner's native language
+ * (the opposite of the topic's `language`).
+ */
+export function buildSections(
+  side: AuthoredSide,
+  language: Language
+): TopicSection[] {
+  const b = BOILERPLATE[language === 'EN' ? 'ES' : 'EN']
   return [
     ...side.studySections.map((s) => ({ ...s })),
-    SHADOWING_SECTION,
-    recordingSection(side.freeRecordingPrompt),
-    TANDEM_SECTION,
+    {
+      title: b.shadowingTitle,
+      intro: b.shadowingIntro,
+      vocabulary: [],
+      dialogue: [],
+      practicePhrases: [],
+      shadowing: true,
+    },
+    {
+      title: b.recordingTitle,
+      intro: b.recordingIntro,
+      vocabulary: [],
+      dialogue: [],
+      practicePhrases: [],
+      freeRecordingPrompt: side.freeRecordingPrompt,
+    },
+    {
+      title: b.tandemTitle,
+      intro: b.tandemIntro,
+      vocabulary: [],
+      dialogue: [],
+      practicePhrases: [],
+      comingSoon: 'tandem',
+    },
   ]
 }
