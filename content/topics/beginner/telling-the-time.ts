@@ -10,14 +10,14 @@ export const tellingTheTime: TopicPair = {
   en: {
     slug: 'telling-the-time',
     title: 'Telling the Time',
-    description: 'Ask and tell the time in everyday English.',
+    description: 'Pregunta y di la hora en inglés del día a día.',
     freeRecordingPrompt:
       'Pregunta la hora y queda con alguien: di a qué hora os veis y dónde.',
     studySections: [
       {
         title: 'La hora',
         intro:
-          'How to ask for the time and say it. You need this for meetings, buses and opening hours.',
+          'Cómo preguntar la hora y decirla. La necesitas para citas, autobuses y horarios.',
         vocabulary: [
           { term: 'What time is it?', translation: '¿Qué hora es?' },
           { term: "It's three o'clock", translation: 'Son las tres (en punto)' },
@@ -45,14 +45,14 @@ export const tellingTheTime: TopicPair = {
   es: {
     slug: 'la-hora',
     title: '¿Qué hora es?',
-    description: 'Pregunta y di la hora en español del día a día.',
+    description: 'Ask and tell the time in everyday Spanish.',
     freeRecordingPrompt:
       "Ask the time and make plans with someone: say what time you'll meet and where.",
     studySections: [
       {
-        title: 'La hora',
+        title: 'Telling the time',
         intro:
-          'Cómo preguntar la hora y decirla. La necesitas para citas, autobuses y horarios.',
+          'How to ask for the time and say it. You need this for meetings, buses and opening hours.',
         vocabulary: [
           { term: '¿Qué hora es?', translation: 'What time is it?' },
           { term: 'Son las tres (en punto)', translation: "It's three o'clock" },

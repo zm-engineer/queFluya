@@ -10,14 +10,14 @@ export const greetings: TopicPair = {
   en: {
     slug: 'greetings',
     title: 'Greetings',
-    description: 'Learn how to greet people in everyday English situations.',
+    description: 'Aprende a saludar en situaciones cotidianas en inglés.',
     freeRecordingPrompt:
       'Saluda a alguien y pregúntale cómo está. Usa los saludos que aprendiste.',
     studySections: [
       {
         title: 'Saludos básicos',
         intro:
-          'These are the most common ways to greet someone in English. Pay attention to how casual or formal each one feels.',
+          'Estos son los saludos más comunes en inglés. Fíjate en cuán formal o informal suena cada uno.',
         vocabulary: [
           { term: 'Hi', translation: 'Hola (informal)' },
           { term: 'Hello', translation: 'Hola (neutro)' },
@@ -43,14 +43,14 @@ export const greetings: TopicPair = {
     slug: 'saludos',
     title: 'Saludos',
     description:
-      'Aprende a saludar en distintas situaciones del día a día en español.',
+      'Learn how to greet people in everyday Spanish situations.',
     freeRecordingPrompt:
       'Greet someone and ask how they are. Use the greetings you learned.',
     studySections: [
       {
-        title: 'Saludos básicos',
+        title: 'Basic greetings',
         intro:
-          'Estos son los saludos más comunes en español. Fíjate en cuán formal o informal suena cada uno.',
+          'These are the most common ways to greet someone in Spanish. Pay attention to how casual or formal each one feels.',
         vocabulary: [
           { term: 'Hola', translation: 'Hi' },
           { term: 'Buenos días', translation: 'Good morning' },

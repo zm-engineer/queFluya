@@ -9,14 +9,14 @@ export const atWork: TopicPair = {
   en: {
     slug: 'at-work',
     title: 'At Work',
-    description: 'Talk about your job, meetings and deadlines in English.',
+    description: 'Habla de tu trabajo, reuniones y plazos en inglés.',
     freeRecordingPrompt:
       'Habla de tu trabajo: qué haces, con quién trabajas y qué tienes pendiente esta semana.',
     studySections: [
       {
         title: 'En el trabajo',
         intro:
-          'How to talk about your work day: asking for help, scheduling, and handling deadlines.',
+          'Cómo hablar de tu jornada: pedir ayuda, organizar horarios y gestionar plazos.',
         vocabulary: [
           { term: 'meeting', translation: 'reunión' },
           { term: 'deadline', translation: 'fecha límite / plazo' },
@@ -46,14 +46,14 @@ export const atWork: TopicPair = {
   es: {
     slug: 'en-el-trabajo',
     title: 'En el trabajo',
-    description: 'Habla de tu trabajo, reuniones y plazos en español.',
+    description: 'Talk about your job, meetings and deadlines in Spanish.',
     freeRecordingPrompt:
       'Talk about your job: what you do, who you work with, and what you have to finish this week.',
     studySections: [
       {
-        title: 'En el trabajo',
+        title: 'At work',
         intro:
-          'Cómo hablar de tu jornada: pedir ayuda, organizar horarios y gestionar plazos.',
+          'How to talk about your work day: asking for help, scheduling, and handling deadlines.',
         vocabulary: [
           { term: 'la reunión', translation: 'meeting' },
           { term: 'la fecha límite / el plazo', translation: 'deadline' },

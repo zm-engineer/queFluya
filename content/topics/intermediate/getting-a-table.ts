@@ -11,14 +11,14 @@ export const gettingATable: TopicPair = {
     slug: 'getting-a-table',
     title: 'Getting a Table',
     description:
-      'Walk into a restaurant, mention your reservation (or lack of it), and get seated.',
+      'Entra en un restaurante, menciona si tienes reserva y consigue mesa, en inglés.',
     freeRecordingPrompt:
       'Entras a un restaurante con un amigo. Saluda al host, di si tienes reserva, pide una mesa y elige dónde sentarte.',
     studySections: [
       {
         title: 'Conseguir una mesa',
         intro:
-          'These phrases will help you walk into a restaurant and get seated.',
+          'Lo que necesitas para entrar y sentarte.',
         vocabulary: [
           { term: 'A table for two, please', translation: 'Una mesa para dos, por favor' },
           { term: 'Do you have a reservation?', translation: '¿Tienen reserva?' },
@@ -43,13 +43,13 @@ export const gettingATable: TopicPair = {
     slug: 'conseguir-mesa',
     title: 'Conseguir una mesa',
     description:
-      'Entrar en un restaurante en español: reserva, mesa, dónde sentarte.',
+      'Walk into a restaurant in Spanish: reservation, table, where to sit.',
     freeRecordingPrompt:
       'You walk into a restaurant with a friend. Greet the host, say whether you have a reservation, ask for a table, and choose where to sit.',
     studySections: [
       {
-        title: 'Conseguir una mesa',
-        intro: 'Lo que necesitas para entrar y sentarte.',
+        title: 'Getting a table',
+        intro: 'These phrases will help you walk into a restaurant and get seated.',
         vocabulary: [
           { term: 'Una mesa para dos, por favor', translation: 'A table for two, please' },
           { term: '¿Tienen reserva?', translation: 'Do you have a reservation?' },

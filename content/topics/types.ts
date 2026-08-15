@@ -4,13 +4,17 @@
 // + tandem placeholder). scripts/build-topics.ts turns these into the seed SQL.
 //
 // Convention:
+//  * The topic `title` stays in the topic's language — it's the topic's name,
+//    the way the learner recognises it (an ES topic is "Saludos", not "Greetings").
 //  * Vocabulary: `term` in the topic's language, `translation` in the other.
-//  * Study intro/dialogue/phrases: in the topic's language (immersion).
-//  * The recording prompt + the boilerplate practice-section titles/intros: in
-//    the LEARNER'S NATIVE language, i.e. the OPPOSITE of the topic's language
-//    (an EN topic is for Spanish natives → Spanish; an ES topic is for English
-//    natives → English). So `freeRecordingPrompt` on the `en` side is Spanish,
-//    and on the `es` side is English.
+//  * Study dialogue + practicePhrases: in the topic's language (immersion — this
+//    is the content the learner practises out loud).
+//  * Everything that is instruction/chrome — the topic `description`, the study
+//    section title + intro, the recording prompt, and the boilerplate
+//    practice-section titles/intros — goes in the LEARNER'S NATIVE language, i.e.
+//    the OPPOSITE of the topic's language (an EN topic is for Spanish natives →
+//    Spanish; an ES topic is for English natives → English). So on the `en` side
+//    description/title/intro/prompt are Spanish, and on the `es` side English.
 
 import type {
   Language,

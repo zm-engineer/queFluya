@@ -9,14 +9,14 @@ export const shoppingAndReturns: TopicPair = {
   en: {
     slug: 'shopping-and-returns',
     title: 'Shopping and Returns',
-    description: 'Buy clothes, try things on and return them in English.',
+    description: 'Compra ropa, pruébatela y devuélvela en inglés.',
     freeRecordingPrompt:
       'Estás en una tienda de ropa. Pregunta por una talla, di que te la quieres probar y que quieres devolver algo.',
     studySections: [
       {
         title: 'De compras',
         intro:
-          'Sizes, fitting rooms, and how to return or exchange something that doesn’t fit.',
+          'Tallas, probadores y cómo devolver o cambiar algo que no te queda bien.',
         vocabulary: [
           { term: 'size', translation: 'talla' },
           { term: 'to try on', translation: 'probarse' },
@@ -47,14 +47,14 @@ export const shoppingAndReturns: TopicPair = {
   es: {
     slug: 'de-compras',
     title: 'De compras',
-    description: 'Compra ropa, pruébatela y devuélvela en español.',
+    description: 'Buy clothes, try things on and return them in Spanish.',
     freeRecordingPrompt:
       "You're in a clothes shop. Ask about a size, say you want to try it on, and that you want to return something.",
     studySections: [
       {
-        title: 'De compras',
+        title: 'Shopping',
         intro:
-          'Tallas, probadores y cómo devolver o cambiar algo que no te queda bien.',
+          'Sizes, fitting rooms, and how to return or exchange something that doesn’t fit.',
         vocabulary: [
           { term: 'la talla', translation: 'size' },
           { term: 'probarse', translation: 'to try on' },

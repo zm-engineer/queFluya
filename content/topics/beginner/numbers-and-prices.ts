@@ -10,14 +10,14 @@ export const numbersAndPrices: TopicPair = {
   en: {
     slug: 'numbers-and-prices',
     title: 'Numbers and Prices',
-    description: 'Count, say prices and pay for things in everyday English.',
+    description: 'Cuenta, di precios y paga cosas en inglés del día a día.',
     freeRecordingPrompt:
       'Imagina que compras algo en una tienda. Pregunta cuánto cuesta, di el precio en voz alta y decide si lo pagas con tarjeta o en efectivo.',
     studySections: [
       {
         title: 'Los números',
         intro:
-          'Numbers you use every day: to count, give your phone number, or say how many. Say each one out loud.',
+          'Números que usas cada día: para contar, dar tu teléfono o decir cuántos. Di cada uno en voz alta.',
         vocabulary: [
           { term: 'one, two, three', translation: 'uno, dos, tres' },
           { term: 'four, five, six', translation: 'cuatro, cinco, seis' },
@@ -42,7 +42,7 @@ export const numbersAndPrices: TopicPair = {
       {
         title: 'Precios y pagar',
         intro:
-          'Ask how much something costs, understand the price, and pay. These come up every single time you shop.',
+          'Pregunta cuánto cuesta algo, entiende el precio y paga. Aparece siempre que vas de compras.',
         vocabulary: [
           { term: 'How much is it?', translation: '¿Cuánto cuesta?' },
           { term: 'How much is this?', translation: '¿Cuánto vale esto?' },
@@ -71,14 +71,14 @@ export const numbersAndPrices: TopicPair = {
   es: {
     slug: 'numeros-y-precios',
     title: 'Los números y los precios',
-    description: 'Cuenta, di precios y paga cosas en español del día a día.',
+    description: 'Count, say prices and pay for things in everyday Spanish.',
     freeRecordingPrompt:
       "Imagine you're buying something at a shop. Ask how much it costs, say the price out loud, and decide whether to pay by card or cash.",
     studySections: [
       {
-        title: 'Los números',
+        title: 'Numbers',
         intro:
-          'Números que usas cada día: para contar, dar tu teléfono o decir cuántos. Di cada uno en voz alta.',
+          'Numbers you use every day: to count, give your phone number, or say how many. Say each one out loud.',
         vocabulary: [
           { term: 'uno, dos, tres', translation: 'one, two, three' },
           { term: 'cuatro, cinco, seis', translation: 'four, five, six' },
@@ -101,9 +101,9 @@ export const numbersAndPrices: TopicPair = {
         ],
       },
       {
-        title: 'Precios y pagar',
+        title: 'Prices and paying',
         intro:
-          'Pregunta cuánto cuesta algo, entiende el precio y paga. Aparece siempre que vas de compras.',
+          'Ask how much something costs, understand the price, and pay. These come up every single time you shop.',
         vocabulary: [
           { term: '¿Cuánto cuesta?', translation: 'How much is it?' },
           { term: '¿Cuánto vale esto?', translation: 'How much is this?' },
