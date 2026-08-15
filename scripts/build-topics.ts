@@ -59,7 +59,7 @@ function validate(rows: Row[]): string[] {
 const sqlStr = (s: string) => `'${s.replace(/'/g, "''")}'`
 
 function rowValues(r: Row): string {
-  const content = JSON.stringify({ sections: buildSections(r.side) })
+  const content = JSON.stringify({ sections: buildSections(r.side, r.language) })
   return [
     sqlStr(r.side.slug),
     sqlStr(r.side.title),

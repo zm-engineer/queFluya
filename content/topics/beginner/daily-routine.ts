@@ -48,7 +48,7 @@ export const dailyRoutine: TopicPair = {
     title: 'La rutina diaria',
     description: 'Describe tu día típico con verbos del día a día.',
     freeRecordingPrompt:
-      'Cuenta tu día normal de principio a fin: a qué hora te levantas, qué haces y cuándo te acuestas.',
+      'Describe your normal day from start to finish: what time you get up, what you do, and when you go to bed.',
     studySections: [
       {
         title: 'La rutina diaria',
