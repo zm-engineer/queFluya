@@ -9,14 +9,14 @@ export const atTheDoctor: TopicPair = {
   en: {
     slug: 'at-the-doctor',
     title: 'At the Doctor',
-    description: 'Describe symptoms and understand a doctor in English.',
+    description: 'Describe síntomas y entiende al médico en inglés.',
     freeRecordingPrompt:
       'Estás en el médico. Explica cómo te sientes, qué te duele y desde cuándo.',
     studySections: [
       {
         title: 'En el médico',
         intro:
-          "Explaining how you feel and what hurts. Important to know before you need it abroad.",
+          'Explicar cómo te sientes y qué te duele. Importante saberlo antes de necesitarlo fuera.',
         vocabulary: [
           { term: 'it hurts', translation: 'me duele' },
           { term: 'headache', translation: 'dolor de cabeza' },
@@ -47,14 +47,14 @@ export const atTheDoctor: TopicPair = {
   es: {
     slug: 'en-el-medico',
     title: 'En el médico',
-    description: 'Describe síntomas y entiende al médico en español.',
+    description: 'Describe symptoms and understand a doctor in Spanish.',
     freeRecordingPrompt:
       "You're at the doctor. Explain how you feel, what hurts, and since when.",
     studySections: [
       {
-        title: 'En el médico',
+        title: 'At the doctor',
         intro:
-          'Explicar cómo te sientes y qué te duele. Importante saberlo antes de necesitarlo fuera.',
+          'Explaining how you feel and what hurts. Important to know before you need it abroad.',
         vocabulary: [
           { term: 'me duele', translation: 'it hurts' },
           { term: 'el dolor de cabeza', translation: 'headache' },

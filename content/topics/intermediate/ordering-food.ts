@@ -10,13 +10,13 @@ export const orderingFood: TopicPair = {
   en: {
     slug: 'ordering-food',
     title: 'Ordering Food',
-    description: 'Ask for the menu, order politely, and pay the bill in English.',
+    description: 'Pide el menú, ordena con educación y paga la cuenta en inglés.',
     freeRecordingPrompt:
       'El camarero llega a tu mesa. Pídele recomendaciones, ordena un plato y una bebida, y al final pide la cuenta.',
     studySections: [
       {
         title: 'Pedir comida',
-        intro: 'How to ask for what you want — politely.',
+        intro: 'Cómo pedir educadamente.',
         vocabulary: [
           { term: "I'll have...", translation: 'Tomaré...' },
           { term: 'Could I get...?', translation: '¿Podría pedir...?' },
@@ -41,13 +41,13 @@ export const orderingFood: TopicPair = {
   es: {
     slug: 'pedir-comida',
     title: 'Pedir comida',
-    description: 'Pide en español: menú, plato, bebida y la cuenta.',
+    description: 'Order in Spanish: menu, dish, drink, and the bill.',
     freeRecordingPrompt:
       'The waiter comes to your table. Ask for recommendations, order a dish and a drink, and ask for the bill at the end.',
     studySections: [
       {
-        title: 'Pedir la comida',
-        intro: 'Cómo pedir educadamente.',
+        title: 'Ordering food',
+        intro: 'How to ask for what you want — politely.',
         vocabulary: [
           { term: 'Voy a pedir...', translation: "I'll have..." },
           { term: '¿Qué me recomienda?', translation: 'What do you recommend?' },

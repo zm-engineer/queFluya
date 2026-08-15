@@ -10,14 +10,14 @@ export const familyAndPeople: TopicPair = {
   en: {
     slug: 'family-and-people',
     title: 'Family and People',
-    description: 'Talk about your family and the people around you.',
+    description: 'Habla de tu familia y de la gente que te rodea, en inglés.',
     freeRecordingPrompt:
       'Presenta a tu familia: di quiénes son y algo de cada uno (nombre, edad o dónde viven).',
     studySections: [
       {
         title: 'La familia',
         intro:
-          'The people closest to you. Great for small talk when you meet someone new.',
+          'Las personas más cercanas. Perfecto para romper el hielo cuando conoces a alguien.',
         vocabulary: [
           { term: 'mother / father', translation: 'madre / padre' },
           { term: 'parents', translation: 'padres' },
@@ -45,14 +45,14 @@ export const familyAndPeople: TopicPair = {
   es: {
     slug: 'la-familia',
     title: 'La familia',
-    description: 'Habla de tu familia y de la gente cercana.',
+    description: 'Talk about your family and the people around you, in Spanish.',
     freeRecordingPrompt:
       'Introduce your family: say who they are and something about each one (name, age, or where they live).',
     studySections: [
       {
-        title: 'La familia',
+        title: 'Family',
         intro:
-          'Las personas más cercanas. Perfecto para romper el hielo cuando conoces a alguien.',
+          'The people closest to you. Great for small talk when you meet someone new.',
         vocabulary: [
           { term: 'madre / padre', translation: 'mother / father' },
           { term: 'los padres', translation: 'parents' },

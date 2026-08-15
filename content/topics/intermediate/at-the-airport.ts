@@ -10,14 +10,14 @@ export const atTheAirport: TopicPair = {
   en: {
     slug: 'at-the-airport',
     title: 'At the Airport',
-    description: 'Check in, pass security and board your flight in English.',
+    description: 'Factura, pasa el control y embarca tu vuelo en inglés.',
     freeRecordingPrompt:
       'Estás facturando para un vuelo. Da tu destino, di cuántas maletas llevas y pregunta por la puerta de embarque.',
     studySections: [
       {
         title: 'En el aeropuerto',
         intro:
-          'The words and phrases you need from check-in to the gate. You use these every time you fly.',
+          'Las palabras y frases que necesitas desde la facturación hasta la puerta. Las usas cada vez que vuelas.',
         vocabulary: [
           { term: 'boarding pass', translation: 'tarjeta de embarque' },
           { term: 'check-in desk', translation: 'mostrador de facturación' },
@@ -48,14 +48,14 @@ export const atTheAirport: TopicPair = {
   es: {
     slug: 'en-el-aeropuerto',
     title: 'En el aeropuerto',
-    description: 'Factura, pasa el control y embarca tu vuelo en español.',
+    description: 'Check in, pass security and board your flight in Spanish.',
     freeRecordingPrompt:
       "You're checking in for a flight. Give your destination, say how many bags you have, and ask about your gate.",
     studySections: [
       {
-        title: 'En el aeropuerto',
+        title: 'At the airport',
         intro:
-          'Las palabras y frases que necesitas desde la facturación hasta la puerta. Las usas cada vez que vuelas.',
+          'The words and phrases you need from check-in to the gate. You use these every time you fly.',
         vocabulary: [
           { term: 'la tarjeta de embarque', translation: 'boarding pass' },
           { term: 'el mostrador de facturación', translation: 'check-in desk' },

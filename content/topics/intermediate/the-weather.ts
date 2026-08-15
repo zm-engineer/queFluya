@@ -9,14 +9,14 @@ export const theWeather: TopicPair = {
   en: {
     slug: 'the-weather',
     title: 'The Weather',
-    description: 'Talk about the weather and the forecast in English.',
+    description: 'Habla del tiempo y del pronóstico en inglés.',
     freeRecordingPrompt:
       'Describe el tiempo que hace hoy y el que crees que hará mañana. Di qué ropa te vas a poner.',
     studySections: [
       {
         title: 'El tiempo',
         intro:
-          'The most common small talk there is — describe today and read a forecast.',
+          'La conversación más común que existe: describe el día de hoy y lee un pronóstico.',
         vocabulary: [
           { term: "it's sunny", translation: 'hace sol' },
           { term: "it's raining", translation: 'está lloviendo' },
@@ -47,14 +47,14 @@ export const theWeather: TopicPair = {
   es: {
     slug: 'el-tiempo',
     title: 'El tiempo',
-    description: 'Habla del tiempo y del pronóstico en español.',
+    description: 'Talk about the weather and the forecast in Spanish.',
     freeRecordingPrompt:
       "Describe today's weather and what you think it'll be like tomorrow. Say what you're going to wear.",
     studySections: [
       {
-        title: 'El tiempo',
+        title: 'The weather',
         intro:
-          'La conversación más común que existe: describe el día de hoy y lee un pronóstico.',
+          'The most common small talk there is — describe today and read a forecast.',
         vocabulary: [
           { term: 'hace sol', translation: "it's sunny" },
           { term: 'está lloviendo', translation: "it's raining" },

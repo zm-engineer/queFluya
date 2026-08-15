@@ -9,14 +9,14 @@ export const atTheHotel: TopicPair = {
   en: {
     slug: 'at-the-hotel',
     title: 'At the Hotel',
-    description: 'Check in, ask about your room and amenities in English.',
+    description: 'Haz el check-in y pregunta por tu habitación en inglés.',
     freeRecordingPrompt:
       'Llegas a un hotel. Di que tienes una reserva, pregunta por el desayuno y la hora de salida.',
     studySections: [
       {
         title: 'En el hotel',
         intro:
-          'Everything from arriving with a booking to asking about breakfast and check-out.',
+          'Desde llegar con una reserva hasta preguntar por el desayuno y la salida.',
         vocabulary: [
           { term: 'reservation / booking', translation: 'reserva' },
           { term: 'single / double room', translation: 'habitación individual / doble' },
@@ -47,14 +47,14 @@ export const atTheHotel: TopicPair = {
   es: {
     slug: 'en-el-hotel',
     title: 'En el hotel',
-    description: 'Haz el check-in y pregunta por tu habitación en español.',
+    description: 'Check in, ask about your room and amenities in Spanish.',
     freeRecordingPrompt:
       'You arrive at a hotel. Say you have a reservation, and ask about breakfast and check-out time.',
     studySections: [
       {
-        title: 'En el hotel',
+        title: 'At the hotel',
         intro:
-          'Desde llegar con una reserva hasta preguntar por el desayuno y la salida.',
+          'Everything from arriving with a booking to asking about breakfast and check-out.',
         vocabulary: [
           { term: 'la reserva', translation: 'reservation / booking' },
           { term: 'la habitación individual / doble', translation: 'single / double room' },

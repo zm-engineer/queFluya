@@ -10,14 +10,14 @@ export const directions: TopicPair = {
   en: {
     slug: 'directions',
     title: 'Directions',
-    description: 'Ask for and give simple directions on the street.',
+    description: 'Pregunta y da indicaciones sencillas por la calle, en inglés.',
     freeRecordingPrompt:
       'Alguien te pregunta cómo llegar a un sitio. Dale indicaciones: recto, giros y alguna referencia.',
     studySections: [
       {
         title: 'Cómo llegar',
         intro:
-          'Ask where something is and follow simple directions. Essential when you get lost.',
+          'Pregunta dónde está algo y sigue indicaciones sencillas. Esencial cuando te pierdes.',
         vocabulary: [
           { term: 'Where is…?', translation: '¿Dónde está…?' },
           { term: 'How do I get to…?', translation: '¿Cómo llego a…?' },
@@ -45,14 +45,14 @@ export const directions: TopicPair = {
   es: {
     slug: 'como-llegar',
     title: 'Cómo llegar',
-    description: 'Pregunta y da indicaciones sencillas por la calle.',
+    description: 'Ask for and give simple directions on the street, in Spanish.',
     freeRecordingPrompt:
       'Someone asks you how to get somewhere. Give directions: straight ahead, turns, and a landmark.',
     studySections: [
       {
-        title: 'Cómo llegar',
+        title: 'Getting there',
         intro:
-          'Pregunta dónde está algo y sigue indicaciones sencillas. Esencial cuando te pierdes.',
+          'Ask where something is and follow simple directions. Essential when you get lost.',
         vocabulary: [
           { term: '¿Dónde está…?', translation: 'Where is…?' },
           { term: '¿Cómo llego a…?', translation: 'How do I get to…?' },

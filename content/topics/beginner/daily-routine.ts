@@ -10,14 +10,14 @@ export const dailyRoutine: TopicPair = {
   en: {
     slug: 'daily-routine',
     title: 'Daily Routine',
-    description: 'Describe your typical day with everyday verbs.',
+    description: 'Describe tu día típico con verbos del día a día, en inglés.',
     freeRecordingPrompt:
       'Cuenta tu día normal de principio a fin: a qué hora te levantas, qué haces y cuándo te acuestas.',
     studySections: [
       {
         title: 'La rutina diaria',
         intro:
-          'The verbs you use to describe an ordinary day. Perfect for practising the present tense.',
+          'Los verbos para describir un día normal. Perfecto para practicar el presente.',
         vocabulary: [
           { term: 'wake up / get up', translation: 'despertarse / levantarse' },
           { term: 'have breakfast', translation: 'desayunar' },
@@ -46,14 +46,14 @@ export const dailyRoutine: TopicPair = {
   es: {
     slug: 'la-rutina-diaria',
     title: 'La rutina diaria',
-    description: 'Describe tu día típico con verbos del día a día.',
+    description: 'Describe your typical day with everyday verbs, in Spanish.',
     freeRecordingPrompt:
       'Describe your normal day from start to finish: what time you get up, what you do, and when you go to bed.',
     studySections: [
       {
-        title: 'La rutina diaria',
+        title: 'Daily routine',
         intro:
-          'Los verbos para describir un día normal. Perfecto para practicar el presente.',
+          'The verbs you use to describe an ordinary day. Perfect for practising the present tense.',
         vocabulary: [
           { term: 'despertarse / levantarse', translation: 'wake up / get up' },
           { term: 'desayunar', translation: 'have breakfast' },

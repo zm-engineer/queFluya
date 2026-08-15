@@ -10,14 +10,14 @@ export const introductions: TopicPair = {
   en: {
     slug: 'introductions',
     title: 'Introductions',
-    description: 'Introduce yourself in English: name, origin, a little about you.',
+    description: 'Preséntate en inglés: nombre, origen y algo sobre ti.',
     freeRecordingPrompt:
       'Preséntate a un extraño en 30 segundos. Di tu nombre, de dónde eres y algo breve sobre ti.',
     studySections: [
       {
         title: 'Presentándote',
         intro:
-          "Once you've said hello, the next step is usually to share your name and a little about yourself.",
+          'Después de saludar, lo normal es decir tu nombre y algo sobre ti.',
         vocabulary: [
           { term: 'My name is...', translation: 'Me llamo...' },
           { term: "I'm from...", translation: 'Soy de...' },
@@ -43,13 +43,13 @@ export const introductions: TopicPair = {
     slug: 'presentaciones',
     title: 'Presentaciones',
     description:
-      'Aprende a presentarte en español: nombre, origen y un poco sobre ti.',
+      'Introduce yourself in Spanish: name, origin, a little about you.',
     freeRecordingPrompt:
       'Introduce yourself to a stranger in 30 seconds. Say your name, where you are from, and something brief about you.',
     studySections: [
       {
-        title: 'Presentarse',
-        intro: 'Cómo decir tu nombre, de dónde eres y a qué te dedicas.',
+        title: 'Introducing yourself',
+        intro: "How to say your name, where you're from, and what you do.",
         vocabulary: [
           { term: 'Me llamo...', translation: 'My name is...' },
           { term: 'Soy de...', translation: "I'm from..." },

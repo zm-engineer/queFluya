@@ -10,14 +10,14 @@ export const gettingAround: TopicPair = {
   en: {
     slug: 'getting-around',
     title: 'Getting Around the City',
-    description: 'Use public transport and ask for routes in English.',
+    description: 'Usa el transporte público y pregunta rutas en inglés.',
     freeRecordingPrompt:
       'Estás perdido en una ciudad. Pregunta cómo llegar a un sitio y qué transporte tomar.',
     studySections: [
       {
         title: 'Por la ciudad',
         intro:
-          'Buses, trains and tickets — how to ask for a route and get to where you’re going.',
+          'Autobuses, trenes y billetes: cómo preguntar una ruta y llegar a tu destino.',
         vocabulary: [
           { term: 'bus / train / subway', translation: 'autobús / tren / metro' },
           { term: 'ticket', translation: 'billete / boleto' },
@@ -48,14 +48,14 @@ export const gettingAround: TopicPair = {
   es: {
     slug: 'por-la-ciudad',
     title: 'Por la ciudad',
-    description: 'Usa el transporte público y pregunta rutas en español.',
+    description: 'Use public transport and ask for routes in Spanish.',
     freeRecordingPrompt:
       'You are lost in a city. Ask how to get somewhere and what transport to take.',
     studySections: [
       {
-        title: 'Por la ciudad',
+        title: 'Around the city',
         intro:
-          'Autobuses, trenes y billetes: cómo preguntar una ruta y llegar a tu destino.',
+          'Buses, trains and tickets — how to ask for a route and get to where you’re going.',
         vocabulary: [
           { term: 'el autobús / el tren / el metro', translation: 'bus / train / subway' },
           { term: 'el billete / el boleto', translation: 'ticket' },
