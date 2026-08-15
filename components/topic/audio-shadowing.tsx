@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useDict } from '@/components/i18n/language-provider'
 import { cn } from '@/lib/utils'
 import type { Language, TopicDialogueLine } from '@/lib/topics'
 
@@ -36,6 +37,7 @@ type Props = {
 type PlayingWord = { lineIdx: number; wordIdx: number }
 
 export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
+  const t = useDict()
   const [mode, setMode] = useState<Mode>('idle')
   const [currentIdx, setCurrentIdx] = useState(0)
   const [playbackRate, setPlaybackRate] = useState(1.0)
@@ -64,9 +66,11 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
   }, [])
 
   // Defined as a ref so the recursive call from inside playLine works without
-  // re-creating the function each render.
+  // re-creating the function each render. It intentionally reads the latest
+  // dialogue/playbackRate/t on every render, hence the render-phase assignment.
   const playLineRef = useRef<(idx: number, runId: number) => void>(() => {})
 
+  // eslint-disable-next-line react-hooks/refs -- intentional latest-closure ref
   playLineRef.current = (idx: number, runId: number) => {
     if (idx >= dialogue.length) {
       setMode('done')
@@ -119,19 +123,19 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
 
         audio.onerror = () => {
           if (runIdRef.current !== runId) return
-          setError('No se pudo reproducir el audio')
+          setError(t.practice.playbackErrorAudio)
           setMode('error')
         }
 
         audio.play().catch(() => {
           if (runIdRef.current !== runId) return
-          setError('Bloqueado por el navegador. Toca de nuevo.')
+          setError(t.practice.playbackBlocked)
           setMode('error')
         })
       })
       .catch((err) => {
         if (runIdRef.current !== runId) return
-        setError(err instanceof Error ? err.message : 'TTS falló')
+        setError(err instanceof Error ? err.message : t.practice.ttsFailed)
         setMode('error')
       })
   }
@@ -195,8 +199,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
   if (dialogue.length === 0) {
     return (
       <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 text-sm font-bold text-amber-900">
-        ⚠️ Este tema no tiene diálogo todavía. No se puede practicar
-        shadowing.
+        ⚠️ {t.practice.shadowNoDialogue}
       </div>
     )
   }
@@ -209,7 +212,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
       <div className="bg-stone-50 border-2 border-stone-200 rounded-2xl p-5">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="text-sm font-bold text-stone-700">
-            🎧 Escucha y repite cada línea en voz alta.
+            🎧 {t.practice.shadowHint}
           </div>
           <div className="flex items-center gap-1.5">
             {PLAYBACK_RATES.map((rate) => (
@@ -275,7 +278,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
                             isWordActive &&
                               'text-emerald-700 font-black decoration-emerald-500 decoration-solid decoration-2'
                           )}
-                          aria-label={`Escuchar ${word}`}
+                          aria-label={t.practice.listenWordAria(word)}
                         >
                           {word}
                         </span>
@@ -289,7 +292,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
                 )}
                 {isPausing && (
                   <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 shrink-0 self-center bg-white px-2 py-1 rounded-full">
-                    Repite ahora
+                    {t.practice.repeatNow}
                   </span>
                 )}
               </div>
@@ -297,7 +300,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
           })}
         </div>
         <p className="text-[11px] font-bold text-stone-400 mt-3">
-          💡 Toca cualquier palabra para escucharla sola.
+          💡 {t.practice.tapWordHint}
         </p>
       </div>
 
@@ -310,10 +313,10 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs font-bold text-stone-400">
           {mode === 'done'
-            ? `¡Hecho! Repasaste ${dialogue.length} líneas.`
+            ? t.practice.shadowDone(dialogue.length)
             : isActive
-              ? `Línea ${currentIdx + 1} de ${dialogue.length}`
-              : 'Listo para empezar'}
+              ? t.practice.lineOf(currentIdx + 1, dialogue.length)
+              : t.practice.readyToStart}
         </div>
         <div className="flex gap-2">
           {mode === 'done' ? (
@@ -323,7 +326,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
               size="sm"
               onClick={restart}
             >
-              ↺ Repetir
+              ↺ {t.practice.repeat}
             </Button>
           ) : isActive ? (
             <Button
@@ -332,7 +335,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
               size="sm"
               onClick={stop}
             >
-              ⏹ Parar
+              ⏹ {t.practice.stop}
             </Button>
           ) : (
             <Button
@@ -341,7 +344,7 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
               size="sm"
               onClick={start}
             >
-              ▶ {mode === 'error' ? 'Reintentar' : 'Reproducir todo'}
+              ▶ {mode === 'error' ? t.practice.retry : t.practice.playAll}
             </Button>
           )}
         </div>

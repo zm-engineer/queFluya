@@ -9,13 +9,17 @@ import {
   type Language,
   type TopicVocab,
 } from '@/lib/topics'
+import { getDict } from '@/lib/i18n/dictionaries'
 
 export default async function TandemPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ reservation?: string }>
 }) {
   const { slug } = await params
+  const { reservation } = await searchParams
 
   const supabase = await createClient()
   const {
@@ -26,11 +30,13 @@ export default async function TandemPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username')
+    .select('id, username, native_language')
     .eq('user_id', user.id)
     .maybeSingle()
 
   if (!profile) redirect('/onboarding')
+
+  const t = getDict(profile.native_language as Language)
 
   const topic = await getTopicBySlug(supabase, slug)
   if (!topic) notFound()
@@ -70,18 +76,17 @@ export default async function TandemPage({
           href={`/topics/${slug}`}
           className="text-sm font-black text-stone-500 hover:text-emerald-600 transition-colors inline-block mb-6"
         >
-          ← Volver al tema
+          {t.back.toTopic}
         </Link>
         <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full mb-4">
           <span>👥</span>
-          <span>Conectar en vivo</span>
+          <span>{t.tandemPage.badge}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-stone-900 leading-tight mb-3">
           {topic.title}
         </h1>
         <p className="text-stone-600 text-base font-semibold leading-relaxed max-w-2xl mb-10">
-          Practica este tema por chat con otra persona. 5 minutos en inglés, 5 en
-          español — y el vocabulario del tema siempre a mano.
+          {t.tandemPage.intro}
         </p>
 
         <TandemRoom
@@ -92,6 +97,7 @@ export default async function TandemPage({
           language={topic.language}
           pairKey={topic.pairKey}
           vocabByLanguage={vocabByLanguage}
+          initialReservationId={reservation ?? null}
         />
       </section>
     </main>

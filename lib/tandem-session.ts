@@ -261,6 +261,43 @@ export async function getSessionById(
   return (data as SessionRow) ?? null
 }
 
+/**
+ * Join an existing session by id (used by scheduled reservations, which already
+ * know the session id — no invite code involved). Adds the caller as a
+ * participant if needed and flips the session ACTIVE, then returns it.
+ */
+export async function joinSessionById(
+  supabase: SupabaseClient,
+  profileId: string,
+  sessionId: string
+): Promise<SessionRow | null> {
+  const { data: existing } = await supabase
+    .from('session_participants')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('profile_id', profileId)
+    .maybeSingle()
+
+  if (!existing) {
+    const { error } = await supabase
+      .from('session_participants')
+      .insert({ session_id: sessionId, profile_id: profileId })
+    // 23505 = already in; "full" = capacity trigger — both mean we can proceed.
+    if (error && error.code !== '23505' && !error.message.includes('full')) {
+      return null
+    }
+  }
+
+  const startedAt = new Date().toISOString()
+  await supabase
+    .from('tandem_sessions')
+    .update({ status: 'ACTIVE', started_at: startedAt })
+    .eq('id', sessionId)
+    .eq('status', 'WAITING')
+
+  return getSessionById(supabase, sessionId)
+}
+
 export async function loadMessages(
   supabase: SupabaseClient,
   sessionId: string

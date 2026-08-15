@@ -3,13 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { TopicSections } from '@/components/topic/topic-sections'
-import { getTopicBySlug, type Level } from '@/lib/topics'
-
-const LEVEL_LABEL: Record<Level, string> = {
-  BEGINNER: 'Principiante',
-  INTERMEDIATE: 'Intermedio',
-  ADVANCED: 'Avanzado',
-}
+import { getTopicBySlug, type Language, type Level } from '@/lib/topics'
+import { getDict } from '@/lib/i18n/dictionaries'
 
 const LEVEL_EMOJI: Record<Level, string> = {
   BEGINNER: '🌱',
@@ -19,10 +14,14 @@ const LEVEL_EMOJI: Record<Level, string> = {
 
 export default async function TopicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ section?: string }>
 }) {
   const { slug } = await params
+  const { section } = await searchParams
+  const initialSection = section != null ? Number(section) : undefined
 
   const supabase = await createClient()
   const {
@@ -35,13 +34,15 @@ export default async function TopicPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username')
+    .select('id, username, native_language')
     .eq('user_id', user.id)
     .maybeSingle()
 
   if (!profile) {
     redirect('/onboarding')
   }
+
+  const t = getDict(profile.native_language as Language)
 
   const topic = await getTopicBySlug(supabase, slug)
 
@@ -75,11 +76,11 @@ export default async function TopicPage({
           href="/dashboard"
           className="text-sm font-black text-stone-500 hover:text-emerald-600 transition-colors inline-block mb-6"
         >
-          ← Volver a temas
+          {t.back.toTopics}
         </Link>
         <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full mb-4">
           <span>{LEVEL_EMOJI[topic.level]}</span>
-          <span>{LEVEL_LABEL[topic.level]}</span>
+          <span>{t.common.levels[topic.level]}</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-black text-stone-900 leading-tight mb-4">
           {topic.title}
@@ -97,6 +98,11 @@ export default async function TopicPage({
           topicTitle={topic.title}
           topicDescription={topic.description}
           profileId={profile.id}
+          initialSection={
+            initialSection != null && Number.isInteger(initialSection)
+              ? initialSection
+              : undefined
+          }
         />
       </section>
     </main>

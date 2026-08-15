@@ -35,6 +35,33 @@ export function currentSectionFor(
   return Math.max(0, total - 1)
 }
 
+/**
+ * All of a user's completed sections across every topic, in one query, as
+ * slug → array of completed (0-indexed) sections. For the dashboard journey,
+ * which shows progress + gating for many topics at once.
+ */
+export async function loadAllProgress(
+  supabase: SupabaseClient,
+  profileId: string
+): Promise<Record<string, number[]>> {
+  const { data, error } = await supabase
+    .from('topic_progress')
+    .select('topic_slug, section, completed_at')
+    .eq('profile_id', profileId)
+
+  if (error || !data) return {}
+  const out: Record<string, number[]> = {}
+  for (const r of data as {
+    topic_slug: string
+    section: number
+    completed_at: string | null
+  }[]) {
+    if (r.completed_at === null) continue
+    ;(out[r.topic_slug] ??= []).push(r.section - 1)
+  }
+  return out
+}
+
 export async function loadCompletedSections(
   supabase: SupabaseClient,
   profileId: string,

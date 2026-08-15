@@ -1,5 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
-import { getTopicBySlug, getTopicsForUser } from './topics'
+import { getTopicBySlug, getTopicsForUser, isLevelUnlocked } from './topics'
+
+describe('isLevelUnlocked', () => {
+  it('unlocks the user level and everything below it', () => {
+    expect(isLevelUnlocked('BEGINNER', 'INTERMEDIATE')).toBe(true)
+    expect(isLevelUnlocked('INTERMEDIATE', 'INTERMEDIATE')).toBe(true)
+  })
+
+  it('locks levels above the user level', () => {
+    expect(isLevelUnlocked('ADVANCED', 'INTERMEDIATE')).toBe(false)
+    expect(isLevelUnlocked('INTERMEDIATE', 'BEGINNER')).toBe(false)
+  })
+})
 
 type AnySupabase = Parameters<typeof getTopicsForUser>[0]
 

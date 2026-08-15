@@ -5,9 +5,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDict } from '@/components/i18n/language-provider'
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
+  const t = useDict()
 
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -19,7 +21,7 @@ export default function ForgotPasswordPage() {
     setError(null)
 
     if (!email.trim()) {
-      setError('Introduce tu email.')
+      setError(t.auth.enterEmail)
       return
     }
 
@@ -31,7 +33,7 @@ export default function ForgotPasswordPage() {
     setLoading(false)
 
     if (authError) {
-      setError('No se pudo enviar el enlace. Inténtalo de nuevo.')
+      setError(t.auth.forgot.sendFail)
       return
     }
 
@@ -51,18 +53,17 @@ export default function ForgotPasswordPage() {
           <div className="mt-12 bg-white border-2 border-stone-100 rounded-3xl p-10">
             <p className="text-6xl mb-4">📨</p>
             <h1 className="text-3xl font-black text-stone-900 mb-3">
-              Revisa tu email
+              {t.auth.forgot.successTitle}
             </h1>
             <p className="text-stone-600 font-semibold leading-relaxed">
-              Te enviamos un enlace para restablecer tu contraseña. Haz click
-              en el enlace para continuar.
+              {t.auth.forgot.successBody}
             </p>
           </div>
           <Link
             href="/login"
             className="inline-block mt-8 text-sm font-black text-emerald-600 hover:text-emerald-700 transition-colors"
           >
-            ← Volver al inicio de sesión
+            {t.auth.backToLogin}
           </Link>
         </div>
       </main>
@@ -80,10 +81,10 @@ export default function ForgotPasswordPage() {
             que<span className="text-emerald-500">Fluya</span>
           </Link>
           <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
-            Recupera tu contraseña 🔑
+            {t.auth.forgot.title}
           </h1>
           <p className="text-stone-500 font-semibold">
-            Te enviaremos un enlace por email.
+            {t.auth.forgot.subtitle}
           </p>
         </div>
 
@@ -93,7 +94,7 @@ export default function ForgotPasswordPage() {
               htmlFor="email"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Email
+              {t.auth.email}
             </label>
             <Input
               id="email"
@@ -117,17 +118,17 @@ export default function ForgotPasswordPage() {
             size="lg"
             className="w-full"
           >
-            {loading ? 'Enviando…' : 'Enviar enlace'}
+            {loading ? t.auth.forgot.loading : t.auth.forgot.submit}
           </Button>
         </form>
 
         <p className="text-center text-sm font-semibold text-stone-500 mt-10">
-          ¿La recordaste?{' '}
+          {t.auth.forgot.remembered}{' '}
           <Link
             href="/login"
             className="text-emerald-600 font-black hover:text-emerald-700 transition-colors"
           >
-            Iniciar sesión
+            {t.auth.signIn}
           </Link>
         </p>
       </div>

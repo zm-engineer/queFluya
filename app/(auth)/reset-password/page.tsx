@@ -6,10 +6,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDict } from '@/components/i18n/language-provider'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const supabase = createClient()
+  const t = useDict()
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -21,12 +23,12 @@ export default function ResetPasswordPage() {
     setError(null)
 
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.')
+      setError(t.auth.passwordMin)
       return
     }
 
     if (password !== confirm) {
-      setError('Las contraseñas no coinciden.')
+      setError(t.auth.passwordsNoMatch)
       return
     }
 
@@ -35,7 +37,7 @@ export default function ResetPasswordPage() {
     setLoading(false)
 
     if (authError) {
-      setError('No se pudo actualizar tu contraseña. El enlace puede haber expirado.')
+      setError(t.auth.reset.updateFail)
       return
     }
 
@@ -53,10 +55,10 @@ export default function ResetPasswordPage() {
             que<span className="text-emerald-500">Fluya</span>
           </Link>
           <h1 className="text-4xl font-black text-stone-900 mt-10 mb-2">
-            Nueva contraseña 🔐
+            {t.auth.reset.title}
           </h1>
           <p className="text-stone-500 font-semibold">
-            Mínimo 8 caracteres.
+            {t.auth.reset.subtitle}
           </p>
         </div>
 
@@ -66,7 +68,7 @@ export default function ResetPasswordPage() {
               htmlFor="password"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Contraseña nueva
+              {t.auth.reset.newPassword}
             </label>
             <Input
               id="password"
@@ -74,7 +76,7 @@ export default function ResetPasswordPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
+              placeholder={t.auth.register.passwordPlaceholder}
             />
           </div>
 
@@ -83,7 +85,7 @@ export default function ResetPasswordPage() {
               htmlFor="confirm"
               className="block text-xs font-black tracking-wider uppercase text-stone-500 mb-2"
             >
-              Confirmar contraseña
+              {t.auth.register.confirmPassword}
             </label>
             <Input
               id="confirm"
@@ -107,7 +109,7 @@ export default function ResetPasswordPage() {
             size="lg"
             className="w-full"
           >
-            {loading ? 'Guardando…' : 'Guardar'}
+            {loading ? t.auth.reset.loading : t.auth.reset.submit}
           </Button>
         </form>
       </div>

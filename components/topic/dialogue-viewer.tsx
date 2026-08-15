@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
+import { useDict } from '@/components/i18n/language-provider'
 import { cn } from '@/lib/utils'
 import type { Language, TopicDialogueLine } from '@/lib/topics'
 
@@ -12,7 +13,13 @@ type Props = {
 
 export function DialogueViewer({ dialogue, language }: Props) {
   const synthesis = useTTS()
+  const t = useDict()
   const [activeLine, setActiveLine] = useState<number | null>(null)
+
+  const { prefetch } = synthesis
+  useEffect(() => {
+    dialogue.forEach((line) => prefetch(line.text))
+  }, [dialogue, prefetch])
 
   if (dialogue.length === 0) return null
 
@@ -44,7 +51,7 @@ export function DialogueViewer({ dialogue, language }: Props) {
                 type="button"
                 onClick={() => playLine(idx)}
                 className="text-lg hover:scale-110 active:scale-95 transition-transform shrink-0 mt-0.5"
-                aria-label={`Escuchar línea ${idx + 1}`}
+                aria-label={t.deck.listenLine(idx + 1)}
               >
                 {isActive ? '🔉' : '🔊'}
               </button>
