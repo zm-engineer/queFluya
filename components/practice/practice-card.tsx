@@ -39,7 +39,14 @@ export function PracticeCard({
 }: PracticeCardProps) {
   const recorder = useAudioRecorder()
   const synthesis = useTTS()
+  const { prefetch } = synthesis
   const t = useDict()
+
+  // Warm the TTS cache for this phrase so the first 🔊 click plays instantly
+  // instead of waiting on the /api/speak round-trip (same pattern as the decks).
+  useEffect(() => {
+    prefetch(phrase)
+  }, [phrase, prefetch])
   const [transcript, setTranscript] = useState('')
   const [transcribing, setTranscribing] = useState(false)
   const [transcribeError, setTranscribeError] = useState<string | null>(null)
