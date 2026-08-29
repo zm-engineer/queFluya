@@ -8,6 +8,7 @@ import {
   type Level,
 } from '@/lib/topics'
 import { loadAllProgress } from '@/lib/topic-progress'
+import { loadStreak } from '@/lib/streak'
 import { LearningPath } from '@/components/dashboard/learning-path'
 import { getDict } from '@/lib/i18n/dictionaries'
 
@@ -40,9 +41,10 @@ export default async function DashboardPage() {
   const userLevel = profile.level as Level
   const t = getDict(profile.native_language as Language)
 
-  const [topics, progressBySlug] = await Promise.all([
+  const [topics, progressBySlug, streak] = await Promise.all([
     getTopicsWithContentForUser(supabase, { targetLanguage }),
     loadAllProgress(supabase, profile.id as string),
+    loadStreak(supabase, profile.id as string),
   ])
 
   return (
@@ -103,7 +105,7 @@ export default async function DashboardPage() {
               {t.common.streak}
             </p>
             <p className="text-2xl font-black text-orange-500">
-              {t.common.streakDays(0)}
+              {t.common.streakDays(streak)}
             </p>
           </div>
         </div>
