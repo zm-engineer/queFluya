@@ -16,7 +16,7 @@ const es = {
     language: 'Idioma',
     level: 'Nivel',
     streak: 'Racha',
-    streakDays: (n: number) => `🔥 ${n} días`,
+    streakDays: (n: number) => `🔥 ${n} ${n === 1 ? 'día' : 'días'}`,
     levels: {
       BEGINNER: 'Principiante',
       INTERMEDIATE: 'Intermedio',
@@ -337,7 +337,7 @@ const en: typeof es = {
     language: 'Language',
     level: 'Level',
     streak: 'Streak',
-    streakDays: (n: number) => `🔥 ${n} days`,
+    streakDays: (n: number) => `🔥 ${n} ${n === 1 ? 'day' : 'days'}`,
     levels: {
       BEGINNER: 'Beginner',
       INTERMEDIATE: 'Intermediate',
