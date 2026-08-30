@@ -195,11 +195,15 @@ export function ReservationsPanel({ profileId, username, topics, titleBySlug }: 
               <span className="block text-xs font-black uppercase tracking-wider text-stone-400 mb-1.5">
                 {t.reservations.when}
               </span>
+              {/* appearance-none (+ -webkit-) or Safari keeps the native
+                  datetime chrome and ignores our rounded box; the value pseudo
+                  is forced left-aligned so it matches the other inputs. */}
               <Input
                 type="datetime-local"
                 value={when}
                 min={minWhen}
                 onChange={(e) => setWhen(e.target.value)}
+                className="appearance-none [-webkit-appearance:none] [&::-webkit-date-and-time-value]:text-left"
               />
             </label>
             <Button onClick={handlePublish} disabled={busy || !when}>
