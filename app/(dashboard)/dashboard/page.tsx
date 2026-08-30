@@ -58,9 +58,12 @@ export default async function DashboardPage() {
             que<span className="text-emerald-500">Fluya</span>
           </Link>
           <div className="flex items-center gap-5">
-            <span className="text-sm font-bold text-stone-600">
+            <Link
+              href="/profile"
+              className="text-sm font-bold text-stone-600 hover:text-emerald-600 transition-colors"
+            >
               @{profile.username}
-            </span>
+            </Link>
             <LogoutButton />
           </div>
         </div>
