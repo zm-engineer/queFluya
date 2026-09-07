@@ -9,7 +9,10 @@ import {
 } from '@/lib/topics'
 import { loadAllProgress } from '@/lib/topic-progress'
 import { loadStreak } from '@/lib/streak'
+import { loadPracticeCount } from '@/lib/profile'
+import { computeXp, levelForXp } from '@/lib/gamification'
 import { LearningPath } from '@/components/dashboard/learning-path'
+import { ProgressBar } from '@/components/gamification/progress-bar'
 import { getDict } from '@/lib/i18n/dictionaries'
 
 const LANGUAGE_FLAG: Record<Language, string> = {
@@ -41,11 +44,22 @@ export default async function DashboardPage() {
   const userLevel = profile.level as Level
   const t = getDict(profile.native_language as Language)
 
-  const [topics, progressBySlug, streak] = await Promise.all([
+  const [topics, progressBySlug, streak, practices] = await Promise.all([
     getTopicsWithContentForUser(supabase, { targetLanguage }),
     loadAllProgress(supabase, profile.id as string),
     loadStreak(supabase, profile.id as string),
+    loadPracticeCount(supabase, profile.id as string),
   ])
+
+  const xp = computeXp({
+    sectionsCompleted: Object.values(progressBySlug).reduce(
+      (sum, sections) => sum + sections.length,
+      0
+    ),
+    practices,
+    topicsStarted: Object.keys(progressBySlug).length,
+  })
+  const levelInfo = levelForXp(xp)
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -111,6 +125,14 @@ export default async function DashboardPage() {
               {t.common.streakDays(streak)}
             </p>
           </div>
+        </div>
+
+        <div className="bg-white rounded-3xl border-2 border-stone-100 p-6 mt-4">
+          <ProgressBar
+            label={t.gamification.progress}
+            valueText={t.gamification.xpTotal(xp)}
+            fraction={levelInfo.xpIntoLevel / levelInfo.xpForNextLevel}
+          />
         </div>
       </section>
 

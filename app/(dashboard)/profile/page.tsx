@@ -7,6 +7,14 @@ import { getDict } from '@/lib/i18n/dictionaries'
 import { loadStreak } from '@/lib/streak'
 import { loadAllProgress } from '@/lib/topic-progress'
 import { loadPracticeCount } from '@/lib/profile'
+import {
+  BADGES,
+  computeXp,
+  earnedBadges,
+  levelForXp,
+} from '@/lib/gamification'
+import { ProgressBar } from '@/components/gamification/progress-bar'
+import { BadgeGrid } from '@/components/gamification/badge-grid'
 import type { Language, Level } from '@/lib/topics'
 
 const LANGUAGE_FLAG: Record<Language, string> = {
@@ -51,6 +59,17 @@ export default async function ProfilePage() {
     { label: t.profile.practices, value: String(practices) },
   ]
 
+  const counters = { sectionsCompleted, practices, topicsStarted }
+  const xp = computeXp(counters)
+  const levelInfo = levelForXp(xp)
+  const earned = new Set(earnedBadges({ ...counters, xp }))
+  const badgeViews = BADGES.map((b) => ({
+    emoji: b.emoji,
+    name: t.gamification.badges[b.id].name,
+    desc: t.gamification.badges[b.id].desc,
+    earned: earned.has(b.id),
+  }))
+
   return (
     <main className="min-h-screen bg-stone-50">
       <header className="bg-white border-b-2 border-stone-100 sticky top-0 z-10">
@@ -92,6 +111,15 @@ export default async function ProfilePage() {
           </div>
         </div>
 
+        {/* Level + XP */}
+        <div className="bg-white border-2 border-stone-100 rounded-3xl p-6 mb-6">
+          <ProgressBar
+            label={t.gamification.progress}
+            valueText={t.gamification.xpTotal(xp)}
+            fraction={levelInfo.xpIntoLevel / levelInfo.xpForNextLevel}
+          />
+        </div>
+
         {/* Stats */}
         <h2 className="text-lg font-black text-stone-900 mb-3">
           {t.profile.statsTitle}
@@ -108,6 +136,15 @@ export default async function ProfilePage() {
               </p>
             </div>
           ))}
+        </div>
+
+        {/* Badges */}
+        <div className="mb-10">
+          <BadgeGrid
+            title={t.gamification.badgesTitle}
+            earnedText={t.gamification.earnedCount(earned.size, BADGES.length)}
+            badges={badgeViews}
+          />
         </div>
 
         {/* Edit */}
