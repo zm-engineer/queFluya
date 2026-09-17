@@ -1,7 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Nunito } from 'next/font/google'
 import { headers } from 'next/headers'
 import { LanguageProvider } from '@/components/i18n/language-provider'
+import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register'
 import { detectLanguage } from '@/lib/i18n/dictionaries'
 import './globals.css'
 
@@ -16,6 +17,21 @@ export const metadata: Metadata = {
   title: 'queFluya — Practica idiomas hablando',
   description:
     'Intercambio de idiomas inglés ↔ español. Menos teoría, más práctica, ¡que fluya!',
+  // PWA: the manifest is auto-linked from app/manifest.ts; these add the icons
+  // and let iOS launch it full-screen from the home screen.
+  appleWebApp: {
+    capable: true,
+    title: 'queFluya',
+    statusBarStyle: 'default',
+  },
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#10b981',
 }
 
 export default async function RootLayout({
@@ -33,6 +49,7 @@ export default async function RootLayout({
       className={`${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-stone-50 text-stone-900 font-sans">
+        <ServiceWorkerRegister />
         <LanguageProvider nativeLanguage={lang}>{children}</LanguageProvider>
       </body>
     </html>
