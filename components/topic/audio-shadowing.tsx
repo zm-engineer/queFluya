@@ -15,6 +15,11 @@ const PLAYBACK_RATES: { value: number; label: string }[] = [
 
 const PAUSE_BUFFER_MS = 500
 
+// A tiny valid silent WAV. Played inside the user's tap to "unlock" the reused
+// audio element for the mobile autoplay policy (see start()).
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA='
+
 const BCP47: Record<Language, string> = {
   EN: 'en-US',
   ES: 'es-ES',
@@ -52,12 +57,23 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
     onCompletedRef.current = onCompleted
   }, [onCompleted])
 
+  // A SINGLE reused audio element. Mobile browsers "bless" an element once it
+  // plays inside a user gesture, after which it can be replayed programmatically.
+  // Creating a fresh `new Audio()` per line (as before) meant lines 2+ — which
+  // start from a timer, not a tap — were blocked by the autoplay policy.
+  function ensureAudio(): HTMLAudioElement {
+    if (!audioRef.current) audioRef.current = new Audio()
+    return audioRef.current
+  }
+
   const cleanup = useCallback(() => {
     runIdRef.current++
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
-      audioRef.current = null
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      audio.onended = null
+      audio.onerror = null
+      // Keep the element itself alive so it stays unlocked for the next line.
     }
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -95,9 +111,9 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
       })
       .then((url) => {
         if (runIdRef.current !== runId) return
-        const audio = new Audio(url)
+        const audio = ensureAudio()
+        audio.src = url
         audio.playbackRate = playbackRate
-        audioRef.current = audio
         setMode('playing')
 
         audio.onended = () => {
@@ -143,6 +159,13 @@ export function AudioShadowing({ dialogue, language, onCompleted }: Props) {
   function start() {
     cleanup()
     setPlayingWord(null)
+    // Unlock the reused element inside this tap by playing a near-empty silent
+    // clip. That blesses the element for the browser's autoplay policy, so the
+    // timer-driven lines that follow the first one aren't blocked. It's silent
+    // and gets superseded the moment line 0's real audio sets a new src.
+    const audio = ensureAudio()
+    audio.src = SILENT_WAV
+    audio.play().catch(() => {})
     const runId = ++runIdRef.current
     playLineRef.current(0, runId)
   }
