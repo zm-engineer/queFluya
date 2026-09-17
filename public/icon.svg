@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- queFluya app icon: emerald squircle + white speech bubble (talking = the
+       product's core). Content stays within the central ~80% maskable safe zone. -->
+  <rect width="512" height="512" rx="112" fill="#10b981"/>
+  <g>
+    <rect x="116" y="150" width="280" height="176" rx="46" fill="#ffffff"/>
+    <path d="M176 318 L176 384 L232 318 Z" fill="#ffffff"/>
+    <circle cx="196" cy="238" r="20" fill="#10b981"/>
+    <circle cx="256" cy="238" r="20" fill="#10b981"/>
+    <circle cx="316" cy="238" r="20" fill="#10b981"/>
+  </g>
+</svg>
