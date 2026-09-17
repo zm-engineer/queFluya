@@ -25,6 +25,21 @@ const es = {
     languages: { EN: 'inglés', ES: 'español' } as Record<Language, string>,
     locale: 'es',
   },
+  landing: {
+    signIn: 'Iniciar sesión',
+    badge: 'Inglés y Español',
+    headlineLine1: 'Menos teoría,',
+    headlineLine2: 'más práctica,',
+    headlineHighlight: '¡que fluya!',
+    subtitle:
+      'Practica idiomas hablando. Habla, escucha, mejora cada día. 🚀',
+    startFree: 'Empezar gratis',
+  },
+  meta: {
+    title: 'queFluya — Practica idiomas hablando',
+    description:
+      'Intercambio de idiomas inglés ↔ español. Menos teoría, más práctica, ¡que fluya!',
+  },
   dashboard: {
     greeting: (name: string) => `¡Hola, ${name}!`,
     tagline: 'Menos teoría, más práctica. ¡Que fluya!',
@@ -373,6 +388,21 @@ const en: typeof es = {
     },
     languages: { EN: 'English', ES: 'Spanish' },
     locale: 'en',
+  },
+  landing: {
+    signIn: 'Sign in',
+    badge: 'English and Spanish',
+    headlineLine1: 'Less theory,',
+    headlineLine2: 'more practice,',
+    headlineHighlight: 'let it flow!',
+    subtitle:
+      'Practise languages by speaking. Talk, listen, improve every day. 🚀',
+    startFree: 'Start free',
+  },
+  meta: {
+    title: 'queFluya — Practise languages by speaking',
+    description:
+      'English ↔ Spanish language exchange. Less theory, more practice, let it flow!',
   },
   dashboard: {
     greeting: (name: string) => `Hi, ${name}!`,

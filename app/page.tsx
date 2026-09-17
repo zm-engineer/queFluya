@@ -1,6 +1,13 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
+import { detectLanguage, getDict } from '@/lib/i18n/dictionaries'
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Same browser/phone-language detection the root layout uses for logged-out
+  // visitors: an English device gets the landing in English, everyone else ES.
+  const lang = detectLanguage((await headers()).get('accept-language'))
+  const t = getDict(lang)
+
   return (
     <main className="min-h-screen bg-stone-50 relative overflow-hidden">
       <div
@@ -21,23 +28,23 @@ export default function HomePage() {
             href="/login"
             className="text-sm font-bold text-stone-600 hover:text-emerald-600 transition-colors"
           >
-            Iniciar sesión
+            {t.landing.signIn}
           </Link>
         </header>
 
         <section className="flex-1 flex items-center justify-center px-6">
           <div className="max-w-2xl text-center -mt-12">
             <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-600 mb-8">
-              🇬🇧 ↔ 🇪🇸 Inglés y Español
+              🇬🇧 ↔ 🇪🇸 {t.landing.badge}
             </p>
             <h1 className="text-6xl sm:text-7xl font-black leading-[1.05] text-stone-900 tracking-tight">
-              Menos teoría,
+              {t.landing.headlineLine1}
               <br />
-              más práctica,{' '}
-              <span className="text-emerald-500">¡que fluya!</span>
+              {t.landing.headlineLine2}{' '}
+              <span className="text-emerald-500">{t.landing.headlineHighlight}</span>
             </h1>
             <p className="mt-8 text-lg text-stone-600 font-semibold max-w-lg mx-auto leading-relaxed">
-              Practica idiomas hablando. Habla, escucha, mejora cada día. 🚀
+              {t.landing.subtitle}
             </p>
 
             <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -45,13 +52,13 @@ export default function HomePage() {
                 href="/register"
                 className="w-full sm:w-auto bg-emerald-500 text-white border-b-4 border-emerald-700 rounded-2xl px-10 py-4 text-sm font-black uppercase tracking-wide hover:bg-emerald-400 active:translate-y-1 active:border-b-0 transition-transform duration-150"
               >
-                Empezar gratis
+                {t.landing.startFree}
               </Link>
               <Link
                 href="/login"
                 className="w-full sm:w-auto bg-white text-stone-700 border-2 border-b-4 border-stone-200 rounded-2xl px-10 py-3.5 text-sm font-black uppercase tracking-wide hover:bg-stone-50 active:translate-y-1 active:border-b-2 transition-transform duration-150"
               >
-                Iniciar sesión
+                {t.landing.signIn}
               </Link>
             </div>
           </div>

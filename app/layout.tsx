@@ -3,7 +3,7 @@ import { Nunito } from 'next/font/google'
 import { headers } from 'next/headers'
 import { LanguageProvider } from '@/components/i18n/language-provider'
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register'
-import { detectLanguage } from '@/lib/i18n/dictionaries'
+import { detectLanguage, getDict } from '@/lib/i18n/dictionaries'
 import './globals.css'
 
 const nunito = Nunito({
@@ -13,21 +13,26 @@ const nunito = Nunito({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: 'queFluya — Practica idiomas hablando',
-  description:
-    'Intercambio de idiomas inglés ↔ español. Menos teoría, más práctica, ¡que fluya!',
-  // PWA: the manifest is auto-linked from app/manifest.ts; these add the icons
-  // and let iOS launch it full-screen from the home screen.
-  appleWebApp: {
-    capable: true,
-    title: 'queFluya',
-    statusBarStyle: 'default',
-  },
-  icons: {
-    icon: '/icon-192.png',
-    apple: '/apple-touch-icon.png',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  // Localise the tab title + SEO description to the visitor's language, the same
+  // way the pages do (Accept-Language for logged-out visitors).
+  const lang = detectLanguage((await headers()).get('accept-language'))
+  const t = getDict(lang)
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    // PWA: the manifest is auto-linked from app/manifest.ts; these add the icons
+    // and let iOS launch it full-screen from the home screen.
+    appleWebApp: {
+      capable: true,
+      title: 'queFluya',
+      statusBarStyle: 'default',
+    },
+    icons: {
+      icon: '/icon-192.png',
+      apple: '/apple-touch-icon.png',
+    },
+  }
 }
 
 export const viewport: Viewport = {
