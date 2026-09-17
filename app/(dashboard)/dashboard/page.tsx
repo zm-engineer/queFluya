@@ -91,12 +91,20 @@ export default async function DashboardPage() {
         <p className="text-stone-500 mt-4 text-lg font-semibold max-w-xl">
           {t.dashboard.tagline}
         </p>
-        <Link
-          href="/agenda"
-          className="inline-flex items-center gap-2 mt-6 bg-emerald-500 text-white font-black text-sm px-5 py-3 rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-transform"
-        >
-          {t.dashboard.agenda}
-        </Link>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/agenda"
+            className="inline-flex items-center gap-2 bg-emerald-500 text-white font-black text-sm px-5 py-3 rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-transform"
+          >
+            {t.dashboard.agenda}
+          </Link>
+          <Link
+            href="/esenciales"
+            className="inline-flex items-center gap-2 bg-white text-stone-700 font-black text-sm px-5 py-3 rounded-2xl border-2 border-b-4 border-stone-200 hover:border-emerald-300 active:translate-y-1 active:border-b-2 transition-transform"
+          >
+            {t.essentials.dashboardEntry}
+          </Link>
+        </div>
       </section>
 
       <section className="max-w-5xl mx-auto px-6 pb-10">
