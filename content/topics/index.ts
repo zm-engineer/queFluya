@@ -1,11 +1,15 @@
 import type { TopicPair } from './types'
 import { greetings } from './beginner/greetings'
+import { alphabet } from './beginner/alphabet'
+import { colors } from './beginner/colors'
 import { introductions } from './beginner/introductions'
 import { numbersAndPrices } from './beginner/numbers-and-prices'
 import { tellingTheTime } from './beginner/telling-the-time'
 import { familyAndPeople } from './beginner/family-and-people'
 import { directions } from './beginner/directions'
 import { dailyRoutine } from './beginner/daily-routine'
+import { animals } from './beginner/animals'
+import { bodyParts } from './beginner/body-parts'
 import { gettingATable } from './intermediate/getting-a-table'
 import { orderingFood } from './intermediate/ordering-food'
 import { atTheAirport } from './intermediate/at-the-airport'
@@ -23,12 +27,16 @@ import { jobInterview } from './advanced/job-interview'
 export const TOPIC_PAIRS: TopicPair[] = [
   // Beginner
   greetings,
+  alphabet,
+  colors,
   introductions,
   numbersAndPrices,
   tellingTheTime,
   familyAndPeople,
   directions,
   dailyRoutine,
+  animals,
+  bodyParts,
   // Intermediate
   gettingATable,
   orderingFood,
