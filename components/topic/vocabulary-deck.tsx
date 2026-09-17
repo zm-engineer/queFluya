@@ -13,7 +13,6 @@ type Props = {
 
 export function VocabularyDeck({ vocabulary, language }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [revealed, setRevealed] = useState(false)
   const [done, setDone] = useState(false)
   const synthesis = useTTS()
   const t = useDict()
@@ -28,22 +27,22 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
   const card = vocabulary[currentIdx]
   const isLast = currentIdx === vocabulary.length - 1
 
-  function advance() {
-    if (!revealed) {
-      setRevealed(true)
-      return
-    }
+  // Term and translation are both shown up front (no reveal step); tapping the
+  // card just advances, so the learner browses many terms with quick taps.
+  function next() {
     if (isLast) {
       setDone(true)
     } else {
       setCurrentIdx(currentIdx + 1)
-      setRevealed(false)
     }
+  }
+
+  function prev() {
+    if (currentIdx > 0) setCurrentIdx(currentIdx - 1)
   }
 
   function restart() {
     setCurrentIdx(0)
-    setRevealed(false)
     setDone(false)
   }
 
@@ -68,8 +67,7 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
     )
   }
 
-  const progressPct =
-    ((currentIdx + (revealed ? 1 : 0)) / vocabulary.length) * 100
+  const progressPct = ((currentIdx + 1) / vocabulary.length) * 100
 
   return (
     <div className="space-y-3">
@@ -87,34 +85,32 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
 
       <button
         type="button"
-        onClick={advance}
+        onClick={next}
         className={cn(
-          'w-full bg-white border-2 rounded-2xl px-6 py-8 text-center transition-all duration-150',
-          'hover:-translate-y-0.5 active:translate-y-0.5',
-          revealed
-            ? 'border-emerald-300'
-            : 'border-stone-200 hover:border-emerald-300'
+          'w-full bg-white border-2 border-stone-200 rounded-2xl px-6 py-8 text-center transition-all duration-150',
+          'hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5'
         )}
       >
         <p className="text-3xl font-black text-stone-900">{card.term}</p>
-        {revealed ? (
-          <p className="mt-4 text-2xl font-bold text-emerald-600">
-            {card.translation}
-          </p>
-        ) : (
-          <p className="mt-4 text-sm font-bold text-stone-400">
-            {t.deck.tapReveal}
-          </p>
-        )}
-        {revealed && (
-          <p className="mt-6 text-[11px] font-black uppercase tracking-wider text-stone-400">
-            {isLast ? t.deck.tapFinish : t.deck.tapNext}
-          </p>
-        )}
+        <p className="mt-3 text-2xl font-bold text-emerald-600">
+          {card.translation}
+        </p>
+        <p className="mt-6 text-[11px] font-black uppercase tracking-wider text-stone-400">
+          {isLast ? t.deck.tapFinish : t.deck.tapNext}
+        </p>
       </button>
 
-      {synthesis.isSupported && (
-        <div className="flex justify-center">
+      <div className="flex items-center justify-center gap-5">
+        {currentIdx > 0 && (
+          <button
+            type="button"
+            onClick={prev}
+            className="text-sm font-bold text-stone-500 hover:text-emerald-600 transition-colors"
+          >
+            {t.deck.prev}
+          </button>
+        )}
+        {synthesis.isSupported && (
           <button
             type="button"
             onClick={() => synthesis.speak(card.term, language)}
@@ -123,8 +119,8 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
           >
             🔊 {synthesis.isSpeaking ? t.deck.playing : t.deck.listenWord}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
