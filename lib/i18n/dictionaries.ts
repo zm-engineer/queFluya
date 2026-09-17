@@ -232,6 +232,20 @@ const es = {
     sectionsCompleted: 'Secciones completadas',
     practices: 'Prácticas',
   },
+  gamification: {
+    progress: 'Progreso',
+    xpTotal: (n: number) => `${n} XP`,
+    badgesTitle: 'Logros',
+    earnedCount: (a: number, b: number) => `${a} / ${b}`,
+    badges: {
+      firstSection: { name: 'Primer paso', desc: 'Completa tu primera sección' },
+      topics3: { name: 'Explorador', desc: 'Empieza 3 temas' },
+      practices10: { name: 'Practicante', desc: 'Practica 10 veces' },
+      practices50: { name: 'Incansable', desc: 'Practica 50 veces' },
+      xp500: { name: 'En marcha', desc: 'Acumula 500 XP' },
+      xp1000: { name: 'Maestro', desc: 'Acumula 1000 XP' },
+    },
+  },
   tandemPage: {
     badge: 'Conectar en vivo',
     intro:
@@ -563,6 +577,20 @@ const en: typeof es = {
     topicsStarted: 'Topics started',
     sectionsCompleted: 'Sections completed',
     practices: 'Practices',
+  },
+  gamification: {
+    progress: 'Progress',
+    xpTotal: (n: number) => `${n} XP`,
+    badgesTitle: 'Achievements',
+    earnedCount: (a: number, b: number) => `${a} / ${b}`,
+    badges: {
+      firstSection: { name: 'First step', desc: 'Complete your first section' },
+      topics3: { name: 'Explorer', desc: 'Start 3 topics' },
+      practices10: { name: 'Practitioner', desc: 'Practice 10 times' },
+      practices50: { name: 'Relentless', desc: 'Practice 50 times' },
+      xp500: { name: 'On a roll', desc: 'Earn 500 XP' },
+      xp1000: { name: 'Master', desc: 'Earn 1000 XP' },
+    },
   },
   tandemPage: {
     badge: 'Connect live',
