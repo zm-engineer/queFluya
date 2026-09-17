@@ -254,9 +254,9 @@ export function FreeRecordingPractice({
                 {t.practice.vocabUsed}
               </p>
               <div className="flex flex-wrap gap-2">
-                {correction.vocabUsed.map((v) => (
+                {correction.vocabUsed.map((v, i) => (
                   <span
-                    key={v}
+                    key={`${i}-${v}`}
                     className="bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full"
                   >
                     ✓ {v}
@@ -272,9 +272,9 @@ export function FreeRecordingPractice({
                 {t.practice.vocabSuggested}
               </p>
               <div className="flex flex-wrap gap-2">
-                {correction.vocabSuggested.map((v) => (
+                {correction.vocabSuggested.map((v, i) => (
                   <span
-                    key={v}
+                    key={`${i}-${v}`}
                     className="bg-amber-100 text-amber-800 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full"
                   >
                     {v}
