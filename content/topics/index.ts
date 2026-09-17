@@ -1,5 +1,7 @@
 import type { TopicPair } from './types'
 import { greetings } from './beginner/greetings'
+import { alphabet } from './beginner/alphabet'
+import { colors } from './beginner/colors'
 import { introductions } from './beginner/introductions'
 import { numbersAndPrices } from './beginner/numbers-and-prices'
 import { tellingTheTime } from './beginner/telling-the-time'
@@ -23,6 +25,8 @@ import { jobInterview } from './advanced/job-interview'
 export const TOPIC_PAIRS: TopicPair[] = [
   // Beginner
   greetings,
+  alphabet,
+  colors,
   introductions,
   numbersAndPrices,
   tellingTheTime,
