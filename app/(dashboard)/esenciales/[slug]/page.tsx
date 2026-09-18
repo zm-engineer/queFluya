@@ -6,7 +6,7 @@ import { getDict } from '@/lib/i18n/dictionaries'
 import { essentialBySlug } from '@/lib/essentials'
 import { EssentialPractice } from '@/components/essentials/essential-practice'
 import type { EssentialKind } from '@/content/essentials/types'
-import type { Language } from '@/lib/topics'
+import type { Language, Level } from '@/lib/topics'
 
 const KIND_EMOJI: Record<EssentialKind, string> = {
   'irregular-verbs': '🔁',
@@ -28,12 +28,13 @@ export default async function EssentialContentPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, target_language, native_language')
+    .select('username, target_language, native_language, level')
     .eq('user_id', user.id)
     .maybeSingle()
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language
+  const userLevel = profile.level as Level
   const t = getDict(profile.native_language as Language)
 
   const set = essentialBySlug(slug)
@@ -91,6 +92,7 @@ export default async function EssentialContentPage({
               items={set.items}
               formLabels={t.essentials.formLabels[targetLanguage]}
               language={targetLanguage}
+              userLevel={userLevel}
             />
           </>
         )}

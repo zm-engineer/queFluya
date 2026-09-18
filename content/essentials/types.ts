@@ -21,9 +21,11 @@ export type EssentialExample = {
 // One studied item. `term` is the headword (infinitive/phrasal); `forms` (when
 // present, irregular verbs) are the conjugated forms shown labeled. `examples`
 // are the sentences shown below, synced to whichever item is on screen — several
-// per verb (e.g. `be` across pronouns: I am, she is, we are…).
+// per verb (e.g. `be` across pronouns: I am, she is, we are…). `level` groups
+// items so the practice screen can be filtered by level.
 export type EssentialItem = {
   term: string
+  level: Level
   translation: string
   forms?: string[]
   examples?: EssentialExample[]

@@ -34,6 +34,17 @@ describe('essentialsForLanguage', () => {
     expect(irregular?.items[0]).toHaveProperty('term')
     expect(irregular?.items[0]).toHaveProperty('translation')
   })
+
+  it('every item has a valid level, spanning all three', () => {
+    const valid = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
+    for (const lang of ['EN', 'ES'] as const) {
+      for (const set of essentialsForLanguage(lang)) {
+        expect(set.items.every((i) => valid.includes(i.level))).toBe(true)
+        const levels = new Set(set.items.map((i) => i.level))
+        expect(levels.size).toBe(3)
+      }
+    }
+  })
 })
 
 describe('essentialBySlug', () => {
