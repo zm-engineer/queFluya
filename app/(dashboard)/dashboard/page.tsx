@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, getUser } from '@/lib/auth'
 import { LogoutButton } from '@/components/auth/logout-button'
 import {
   getTopicsWithContentForUser,
@@ -21,24 +22,12 @@ const LANGUAGE_FLAG: Record<Language, string> = {
 }
 
 export default async function DashboardPage() {
+  const user = await getUser()
+  if (!user) redirect('/login')
+  const profile = await getProfile()
+  if (!profile) redirect('/onboarding')
+
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, username, native_language, target_language, level')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (!profile) {
-    redirect('/onboarding')
-  }
 
   const targetLanguage = profile.target_language as Language
   const userLevel = profile.level as Level

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, getUser } from '@/lib/auth'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { TandemRoom } from '@/components/tandem/tandem-room'
 import {
@@ -21,20 +22,12 @@ export default async function TandemPage({
   const { slug } = await params
   const { reservation } = await searchParams
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const user = await getUser()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, username, native_language')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
+  const profile = await getProfile()
   if (!profile) redirect('/onboarding')
+
+  const supabase = await createClient()
 
   const t = getDict(profile.native_language as Language)
 

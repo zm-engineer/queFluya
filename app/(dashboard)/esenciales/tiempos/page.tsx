@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getProfile, getUser } from '@/lib/auth'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { getDict } from '@/lib/i18n/dictionaries'
 import { tensesForLanguage } from '@/lib/essentials'
@@ -9,17 +9,9 @@ import type { Language, Level } from '@/lib/topics'
 const LEVEL_ORDER: Level[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
 
 export default async function TiemposPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getUser()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, target_language, native_language')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const profile = await getProfile()
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language

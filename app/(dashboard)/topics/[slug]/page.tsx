@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, getUser } from '@/lib/auth'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { TopicSections } from '@/components/topic/topic-sections'
 import { getTopicBySlug, type Language, type Level } from '@/lib/topics'
@@ -23,24 +24,12 @@ export default async function TopicPage({
   const { section } = await searchParams
   const initialSection = section != null ? Number(section) : undefined
 
+  const user = await getUser()
+  if (!user) redirect('/login')
+  const profile = await getProfile()
+  if (!profile) redirect('/onboarding')
+
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, username, native_language')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (!profile) {
-    redirect('/onboarding')
-  }
 
   const t = getDict(profile.native_language as Language)
 

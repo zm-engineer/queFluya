@@ -1,23 +1,15 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getProfile, getUser } from '@/lib/auth'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { getDict } from '@/lib/i18n/dictionaries'
 import { Dictionary } from '@/components/essentials/dictionary'
 import type { Language } from '@/lib/topics'
 
 export default async function DiccionarioPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getUser()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, target_language, native_language')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const profile = await getProfile()
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language
