@@ -40,6 +40,38 @@ const es = {
     description:
       'Intercambio de idiomas inglés ↔ español. Menos teoría, más práctica, ¡que fluya!',
   },
+  essentials: {
+    dashboardEntry: '🧱 Esenciales',
+    title: 'Esenciales',
+    intro: 'Practica lo esencial: verbos irregulares, phrasal verbs y más.',
+    comingSoon: 'Próximamente',
+    itemsCount: (n: number) => `${n} para practicar`,
+    practiceHint:
+      'Toca la tarjeta para pasar. Escucha con 🔊 y repite en voz alta.',
+    empty: 'Aún no hay esenciales para tu idioma.',
+    examplesTitle: 'Frases de ejemplo',
+    examplesDone: '¡Ejemplos completados!',
+    tensesWhen: '¿Cuándo se usa?',
+    tensesStructure: 'Estructura',
+    formLabels: {
+      EN: ['Base', 'Pasado', 'Participio'],
+      ES: ['Presente', 'Pretérito', 'Participio'],
+    } as Record<Language, string[]>,
+    kinds: {
+      'irregular-verbs': {
+        name: 'Verbos irregulares',
+        desc: 'Las formas que hay que memorizar.',
+      },
+      'phrasal-verbs': {
+        name: 'Phrasal verbs',
+        desc: 'Verbos con preposición del día a día.',
+      },
+      tenses: {
+        name: 'Tiempos gramaticales',
+        desc: 'Presente, pasado, futuro… por nivel.',
+      },
+    },
+  },
   dashboard: {
     greeting: (name: string) => `¡Hola, ${name}!`,
     tagline: 'Menos teoría, más práctica. ¡Que fluya!',
@@ -403,6 +435,38 @@ const en: typeof es = {
     title: 'queFluya — Practise languages by speaking',
     description:
       'English ↔ Spanish language exchange. Less theory, more practice, let it flow!',
+  },
+  essentials: {
+    dashboardEntry: '🧱 Essentials',
+    title: 'Essentials',
+    intro: 'Practise the essentials: irregular verbs, phrasal verbs and more.',
+    comingSoon: 'Coming soon',
+    itemsCount: (n: number) => `${n} to practise`,
+    practiceHint:
+      'Tap the card to move on. Listen with 🔊 and repeat out loud.',
+    empty: 'No essentials for your language yet.',
+    examplesTitle: 'Example phrases',
+    examplesDone: 'Examples done!',
+    tensesWhen: 'When to use it',
+    tensesStructure: 'Structure',
+    formLabels: {
+      EN: ['Base', 'Past', 'Participle'],
+      ES: ['Present', 'Preterite', 'Participle'],
+    } as Record<Language, string[]>,
+    kinds: {
+      'irregular-verbs': {
+        name: 'Irregular verbs',
+        desc: 'The forms you just have to memorise.',
+      },
+      'phrasal-verbs': {
+        name: 'Phrasal verbs',
+        desc: 'Everyday verb + preposition combos.',
+      },
+      tenses: {
+        name: 'Grammar tenses',
+        desc: 'Present, past, future… by level.',
+      },
+    },
   },
   dashboard: {
     greeting: (name: string) => `Hi, ${name}!`,
