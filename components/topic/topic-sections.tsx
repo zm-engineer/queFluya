@@ -319,6 +319,17 @@ export function TopicSections({
           </p>
         </div>
       )}
+
+      {/* Section done, but the NEXT one (the tandem call) is still locked behind
+          the phrase practice — explain it instead of a dead disabled button. */}
+      {isCurrentCompleted && !canAdvance && nextIdx < total && (
+        <div className="mt-4 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+          <span className="text-2xl">🔒</span>
+          <p className="text-sm font-bold text-amber-900 flex-1">
+            {t.path.tandemLocked}
+          </p>
+        </div>
+      )}
     </>
   )
 }
