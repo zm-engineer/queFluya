@@ -3,6 +3,7 @@ import { Nunito } from 'next/font/google'
 import { headers } from 'next/headers'
 import { LanguageProvider } from '@/components/i18n/language-provider'
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register'
+import { TopProgressBar } from '@/components/ui/top-progress-bar'
 import { detectLanguage, getDict } from '@/lib/i18n/dictionaries'
 import './globals.css'
 
@@ -54,6 +55,7 @@ export default async function RootLayout({
       className={`${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-stone-50 text-stone-900 font-sans">
+        <TopProgressBar />
         <ServiceWorkerRegister />
         <LanguageProvider nativeLanguage={lang}>{children}</LanguageProvider>
       </body>
