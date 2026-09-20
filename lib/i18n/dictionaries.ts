@@ -64,6 +64,19 @@ const es = {
       error: 'Algo salió mal. Inténtalo de nuevo.',
       prompt: 'Escribe una palabra para ver su significado.',
     },
+    listening: {
+      title: 'Escucha',
+      desc: 'Pega el enlace de una página con audio y escúchalo en bucle.',
+      placeholder: 'Pega el enlace de la página…',
+      load: 'Cargar',
+      loading: 'Buscando el audio…',
+      audio: 'Audio',
+      loopBadge: '🔁 En bucle',
+      notFound:
+        'No pude sacar el audio de esta página (puede estar protegida o ser vídeo). Prueba con una página abierta.',
+      error: 'Algo salió mal. Inténtalo de nuevo.',
+      hint: 'Se reproduce en bucle hasta que lo pares. Puedes pausarlo desde los controles del móvil o del coche.',
+    },
     formLabels: {
       EN: ['Base', 'Pasado', 'Participio'],
       ES: ['Presente', 'Pretérito', 'Participio'],
@@ -470,6 +483,19 @@ const en: typeof es = {
       notFound: (w: string) => `Couldn't find "${w}". Check the spelling.`,
       error: 'Something went wrong. Try again.',
       prompt: 'Type a word to see its meaning.',
+    },
+    listening: {
+      title: 'Listen',
+      desc: 'Paste a link to a page with audio and loop it.',
+      placeholder: 'Paste the page link…',
+      load: 'Load',
+      loading: 'Finding the audio…',
+      audio: 'Audio',
+      loopBadge: '🔁 Looping',
+      notFound:
+        "Couldn't get the audio from this page (it may be protected or video). Try an open page.",
+      error: 'Something went wrong. Try again.',
+      hint: 'It loops until you stop it. Pause it from your phone or car controls.',
     },
     formLabels: {
       EN: ['Base', 'Past', 'Participle'],

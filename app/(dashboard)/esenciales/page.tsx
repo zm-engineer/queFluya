@@ -133,6 +133,19 @@ export default async function EsencialesPage() {
                 {t.essentials.dictionary.desc}
               </p>
             </Link>
+
+            <Link
+              href="/esenciales/escucha"
+              className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
+            >
+              <div className="text-3xl mb-2">🎧</div>
+              <p className="text-lg font-black text-stone-900">
+                {t.essentials.listening.title}
+              </p>
+              <p className="text-sm font-semibold text-stone-500 mt-1">
+                {t.essentials.listening.desc}
+              </p>
+            </Link>
           </div>
         )}
       </section>
