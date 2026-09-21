@@ -18,8 +18,8 @@ export function DialogueViewer({ dialogue, language }: Props) {
 
   const { prefetch } = synthesis
   useEffect(() => {
-    dialogue.forEach((line) => prefetch(line.text))
-  }, [dialogue, prefetch])
+    dialogue.forEach((line) => prefetch(line.text, language))
+  }, [dialogue, prefetch, language])
 
   if (dialogue.length === 0) return null
 

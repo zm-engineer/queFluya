@@ -29,8 +29,8 @@ export function EssentialPractice({ items, formLabels, language }: Props) {
 
   const { prefetch } = synthesis
   useEffect(() => {
-    items.forEach((item) => prefetch(spoken(item)))
-  }, [items, prefetch])
+    items.forEach((item) => prefetch(spoken(item), language))
+  }, [items, prefetch, language])
 
   if (items.length === 0) return null
 

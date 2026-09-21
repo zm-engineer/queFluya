@@ -19,8 +19,8 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
 
   const { prefetch } = synthesis
   useEffect(() => {
-    vocabulary.forEach((v) => prefetch(v.term))
-  }, [vocabulary, prefetch])
+    vocabulary.forEach((v) => prefetch(v.term, language))
+  }, [vocabulary, prefetch, language])
 
   if (vocabulary.length === 0) return null
 
