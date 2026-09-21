@@ -5,6 +5,16 @@ import { createClient } from '@/lib/supabase/server'
 
 const BUCKET = 'tts-cache'
 
+const MODEL = 'gpt-4o-mini-tts'
+const VOICE = 'nova'
+
+// Accent/style guidance per language. gpt-4o-mini-tts follows these, which is
+// what fixes Spanish sounding like an English voice reading Spanish text.
+const INSTRUCTIONS: Record<'EN' | 'ES', string> = {
+  ES: 'Habla en español con acento nativo neutro, claro y natural, comprensible tanto en España como en Latinoamérica. Ritmo tranquilo y buena dicción, como para alguien que está aprendiendo el idioma.',
+  EN: 'Speak in natural, native English with a clear, neutral accent. Calm pace and crisp pronunciation, as if helping a language learner.',
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -29,11 +39,14 @@ export async function POST(request: NextRequest) {
   if (text.length > 4096) {
     return NextResponse.json({ error: 'text_too_long' }, { status: 400 })
   }
+  // Default to English if the client didn't say — keeps old callers working.
+  const language: 'EN' | 'ES' = body?.language === 'ES' ? 'ES' : 'EN'
 
-  // Deterministic filename: same text always lands at the same path. If the
-  // voice/model changes, bump the prefix so old entries are not reused.
+  // Deterministic filename: same text+language always lands at the same path. If
+  // the voice/model/instructions change, bump the prefix so old entries (with
+  // the previous accent) are not reused.
   const hash = createHash('sha256')
-    .update(`v1:nova:tts-1:${text}`)
+    .update(`v2:${VOICE}:${MODEL}:${language}:${text}`)
     .digest('hex')
     .slice(0, 32)
   const filename = `${hash}.mp3`
@@ -51,9 +64,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const audio = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice: 'nova',
+      model: MODEL,
+      voice: VOICE,
       input: text,
+      instructions: INSTRUCTIONS[language],
       response_format: 'mp3',
     })
     const buffer = Buffer.from(await audio.arrayBuffer())

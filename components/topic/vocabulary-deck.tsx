@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
 import { useDict } from '@/components/i18n/language-provider'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import type { Language, TopicVocab } from '@/lib/topics'
 
 type Props = {
@@ -19,16 +19,14 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
 
   const { prefetch } = synthesis
   useEffect(() => {
-    vocabulary.forEach((v) => prefetch(v.term))
-  }, [vocabulary, prefetch])
+    vocabulary.forEach((v) => prefetch(v.term, language))
+  }, [vocabulary, prefetch, language])
 
   if (vocabulary.length === 0) return null
 
   const card = vocabulary[currentIdx]
   const isLast = currentIdx === vocabulary.length - 1
 
-  // Term and translation are both shown up front (no reveal step); tapping the
-  // card just advances, so the learner browses many terms with quick taps.
   function next() {
     if (isLast) {
       setDone(true)
@@ -70,7 +68,8 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
   const progressPct = ((currentIdx + 1) / vocabulary.length) * 100
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
+      {/* Progress */}
       <div className="flex items-center gap-3">
         <div className="text-[11px] font-black uppercase tracking-wider text-stone-400 shrink-0">
           {currentIdx + 1} / {vocabulary.length}
@@ -83,43 +82,47 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={next}
-        className={cn(
-          'w-full bg-white border-2 border-stone-200 rounded-2xl px-6 py-8 text-center transition-all duration-150',
-          'hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5'
-        )}
-      >
+      {/* Studied word: term, 🔊 right below it, then the translation */}
+      <div className="bg-white border-2 border-stone-200 rounded-2xl px-6 py-8 text-center">
         <p className="text-3xl font-black text-stone-900">{card.term}</p>
-        <p className="mt-3 text-2xl font-bold text-emerald-600">
+        {synthesis.isSupported && (
+          <div className="mt-3 flex justify-center">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => synthesis.speak(card.term, language)}
+              disabled={synthesis.isSpeaking}
+            >
+              🔊 {synthesis.isSpeaking ? t.deck.playing : t.deck.listenWord}
+            </Button>
+          </div>
+        )}
+        <p className="mt-4 text-2xl font-bold text-emerald-600">
           {card.translation}
         </p>
-        <p className="mt-6 text-[11px] font-black uppercase tracking-wider text-stone-400">
-          {isLast ? t.deck.tapFinish : t.deck.tapNext}
-        </p>
-      </button>
+      </div>
 
-      <div className="flex items-center justify-center gap-5">
-        {currentIdx > 0 && (
-          <button
-            type="button"
-            onClick={prev}
-            className="text-sm font-bold text-stone-500 hover:text-emerald-600 transition-colors"
-          >
-            {t.deck.prev}
-          </button>
-        )}
-        {synthesis.isSupported && (
-          <button
-            type="button"
-            onClick={() => synthesis.speak(card.term, language)}
-            disabled={synthesis.isSpeaking}
-            className="text-sm font-bold text-stone-500 hover:text-emerald-600 disabled:opacity-50 transition-colors"
-          >
-            🔊 {synthesis.isSpeaking ? t.deck.playing : t.deck.listenWord}
-          </button>
-        )}
+      {/* Prev / Next side by side */}
+      <div className="flex gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          size="md"
+          className="flex-1"
+          onClick={prev}
+          disabled={currentIdx === 0}
+        >
+          {t.deck.prev}
+        </Button>
+        <Button
+          type="button"
+          size="md"
+          className="flex-1"
+          onClick={next}
+        >
+          {isLast ? t.deck.finish : t.deck.next}
+        </Button>
       </div>
     </div>
   )

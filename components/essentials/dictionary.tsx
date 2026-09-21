@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useTTS } from '@/lib/practice/use-tts'
 import { useDict } from '@/components/i18n/language-provider'
 import type { Language } from '@/lib/topics'
 
@@ -26,6 +27,7 @@ type Props = {
 export function Dictionary({ language }: Props) {
   const t = useDict()
   const d = t.essentials.dictionary
+  const synthesis = useTTS()
 
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'idle' | 'searching' | 'error'>('idle')
@@ -47,6 +49,7 @@ export function Dictionary({ language }: Props) {
     if (cached) {
       setResult(cached)
       setStatus('idle')
+      if (cached.found) synthesis.prefetch(cached.word, language)
       return
     }
 
@@ -61,6 +64,7 @@ export function Dictionary({ language }: Props) {
       defineCache.set(key, data)
       setResult(data)
       setStatus('idle')
+      if (data.found) synthesis.prefetch(data.word, language)
     } catch {
       setStatus('error')
     }
@@ -126,7 +130,7 @@ export function Dictionary({ language }: Props) {
 
       {result && result.found && (
         <div className="bg-white border-2 border-stone-100 rounded-3xl p-6">
-          <div className="flex items-baseline gap-3 flex-wrap mb-4">
+          <div className="flex items-center gap-3 flex-wrap mb-4">
             <span className="text-2xl font-black text-stone-900">
               {result.word}
             </span>
@@ -134,6 +138,17 @@ export function Dictionary({ language }: Props) {
               <span className="text-sm font-semibold text-stone-400">
                 {result.phonetic}
               </span>
+            )}
+            {synthesis.isSupported && (
+              <button
+                type="button"
+                onClick={() => synthesis.speak(result.word, language)}
+                disabled={synthesis.isSpeaking}
+                aria-label={t.practice.listen}
+                className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 transition-colors"
+              >
+                🔊
+              </button>
             )}
           </div>
 

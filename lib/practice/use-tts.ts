@@ -6,28 +6,29 @@ import type { Language } from '@/lib/topics'
 export type UseTTS = {
   speak: (text: string, language: Language) => void
   /** Warm the cache for a phrase so the first click plays instantly. */
-  prefetch: (text: string) => void
+  prefetch: (text: string, language: Language) => void
   cancel: () => void
   isSpeaking: boolean
   isSupported: boolean
 }
 
-// Session-wide cache: same text → same audio URL. Keyed by the trimmed text and
-// stores the in-flight promise, so repeat plays AND prefetches of the same
-// phrase skip the /api/speak round-trip entirely (the main source of the delay).
+// Session-wide cache: same text+language → same audio URL. Keyed by both so a
+// phrase always plays with the right-accent voice, and repeat plays AND
+// prefetches skip the /api/speak round-trip entirely (the main source of delay).
 const urlCache = new Map<string, Promise<string | null>>()
 
-function resolveUrl(text: string): Promise<string | null> {
-  const key = text.trim()
-  if (!key) return Promise.resolve(null)
+function resolveUrl(text: string, language: Language): Promise<string | null> {
+  const trimmed = text.trim()
+  if (!trimmed) return Promise.resolve(null)
 
+  const key = `${language}:${trimmed}`
   const cached = urlCache.get(key)
   if (cached) return cached
 
   const pending = fetch('/api/speak', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: key }),
+    body: JSON.stringify({ text: trimmed, language }),
   })
     .then(async (response) => {
       if (!response.ok) throw new Error('tts_failed')
@@ -64,7 +65,7 @@ export function useTTS(): UseTTS {
     setIsSpeaking(false)
   }, [])
 
-  const speak = useCallback((text: string, _language: Language) => {
+  const speak = useCallback((text: string, language: Language) => {
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.src = ''
@@ -73,7 +74,7 @@ export function useTTS(): UseTTS {
     const requestId = ++requestIdRef.current
     setIsSpeaking(true)
 
-    resolveUrl(text).then((url) => {
+    resolveUrl(text, language).then((url) => {
       if (requestIdRef.current !== requestId) return
       if (!url) {
         setIsSpeaking(false)
@@ -94,10 +95,10 @@ export function useTTS(): UseTTS {
     })
   }, [])
 
-  const prefetch = useCallback((text: string) => {
+  const prefetch = useCallback((text: string, language: Language) => {
     // Resolve (and cache) the URL, then warm the browser's HTTP cache for the
     // mp3 so playback starts with no network wait on the first click.
-    resolveUrl(text).then((url) => {
+    resolveUrl(text, language).then((url) => {
       if (url) fetch(url).catch(() => {})
     })
   }, [])

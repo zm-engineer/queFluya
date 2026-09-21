@@ -6,8 +6,6 @@ import { getDict } from '@/lib/i18n/dictionaries'
 import { tensesForLanguage } from '@/lib/essentials'
 import type { Language, Level } from '@/lib/topics'
 
-const LEVEL_ORDER: Level[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
-
 export default async function TiemposPage() {
   const user = await getUser()
   if (!user) redirect('/login')
@@ -15,8 +13,13 @@ export default async function TiemposPage() {
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language
+  const userLevel = profile.level as Level
   const t = getDict(profile.native_language as Language)
-  const tenses = tensesForLanguage(targetLanguage)
+  // Grammar tenses are shown only for the learner's own level (unlike verbs,
+  // which show every level at once).
+  const tenses = tensesForLanguage(targetLanguage).filter(
+    (tense) => tense.level === userLevel
+  )
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -44,39 +47,31 @@ export default async function TiemposPage() {
         >
           ← {t.essentials.title}
         </Link>
-        <h1 className="text-3xl sm:text-4xl font-black text-stone-900 leading-tight mb-10">
+        <h1 className="text-3xl sm:text-4xl font-black text-stone-900 leading-tight mb-2">
           ⏳ {t.essentials.kinds.tenses.name}
         </h1>
+        <p className="text-xs font-black uppercase tracking-wider text-emerald-600 mb-10">
+          {t.common.levels[userLevel]}
+        </p>
 
-        <div className="space-y-8">
-          {LEVEL_ORDER.map((level) => {
-            const group = tenses.filter((tense) => tense.level === level)
-            if (group.length === 0) return null
-            return (
-              <div key={level}>
-                <h2 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-3">
-                  {t.common.levels[level]}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {group.map((tense) => (
-                    <Link
-                      key={tense.slug}
-                      href={`/esenciales/tiempos/${tense.slug}`}
-                      className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
-                    >
-                      <p className="text-lg font-black text-stone-900">
-                        {tense.name}
-                      </p>
-                      <p className="text-sm font-semibold text-stone-500 mt-1">
-                        {tense.when}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        {tenses.length === 0 ? (
+          <p className="text-sm font-bold text-stone-400">{t.essentials.empty}</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {tenses.map((tense) => (
+              <Link
+                key={tense.slug}
+                href={`/esenciales/tiempos/${tense.slug}`}
+                className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
+              >
+                <p className="text-lg font-black text-stone-900">{tense.name}</p>
+                <p className="text-sm font-semibold text-stone-500 mt-1">
+                  {tense.when}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   )
