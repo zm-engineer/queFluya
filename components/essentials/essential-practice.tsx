@@ -5,37 +5,24 @@ import { useTTS } from '@/lib/practice/use-tts'
 import { useDict } from '@/components/i18n/language-provider'
 import { Button } from '@/components/ui/button'
 import { ExampleCard } from '@/components/essentials/example-card'
-import { cn } from '@/lib/utils'
 import type { EssentialItem } from '@/content/essentials/types'
-import type { Language, Level } from '@/lib/topics'
+import type { Language } from '@/lib/topics'
 
 type Props = {
   items: EssentialItem[]
   /** Native-language labels for each conjugated form (empty for non-verbs). */
   formLabels: string[]
   language: Language
-  /** The learner's level — the tab shown first. */
-  userLevel: Level
 }
 
-const LEVEL_ORDER: Level[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
-
-// One synced practice screen, filtered by level tabs: the studied word up top
-// (with 🔊 under it and its conjugation), Prev/Next side by side, and — below —
-// the example sentences for whichever word is on screen (ExampleCard).
-export function EssentialPractice({
-  items,
-  formLabels,
-  language,
-  userLevel,
-}: Props) {
+// One synced practice screen showing every item in the set (no level filter —
+// verbs/phrasal are studied as a whole list): the studied word up top (with 🔊
+// under it and its conjugation), Prev/Next side by side, and — below — the
+// example sentences for whichever word is on screen (ExampleCard).
+export function EssentialPractice({ items, formLabels, language }: Props) {
   const synthesis = useTTS()
   const t = useDict()
 
-  const levels = LEVEL_ORDER.filter((l) => items.some((i) => i.level === l))
-  const [activeLevel, setActiveLevel] = useState<Level>(
-    levels.includes(userLevel) ? userLevel : levels[0]
-  )
   const [currentIdx, setCurrentIdx] = useState(0)
 
   const spoken = (item: EssentialItem) => (item.forms ?? [item.term]).join(', ')
@@ -45,51 +32,24 @@ export function EssentialPractice({
     items.forEach((item) => prefetch(spoken(item)))
   }, [items, prefetch])
 
-  const levelItems = items.filter((i) => i.level === activeLevel)
-  if (levelItems.length === 0) return null
+  if (items.length === 0) return null
 
-  const idx = Math.min(currentIdx, levelItems.length - 1)
-  const item = levelItems[idx]
+  const idx = Math.min(currentIdx, items.length - 1)
+  const item = items[idx]
   const forms = item.forms
   const examples = item.examples ?? []
 
-  function selectLevel(level: Level) {
-    setActiveLevel(level)
-    setCurrentIdx(0)
-  }
-
   return (
     <div className="space-y-6">
-      {/* Level tabs */}
-      {levels.length > 1 && (
-        <div className="flex gap-2">
-          {levels.map((level) => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => selectLevel(level)}
-              className={cn(
-                'flex-1 text-xs font-black uppercase tracking-wider px-3 py-2 rounded-2xl border-2 transition-colors',
-                level === activeLevel
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300'
-              )}
-            >
-              {t.common.levels[level]}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Progress */}
       <div className="flex items-center gap-3">
         <div className="text-[11px] font-black uppercase tracking-wider text-stone-400 shrink-0">
-          {idx + 1} / {levelItems.length}
+          {idx + 1} / {items.length}
         </div>
         <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-emerald-500 transition-all duration-300"
-            style={{ width: `${((idx + 1) / levelItems.length) * 100}%` }}
+            style={{ width: `${((idx + 1) / items.length) * 100}%` }}
           />
         </div>
       </div>
@@ -146,8 +106,8 @@ export function EssentialPractice({
           type="button"
           size="md"
           className="flex-1"
-          onClick={() => setCurrentIdx(Math.min(levelItems.length - 1, idx + 1))}
-          disabled={idx === levelItems.length - 1}
+          onClick={() => setCurrentIdx(Math.min(items.length - 1, idx + 1))}
+          disabled={idx === items.length - 1}
         >
           {t.deck.next}
         </Button>
@@ -159,11 +119,7 @@ export function EssentialPractice({
           <h2 className="text-lg font-black text-stone-900 mb-3">
             {t.essentials.examplesTitle}
           </h2>
-          <ExampleCard
-            key={`${activeLevel}-${idx}`}
-            examples={examples}
-            language={language}
-          />
+          <ExampleCard key={idx} examples={examples} language={language} />
         </div>
       )}
     </div>

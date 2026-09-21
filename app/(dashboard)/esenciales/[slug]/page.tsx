@@ -6,7 +6,7 @@ import { getDict } from '@/lib/i18n/dictionaries'
 import { essentialBySlug } from '@/lib/essentials'
 import { EssentialPractice } from '@/components/essentials/essential-practice'
 import type { EssentialKind } from '@/content/essentials/types'
-import type { Language, Level } from '@/lib/topics'
+import type { Language } from '@/lib/topics'
 
 const KIND_EMOJI: Record<EssentialKind, string> = {
   'irregular-verbs': '🔁',
@@ -26,7 +26,6 @@ export default async function EssentialContentPage({
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language
-  const userLevel = profile.level as Level
   const t = getDict(profile.native_language as Language)
 
   const set = essentialBySlug(slug)
@@ -84,7 +83,6 @@ export default async function EssentialContentPage({
               items={set.items}
               formLabels={t.essentials.formLabels[targetLanguage]}
               language={targetLanguage}
-              userLevel={userLevel}
             />
           </>
         )}
