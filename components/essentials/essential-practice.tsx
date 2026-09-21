@@ -25,11 +25,14 @@ export function EssentialPractice({ items, formLabels, language }: Props) {
 
   const [currentIdx, setCurrentIdx] = useState(0)
 
-  const spoken = (item: EssentialItem) => (item.forms ?? [item.term]).join(', ')
-
   const { prefetch } = synthesis
+  // Warm each word on its own (the term + every conjugated form) so its 🔊 plays
+  // instantly — we no longer read all forms joined into one muddled audio.
   useEffect(() => {
-    items.forEach((item) => prefetch(spoken(item), language))
+    items.forEach((item) => {
+      prefetch(item.term, language)
+      item.forms?.forEach((form) => prefetch(form, language))
+    })
   }, [items, prefetch, language])
 
   if (items.length === 0) return null
@@ -38,6 +41,23 @@ export function EssentialPractice({ items, formLabels, language }: Props) {
   const item = items[idx]
   const forms = item.forms
   const examples = item.examples ?? []
+
+  // Icon-only listen button that speaks a SINGLE word (a term or one form).
+  const renderListen = (text: string, size: 'sm' | 'md' = 'md') => {
+    if (!synthesis.isSupported) return null
+    const dim = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'
+    return (
+      <button
+        type="button"
+        onClick={() => synthesis.speak(text, language)}
+        disabled={synthesis.isSpeaking}
+        aria-label={t.practice.listen}
+        className={`shrink-0 inline-flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 transition-colors ${dim}`}
+      >
+        🔊
+      </button>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -56,34 +76,28 @@ export function EssentialPractice({ items, formLabels, language }: Props) {
 
       {/* Studied word */}
       <div className="bg-stone-50 border-2 border-stone-200 rounded-2xl p-6 text-center">
-        <p className="text-3xl sm:text-4xl font-black text-emerald-600 leading-tight">
-          {item.term}
-        </p>
-        {synthesis.isSupported && (
-          <div className="mt-3 flex justify-center">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => synthesis.speak(spoken(item), language)}
-              disabled={synthesis.isSpeaking}
-            >
-              🔊 {synthesis.isSpeaking ? t.deck.playing : t.practice.listen}
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <p className="text-3xl sm:text-4xl font-black text-emerald-600 leading-tight">
+            {item.term}
+          </p>
+          {/* Phrasal verbs have no forms grid, so the headword carries its own 🔊.
+              Irregular verbs list the base form in the grid below, each with its
+              own icon, so we don't duplicate one on the term. */}
+          {(!forms || forms.length === 0) && renderListen(item.term)}
+        </div>
         <p className="text-sm font-bold text-stone-400 mt-3">{item.translation}</p>
 
         {forms && forms.length > 0 && (
           <div className="grid grid-cols-3 gap-2 border-t-2 border-stone-100 mt-5 pt-4">
             {forms.map((form, i) => (
-              <div key={i}>
+              <div key={i} className="flex flex-col items-center">
                 <p className="text-[10px] font-black uppercase tracking-wider text-stone-400 mb-1">
                   {formLabels[i] ?? ''}
                 </p>
                 <p className="text-lg sm:text-xl font-black text-stone-900 leading-tight break-words">
                   {form}
                 </p>
+                <div className="mt-1.5">{renderListen(form, 'sm')}</div>
               </div>
             ))}
           </div>
