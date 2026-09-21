@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { useDict } from '@/components/i18n/language-provider'
 
 export default function LoginPage() {
@@ -38,13 +39,17 @@ export default function LoginPage() {
       email,
       password,
     })
-    setLoading(false)
 
     if (authError) {
+      setLoading(false)
       setError(t.auth.login.badCreds)
       return
     }
 
+    // Keep `loading` true through the navigation — the dashboard route takes a
+    // moment to fetch its data, and this component unmounts once it renders.
+    // Resetting loading here would flip the button back to its idle label and
+    // leave the user staring at the login page with no sign anything happened.
     router.push('/dashboard')
     router.refresh()
   }
@@ -122,7 +127,14 @@ export default function LoginPage() {
             size="lg"
             className="w-full"
           >
-            {loading ? t.auth.login.loading : t.auth.signIn}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <Spinner />
+                {t.auth.login.loading}
+              </span>
+            ) : (
+              t.auth.signIn
+            )}
           </Button>
         </form>
 
