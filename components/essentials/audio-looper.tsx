@@ -145,12 +145,14 @@ export function AudioLooper() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: value }),
       })
-      const data = (await r.json()) as {
+      // Tolerate a non-JSON response (e.g. an HTML error/timeout page) — show the
+      // clear "couldn't load" message instead of the generic error.
+      const data = (await r.json().catch(() => null)) as {
         found?: boolean
         title?: string
         episodes?: Episode[]
-      }
-      if (!r.ok || !data.found || !data.episodes?.length) {
+      } | null
+      if (!r.ok || !data?.found || !data.episodes?.length) {
         setFeedStatus('notfound')
         return
       }

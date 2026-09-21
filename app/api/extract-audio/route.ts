@@ -6,6 +6,8 @@ import {
   isBlockedHost,
 } from '@/lib/listening/extract-audio'
 
+export const maxDuration = 30
+
 // Fetches an (open) page server-side and returns the first direct audio URL it
 // finds, so the client can loop it. Only works for pages that expose a plain
 // media file and don't block automated requests — protected sites (403) or

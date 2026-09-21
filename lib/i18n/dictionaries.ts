@@ -78,7 +78,7 @@ const es = {
       fileLabel: 'Elige un mp3 de tu dispositivo',
       feedPlaceholder: 'Pega el feed RSS del podcast…',
       episodesTitle: 'Episodios',
-      feedNotFound: 'No encontré episodios en ese feed. ¿Es un RSS de podcast válido?',
+      feedNotFound: 'No pude cargar ese feed. Puede estar caído, tardar demasiado, o no ser un RSS de podcast válido.',
       delete: 'Eliminar',
       notFound:
         'No pude sacar el audio de esta página (puede estar protegida o ser vídeo). Prueba con una página abierta.',
@@ -506,7 +506,7 @@ const en: typeof es = {
       fileLabel: 'Pick an mp3 from your device',
       feedPlaceholder: 'Paste the podcast RSS feed…',
       episodesTitle: 'Episodes',
-      feedNotFound: 'No episodes found in that feed. Is it a valid podcast RSS?',
+      feedNotFound: "Couldn't load that feed. It may be down, too slow, or not a valid podcast RSS.",
       delete: 'Delete',
       notFound:
         "Couldn't get the audio from this page (it may be protected or video). Try an open page.",

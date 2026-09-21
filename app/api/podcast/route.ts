@@ -3,6 +3,10 @@ import { getUser } from '@/lib/auth'
 import { isBlockedHost } from '@/lib/listening/extract-audio'
 import { parseFeed } from '@/lib/listening/parse-feed'
 
+// Give the server room to fetch a slow feed before Vercel kills the function
+// (a kill returns an HTML 504 the client can't parse → "something went wrong").
+export const maxDuration = 30
+
 // Fetches a podcast RSS feed and returns its episodes (title + direct audio URL).
 // Podcasts are the clean source — episodes are meant to be downloaded/streamed.
 export async function POST(request: NextRequest) {
