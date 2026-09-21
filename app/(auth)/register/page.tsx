@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { useDict } from '@/components/i18n/language-provider'
 
 export default function RegisterPage() {
@@ -201,7 +202,14 @@ export default function RegisterPage() {
             size="lg"
             className="w-full"
           >
-            {loading ? t.auth.register.loading : t.auth.register.submit}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <Spinner />
+                {t.auth.register.loading}
+              </span>
+            ) : (
+              t.auth.register.submit
+            )}
           </Button>
         </form>
 
