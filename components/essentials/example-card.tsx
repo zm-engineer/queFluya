@@ -22,8 +22,8 @@ export function ExampleCard({ examples, language }: Props) {
 
   const { prefetch } = synthesis
   useEffect(() => {
-    examples.forEach((e) => prefetch(e.text))
-  }, [examples, prefetch])
+    examples.forEach((e) => prefetch(e.text, language))
+  }, [examples, prefetch, language])
 
   if (examples.length === 0) return null
 
