@@ -79,6 +79,7 @@ const es = {
       feedPlaceholder: 'Pega el feed RSS del podcast…',
       episodesTitle: 'Episodios',
       feedNotFound: 'No encontré episodios en ese feed. ¿Es un RSS de podcast válido?',
+      delete: 'Eliminar',
       notFound:
         'No pude sacar el audio de esta página (puede estar protegida o ser vídeo). Prueba con una página abierta.',
       error: 'Algo salió mal. Inténtalo de nuevo.',
@@ -506,6 +507,7 @@ const en: typeof es = {
       feedPlaceholder: 'Paste the podcast RSS feed…',
       episodesTitle: 'Episodes',
       feedNotFound: 'No episodes found in that feed. Is it a valid podcast RSS?',
+      delete: 'Delete',
       notFound:
         "Couldn't get the audio from this page (it may be protected or video). Try an open page.",
       error: 'Something went wrong. Try again.',

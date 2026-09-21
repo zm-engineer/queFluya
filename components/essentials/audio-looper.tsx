@@ -31,6 +31,28 @@ function writeCache(url: string, r: { audioUrl: string; title?: string }) {
   }
 }
 
+// Saved podcast feeds persist across sessions (until deleted) so the user never
+// re-pastes the RSS.
+type SavedFeed = { url: string; title: string }
+const FEEDS_KEY = 'escucha:feeds'
+
+function readFeeds(): SavedFeed[] {
+  try {
+    const raw = localStorage.getItem(FEEDS_KEY)
+    return raw ? (JSON.parse(raw) as SavedFeed[]) : []
+  } catch {
+    return []
+  }
+}
+
+function writeFeeds(feeds: SavedFeed[]) {
+  try {
+    localStorage.setItem(FEEDS_KEY, JSON.stringify(feeds))
+  } catch {
+    // storage unavailable — fine.
+  }
+}
+
 export function AudioLooper() {
   const t = useDict()
   const l = t.essentials.listening
@@ -47,6 +69,14 @@ export function AudioLooper() {
   const [feedUrl, setFeedUrl] = useState('')
   const [feedStatus, setFeedStatus] = useState<Status>('idle')
   const [episodes, setEpisodes] = useState<Episode[] | null>(null)
+  const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>([])
+
+  // Load saved feeds from localStorage (client only; deferred a frame so it's
+  // not a synchronous setState in the effect).
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setSavedFeeds(readFeeds()))
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   // Object URL from an uploaded file — revoke the old one when replaced/unmounted.
   const objectUrlRef = useRef<string | null>(null)
@@ -104,10 +134,9 @@ export function AudioLooper() {
     play(url, file.name)
   }
 
-  async function onFeedSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const value = feedUrl.trim()
+  async function loadFeed(value: string) {
     if (!value) return
+    setFeedUrl(value)
     setFeedStatus('loading')
     setEpisodes(null)
     try {
@@ -127,9 +156,27 @@ export function AudioLooper() {
       }
       setEpisodes(data.episodes)
       setFeedStatus('idle')
+      // Remember this feed (dedupe by url, most recent first) so it's one tap
+      // next time — no re-pasting the RSS.
+      setSavedFeeds((prev) => {
+        const next = [
+          { url: value, title: data.title || value },
+          ...prev.filter((f) => f.url !== value),
+        ]
+        writeFeeds(next)
+        return next
+      })
     } catch {
       setFeedStatus('error')
     }
+  }
+
+  function deleteFeed(url: string) {
+    setSavedFeeds((prev) => {
+      const next = prev.filter((f) => f.url !== url)
+      writeFeeds(next)
+      return next
+    })
   }
 
   const tabs: { id: Tab; label: string }[] = [
@@ -193,7 +240,9 @@ export function AudioLooper() {
           <span className="text-sm font-black text-stone-700">{l.fileLabel}</span>
           <input
             type="file"
-            accept="audio/*"
+            // Explicit extensions alongside audio/* — some phone pickers hide
+            // mp3s when only "audio/*" is set.
+            accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.wav,.opus,.flac"
             onChange={onFile}
             className="hidden"
           />
@@ -202,7 +251,13 @@ export function AudioLooper() {
 
       {tab === 'podcast' && (
         <div className="space-y-3">
-          <form onSubmit={onFeedSubmit} className="flex gap-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              loadFeed(feedUrl.trim())
+            }}
+            className="flex gap-3"
+          >
             <Input
               type="url"
               value={feedUrl}
@@ -213,6 +268,33 @@ export function AudioLooper() {
               {l.load}
             </Button>
           </form>
+
+          {savedFeeds.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {savedFeeds.map((f) => (
+                <div
+                  key={f.url}
+                  className="inline-flex items-center gap-1 bg-white border-2 border-stone-200 rounded-full pl-3 pr-1 py-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => loadFeed(f.url)}
+                    className="text-xs font-black text-stone-700 hover:text-emerald-600 transition-colors max-w-[11rem] truncate"
+                  >
+                    🎙️ {f.title}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteFeed(f.url)}
+                    aria-label={l.delete}
+                    className="shrink-0 w-5 h-5 flex items-center justify-center text-stone-400 hover:text-red-500 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {feedStatus === 'loading' && (
             <p className="text-sm font-bold text-stone-400">{l.loading}</p>
           )}
