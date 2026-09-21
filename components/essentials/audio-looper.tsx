@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDict } from '@/components/i18n/language-provider'
+import {
+  deleteAudioFile,
+  getAudioFile,
+  listAudioFiles,
+  saveAudioFile,
+  type StoredAudio,
+} from '@/lib/listening/audio-storage'
 import { cn } from '@/lib/utils'
 
 type Tab = 'page' | 'file' | 'podcast'
@@ -53,6 +60,28 @@ function writeFeeds(feeds: SavedFeed[]) {
   }
 }
 
+// Saved page links persist across sessions too (the extracted audio URL is kept
+// so replaying is one tap — no re-fetching the page).
+type SavedPage = { pageUrl: string; audioUrl: string; title: string }
+const PAGES_KEY = 'escucha:pages'
+
+function readPages(): SavedPage[] {
+  try {
+    const raw = localStorage.getItem(PAGES_KEY)
+    return raw ? (JSON.parse(raw) as SavedPage[]) : []
+  } catch {
+    return []
+  }
+}
+
+function writePages(pages: SavedPage[]) {
+  try {
+    localStorage.setItem(PAGES_KEY, JSON.stringify(pages))
+  } catch {
+    // storage unavailable — fine.
+  }
+}
+
 export function AudioLooper() {
   const t = useDict()
   const l = t.essentials.listening
@@ -64,6 +93,10 @@ export function AudioLooper() {
   // Page tab
   const [pageUrl, setPageUrl] = useState('')
   const [pageStatus, setPageStatus] = useState<Status>('idle')
+  const [savedPages, setSavedPages] = useState<SavedPage[]>([])
+
+  // File tab
+  const [savedFiles, setSavedFiles] = useState<StoredAudio[]>([])
 
   // Podcast tab
   const [feedUrl, setFeedUrl] = useState('')
@@ -71,11 +104,27 @@ export function AudioLooper() {
   const [episodes, setEpisodes] = useState<Episode[] | null>(null)
   const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>([])
 
-  // Load saved feeds from localStorage (client only; deferred a frame so it's
-  // not a synchronous setState in the effect).
+  // Load saved feeds + pages from localStorage (client only; deferred a frame so
+  // it's not a synchronous setState in the effect).
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setSavedFeeds(readFeeds()))
+    const raf = requestAnimationFrame(() => {
+      setSavedFeeds(readFeeds())
+      setSavedPages(readPages())
+    })
     return () => cancelAnimationFrame(raf)
+  }, [])
+
+  // Load saved uploaded files from IndexedDB (async; ignore if it errors).
+  useEffect(() => {
+    let active = true
+    listAudioFiles()
+      .then((files) => {
+        if (active) setSavedFiles(files)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
   }, [])
 
   // Object URL from an uploaded file — revoke the old one when replaced/unmounted.
@@ -120,18 +169,62 @@ export function AudioLooper() {
       writeCache(value, { audioUrl: data.audioUrl, title: data.title })
       play(data.audioUrl, data.title ?? null)
       setPageStatus('idle')
+      // Remember this page (dedupe by url, most recent first) so replaying it is
+      // one tap next time — no re-pasting the link.
+      const savedTitle = data.title || value
+      setSavedPages((prev) => {
+        const next = [
+          { pageUrl: value, audioUrl: data.audioUrl!, title: savedTitle },
+          ...prev.filter((p) => p.pageUrl !== value),
+        ]
+        writePages(next)
+        return next
+      })
     } catch {
       setPageStatus('error')
     }
   }
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function deletePage(url: string) {
+    setSavedPages((prev) => {
+      const next = prev.filter((p) => p.pageUrl !== url)
+      writePages(next)
+      return next
+    })
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     const url = URL.createObjectURL(file)
     objectUrlRef.current = url
     play(url, file.name)
+    // Persist the file itself (in IndexedDB) so it survives a reload.
+    try {
+      const stored = await saveAudioFile(file.name, file)
+      setSavedFiles((prev) => [stored, ...prev])
+    } catch {
+      // storage unavailable — the file still plays this session.
+    }
+  }
+
+  async function playSavedFile(f: StoredAudio) {
+    const blob = await getAudioFile(f.id)
+    if (!blob) return
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
+    const url = URL.createObjectURL(blob)
+    objectUrlRef.current = url
+    play(url, f.name)
+  }
+
+  async function deleteFile(id: string) {
+    try {
+      await deleteAudioFile(id)
+    } catch {
+      // ignore — remove from the list regardless.
+    }
+    setSavedFiles((prev) => prev.filter((f) => f.id !== id))
   }
 
   async function loadFeed(value: string) {
@@ -221,6 +314,33 @@ export function AudioLooper() {
               {l.load}
             </Button>
           </form>
+
+          {savedPages.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {savedPages.map((p) => (
+                <div
+                  key={p.pageUrl}
+                  className="inline-flex items-center gap-1 bg-white border-2 border-stone-200 rounded-full pl-3 pr-1 py-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => play(p.audioUrl, p.title)}
+                    className="text-xs font-black text-stone-700 hover:text-emerald-600 transition-colors max-w-[11rem] truncate"
+                  >
+                    🔗 {p.title}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deletePage(p.pageUrl)}
+                    aria-label={l.delete}
+                    className="shrink-0 w-5 h-5 flex items-center justify-center text-stone-400 hover:text-red-500 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {pageStatus === 'loading' && (
             <p className="text-sm font-bold text-stone-400">{l.loading}</p>
           )}
@@ -237,18 +357,47 @@ export function AudioLooper() {
       )}
 
       {tab === 'file' && (
-        <label className="block bg-white border-2 border-dashed border-stone-300 rounded-3xl p-8 text-center cursor-pointer hover:border-emerald-400 transition-colors">
-          <div className="text-3xl mb-2">📁</div>
-          <span className="text-sm font-black text-stone-700">{l.fileLabel}</span>
-          <input
-            type="file"
-            // Explicit extensions alongside audio/* — some phone pickers hide
-            // mp3s when only "audio/*" is set.
-            accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.wav,.opus,.flac"
-            onChange={onFile}
-            className="hidden"
-          />
-        </label>
+        <div className="space-y-3">
+          <label className="block bg-white border-2 border-dashed border-stone-300 rounded-3xl p-8 text-center cursor-pointer hover:border-emerald-400 transition-colors">
+            <div className="text-3xl mb-2">📁</div>
+            <span className="text-sm font-black text-stone-700">{l.fileLabel}</span>
+            <input
+              type="file"
+              // Explicit extensions alongside audio/* — some phone pickers hide
+              // mp3s when only "audio/*" is set.
+              accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.wav,.opus,.flac"
+              onChange={onFile}
+              className="hidden"
+            />
+          </label>
+
+          {savedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {savedFiles.map((f) => (
+                <div
+                  key={f.id}
+                  className="inline-flex items-center gap-1 bg-white border-2 border-stone-200 rounded-full pl-3 pr-1 py-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => playSavedFile(f)}
+                    className="text-xs font-black text-stone-700 hover:text-emerald-600 transition-colors max-w-[11rem] truncate"
+                  >
+                    🎵 {f.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteFile(f.id)}
+                    aria-label={l.delete}
+                    className="shrink-0 w-5 h-5 flex items-center justify-center text-stone-400 hover:text-red-500 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {tab === 'podcast' && (

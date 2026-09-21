@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       },
     })
     if (!res.ok) {
-      return NextResponse.json({ found: false, status: res.status })
+      return NextResponse.json({ found: false })
     }
     const xml = (await res.text()).slice(0, 5_000_000)
     const feed = parseFeed(xml)
