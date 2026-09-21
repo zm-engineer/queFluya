@@ -158,6 +158,13 @@ export type MatchResult =
  *
  * pairKey is required to match; without a mirror topic (e.g. job-interview-basics
  * has no ES side) there is nobody to pair with, so we can only wait.
+ *
+ * We prefer an OPPOSITE-language partner (the ideal exchange: each is the other's
+ * native helper). If nobody is waiting in the opposite language, we fall back to
+ * anyone waiting on the same pair_key regardless of language — otherwise two
+ * learners of the same language (two friends on the same topic, or the common
+ * early-days case where the whole user base studies one language) could never be
+ * matched and "buscar pareja" would appear broken.
  */
 export async function findOrCreateMatch(
   supabase: SupabaseClient,
@@ -167,46 +174,51 @@ export async function findOrCreateMatch(
   pairKey: string | null
 ): Promise<MatchResult> {
   if (pairKey) {
-    const want = oppositeLanguage(language)
+    // Preference order: opposite language first, then any language.
+    const languageFilters: (Language | null)[] = [oppositeLanguage(language), null]
 
-    // Retry a few times: a candidate may be claimed by someone else between our
-    // read and our join (the capacity trigger rejects the 3rd participant).
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const { data: candidates } = await supabase
-        .from('tandem_sessions')
-        .select(SESSION_COLUMNS)
-        .eq('status', 'WAITING')
-        .eq('pair_key', pairKey)
-        .eq('language', want)
-        .neq('host_profile_id', profileId)
-        .order('created_at', { ascending: true })
-        .limit(1)
+    for (const languageFilter of languageFilters) {
+      // Retry a few times: a candidate may be claimed by someone else between our
+      // read and our join (the capacity trigger rejects the 3rd participant).
+      for (let attempt = 0; attempt < 3; attempt++) {
+        let query = supabase
+          .from('tandem_sessions')
+          .select(SESSION_COLUMNS)
+          .eq('status', 'WAITING')
+          .eq('pair_key', pairKey)
+          .neq('host_profile_id', profileId)
+          .order('created_at', { ascending: true })
+          .limit(1)
+        if (languageFilter) query = query.eq('language', languageFilter)
 
-      const candidate = candidates?.[0] as SessionRow | undefined
-      if (!candidate) break // nobody waiting → create our own queue entry below
+        const { data: candidates } = await query
 
-      const { error: joinError } = await supabase
-        .from('session_participants')
-        .insert({ session_id: candidate.id, profile_id: profileId })
+        const candidate = candidates?.[0] as SessionRow | undefined
+        if (!candidate) break // none for this filter → try the next one (or create)
 
-      if (joinError) {
-        // Lost the race (already full) or duplicate row → try another candidate.
-        if (joinError.code === '23505' || joinError.message.includes('full')) {
-          continue
+        const { error: joinError } = await supabase
+          .from('session_participants')
+          .insert({ session_id: candidate.id, profile_id: profileId })
+
+        if (joinError) {
+          // Lost the race (already full) or duplicate row → try another candidate.
+          if (joinError.code === '23505' || joinError.message.includes('full')) {
+            continue
+          }
+          return { error: 'unknown' }
         }
-        return { error: 'unknown' }
-      }
 
-      const startedAt = new Date().toISOString()
-      await supabase
-        .from('tandem_sessions')
-        .update({ status: 'ACTIVE', started_at: startedAt })
-        .eq('id', candidate.id)
-        .eq('status', 'WAITING')
+        const startedAt = new Date().toISOString()
+        await supabase
+          .from('tandem_sessions')
+          .update({ status: 'ACTIVE', started_at: startedAt })
+          .eq('id', candidate.id)
+          .eq('status', 'WAITING')
 
-      return {
-        session: { ...candidate, status: 'ACTIVE', started_at: startedAt },
-        matched: true,
+        return {
+          session: { ...candidate, status: 'ACTIVE', started_at: startedAt },
+          matched: true,
+        }
       }
     }
   }
