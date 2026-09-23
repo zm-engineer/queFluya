@@ -102,6 +102,10 @@ const es = {
         name: 'Tiempos gramaticales',
         desc: 'Presente, pasado, futuro… por nivel.',
       },
+      interview: {
+        name: 'Entrevista',
+        desc: 'Vocabulario y frases para entrevistas.',
+      },
     },
   },
   dashboard: {
@@ -529,6 +533,10 @@ const en: typeof es = {
       tenses: {
         name: 'Grammar tenses',
         desc: 'Present, past, future… by level.',
+      },
+      interview: {
+        name: 'Interview',
+        desc: 'Vocabulary and phrases for interviews.',
       },
     },
   },

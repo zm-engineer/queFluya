@@ -11,6 +11,7 @@ import type { Language } from '@/lib/topics'
 const KIND_EMOJI: Record<EssentialKind, string> = {
   'irregular-verbs': '🔁',
   'phrasal-verbs': '🧩',
+  interview: '💼',
   tenses: '⏳',
 }
 
@@ -61,10 +62,10 @@ export default async function EssentialContentPage({
           ← {t.essentials.title}
         </Link>
         <h1 className="text-3xl sm:text-4xl font-black text-stone-900 leading-tight mb-2">
-          {KIND_EMOJI[set.kind]} {kind.name}
+          {KIND_EMOJI[set.kind]} {set.title ?? kind.name}
         </h1>
         <p className="text-stone-600 text-base font-semibold leading-relaxed mb-8">
-          {kind.desc}
+          {set.subtitle ?? kind.desc}
         </p>
 
         {set.comingSoon ? (

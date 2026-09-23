@@ -10,6 +10,7 @@ import type { Language } from '@/lib/topics'
 const KIND_EMOJI: Record<EssentialKind, string> = {
   'irregular-verbs': '🔁',
   'phrasal-verbs': '🧩',
+  interview: '💼',
   tenses: '⏳',
 }
 
@@ -64,6 +65,9 @@ export default async function EsencialesPage() {
             {sets.map((set) => {
               const kind = t.essentials.kinds[set.kind]
               const emoji = KIND_EMOJI[set.kind]
+              // A set may override the generic kind label with its own name.
+              const name = set.title ?? kind.name
+              const desc = set.subtitle ?? kind.desc
 
               if (set.comingSoon) {
                 return (
@@ -73,10 +77,10 @@ export default async function EsencialesPage() {
                   >
                     <div className="text-3xl mb-2 grayscale">{emoji}</div>
                     <p className="text-lg font-black text-stone-400">
-                      {kind.name}
+                      {name}
                     </p>
                     <p className="text-sm font-semibold text-stone-400 mt-1">
-                      {kind.desc}
+                      {desc}
                     </p>
                     <span className="inline-block mt-3 text-[11px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
                       {t.essentials.comingSoon}
@@ -92,9 +96,9 @@ export default async function EsencialesPage() {
                   className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
                 >
                   <div className="text-3xl mb-2">{emoji}</div>
-                  <p className="text-lg font-black text-stone-900">{kind.name}</p>
+                  <p className="text-lg font-black text-stone-900">{name}</p>
                   <p className="text-sm font-semibold text-stone-500 mt-1">
-                    {kind.desc}
+                    {desc}
                   </p>
                   <span className="inline-block mt-3 text-[11px] font-black uppercase tracking-wider text-emerald-600">
                     {t.essentials.itemsCount(set.items.length)}

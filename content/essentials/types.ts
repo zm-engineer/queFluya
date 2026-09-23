@@ -5,7 +5,11 @@ import type { Language, Level } from '../../lib/topics'
 // EN↔ES pairs and have no tandem — each set targets one language (the one being
 // learned) and is filtered by the user's target_language, like topics are.
 
-export type EssentialKind = 'irregular-verbs' | 'phrasal-verbs' | 'tenses'
+export type EssentialKind =
+  | 'irregular-verbs'
+  | 'phrasal-verbs'
+  | 'tenses'
+  | 'interview'
 
 /**
  * An example sentence (target language) with its translation (native).
@@ -37,6 +41,13 @@ export type EssentialSet = {
   kind: EssentialKind
   /** The language being practised (matches profile.target_language). */
   language: Language
+  /**
+   * Per-set card title / subtitle. When present they override the kind's
+   * generic label, so several sets of the same kind (e.g. two `interview` sets)
+   * can each show a distinct name. Fall back to the kind label when omitted.
+   */
+  title?: string
+  subtitle?: string
   /** Listed but locked — content not authored yet. */
   comingSoon?: boolean
   items: EssentialItem[]
@@ -46,6 +57,7 @@ export type EssentialSet = {
 export const KIND_ORDER: EssentialKind[] = [
   'irregular-verbs',
   'phrasal-verbs',
+  'interview',
   'tenses',
 ]
 

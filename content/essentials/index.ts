@@ -1,4 +1,5 @@
 import type { EssentialSet } from './types'
+import { INTERVIEW_SETS } from './interview'
 
 // English irregular verbs — base, past, past participle — for Spanish speakers.
 // Grouped by `level`; the practice screen filters by level. be/have/do show
@@ -318,4 +319,5 @@ export const ESSENTIAL_SETS: EssentialSet[] = [
   irregularVerbsEn,
   phrasalVerbsEn,
   irregularVerbsEs,
+  ...INTERVIEW_SETS,
 ]

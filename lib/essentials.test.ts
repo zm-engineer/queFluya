@@ -35,11 +35,23 @@ describe('essentialsForLanguage', () => {
     expect(irregular?.items[0]).toHaveProperty('translation')
   })
 
-  it('every item has a valid level, spanning all three', () => {
+  it('every item has a valid level', () => {
     const valid = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
     for (const lang of ['EN', 'ES'] as const) {
       for (const set of essentialsForLanguage(lang)) {
         expect(set.items.every((i) => valid.includes(i.level))).toBe(true)
+      }
+    }
+  })
+
+  it('verb sets span all three levels', () => {
+    // Verb sets are graded across levels; other kinds (e.g. `interview`) can be
+    // intentionally single-level, so we only assert full coverage for verbs.
+    for (const lang of ['EN', 'ES'] as const) {
+      const verbSets = essentialsForLanguage(lang).filter(
+        (s) => s.kind === 'irregular-verbs' || s.kind === 'phrasal-verbs'
+      )
+      for (const set of verbSets) {
         const levels = new Set(set.items.map((i) => i.level))
         expect(levels.size).toBe(3)
       }
