@@ -439,6 +439,7 @@ const es = {
     vocab: 'Vocabulario',
     vocabLabelEN: 'Inglés 🇬🇧',
     vocabLabelES: 'Español 🇪🇸',
+    helpPhrases: 'Frases de ayuda',
   },
 }
 
@@ -868,6 +869,7 @@ const en: typeof es = {
     vocab: 'Vocabulary',
     vocabLabelEN: 'English 🇬🇧',
     vocabLabelES: 'Spanish 🇪🇸',
+    helpPhrases: 'Help phrases',
   },
 }
 

@@ -41,9 +41,15 @@ export default async function TandemPage({
     ? await getTopicsByPairKey(supabase, topic.pairKey)
     : [topic]
   const vocabByLanguage: Record<Language, TopicVocab[]> = { EN: [], ES: [] }
+  // The topic's practice phrases, per language — shown as the in-call "help
+  // phrases" overlay so a learner has something to say during the video call.
+  const phrasesByLanguage: Record<Language, string[]> = { EN: [], ES: [] }
   for (const t of pairTopics.length > 0 ? pairTopics : [topic]) {
     vocabByLanguage[t.language] = (t.content.sections ?? []).flatMap(
       (s) => s.vocabulary
+    )
+    phrasesByLanguage[t.language] = (t.content.sections ?? []).flatMap(
+      (s) => s.practicePhrases ?? []
     )
   }
 
@@ -90,6 +96,7 @@ export default async function TandemPage({
           language={topic.language}
           pairKey={topic.pairKey}
           vocabByLanguage={vocabByLanguage}
+          phrasesByLanguage={phrasesByLanguage}
           initialReservationId={reservation ?? null}
         />
       </section>

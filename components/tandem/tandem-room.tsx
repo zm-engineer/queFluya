@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,6 +39,8 @@ type Props = {
   language: Language
   pairKey: string | null
   vocabByLanguage: Record<Language, TopicVocab[]>
+  /** The topic's practice phrases per language — the in-call help overlay. */
+  phrasesByLanguage: Record<Language, string[]>
   /** When arriving from a scheduled reservation, open its session directly. */
   initialReservationId?: string | null
 }
@@ -61,6 +63,7 @@ export function TandemRoom({
   language,
   pairKey,
   vocabByLanguage,
+  phrasesByLanguage,
   initialReservationId = null,
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
@@ -343,6 +346,7 @@ export function TandemRoom({
       messages={messages}
       timer={timer}
       vocabByLanguage={vocabByLanguage}
+      phrasesByLanguage={phrasesByLanguage}
       partnerUsername={partnerUsername}
       onSkipPhase={handleSkipPhase}
       onEndEarly={handleEndEarly}
@@ -537,6 +541,7 @@ type ChatViewProps = {
   messages: MessageRow[]
   timer: ReturnType<typeof computeTimerState> | null
   vocabByLanguage: Record<Language, TopicVocab[]>
+  phrasesByLanguage: Record<Language, string[]>
   partnerUsername: string | null
   onSkipPhase: () => void
   onEndEarly: () => void
@@ -551,6 +556,7 @@ function ChatView({
   messages,
   timer,
   vocabByLanguage,
+  phrasesByLanguage,
   partnerUsername,
   onSkipPhase,
   onEndEarly,
@@ -577,12 +583,14 @@ function ChatView({
   })
 
   // Feed each stream into its <video> (the remote one carries audio too).
+  // `inCall` is a dep so the stream is re-attached when the immersive view
+  // (which owns the <video> elements) mounts after an already-live stream.
   useEffect(() => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = call.remoteStream
-  }, [call.remoteStream])
+  }, [call.remoteStream, inCall])
   useEffect(() => {
     if (localVideoRef.current) localVideoRef.current.srcObject = call.localStream
-  }, [call.localStream])
+  }, [call.localStream, inCall])
   // "Skip language" only makes sense while there's a next phase to skip to.
   const canSkip = timer?.phase === 'EN'
   // Panel follows the timer phase: English vocab during EN, Spanish during ES.
@@ -600,17 +608,38 @@ function ChatView({
     if (!error) setDraft('')
   }
 
+  // In a video call → the immersive, full-screen "gaming" layout: the partner
+  // fills the screen, chat is overlaid at the bottom and the topic's help
+  // phrases sit in a corner. Leaving the call (or the session ending) drops
+  // back to the plain chat view below.
+  if (inCall && !ended) {
+    return (
+      <ImmersiveCall
+        status={call.status}
+        error={call.error}
+        micMuted={call.micMuted}
+        cameraOff={call.cameraOff}
+        hasVideo={call.hasVideo}
+        remoteVideoRef={remoteVideoRef}
+        localVideoRef={localVideoRef}
+        onToggleMic={call.toggleMic}
+        onToggleCamera={call.toggleCamera}
+        onHangUp={() => setInCall(false)}
+        timer={timer}
+        canSkip={canSkip}
+        onSkipPhase={onSkipPhase}
+        partnerUsername={partnerUsername}
+        phrases={phrasesByLanguage[panelLang]}
+        phrasesLang={panelLang}
+        messages={messages}
+        profileId={profileId}
+        onSend={onSend}
+      />
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {inCall && (
-        <CallStage
-          status={call.status}
-          error={call.error}
-          cameraOff={call.cameraOff}
-          remoteVideoRef={remoteVideoRef}
-          localVideoRef={localVideoRef}
-        />
-      )}
       <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
       <div className="bg-white border-2 border-stone-100 rounded-3xl overflow-hidden flex flex-col h-[34rem]">
         <div className="px-5 py-2.5 border-b-2 border-stone-100 flex items-center gap-2 text-sm font-bold text-stone-600">
@@ -820,42 +849,139 @@ function CallControls({
   )
 }
 
-function CallStage({
+// A round, translucent control button for the immersive call bar.
+function RoundBtn({
+  onClick,
+  children,
+  label,
+  active,
+  danger,
+}: {
+  onClick: () => void
+  children: ReactNode
+  label: string
+  active?: boolean
+  danger?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={cn(
+        'w-12 h-12 rounded-full grid place-items-center text-xl transition-colors shadow-lg',
+        danger
+          ? 'bg-red-500 hover:bg-red-400 text-white'
+          : active === false
+            ? 'bg-white/20 hover:bg-white/30 text-white'
+            : 'bg-white/90 hover:bg-white text-stone-900'
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+// The full-screen, "video-game" call layout: the partner fills the viewport,
+// your camera is a PiP, the timer + controls sit in a top/bottom bar, chat is
+// overlaid at the bottom and the topic's help phrases live in a corner.
+function ImmersiveCall({
   status,
   error,
+  micMuted,
   cameraOff,
+  hasVideo,
   remoteVideoRef,
   localVideoRef,
+  onToggleMic,
+  onToggleCamera,
+  onHangUp,
+  timer,
+  canSkip,
+  onSkipPhase,
+  partnerUsername,
+  phrases,
+  phrasesLang,
+  messages,
+  profileId,
+  onSend,
 }: {
   status: CallStatus
   error: string | null
+  micMuted: boolean
   cameraOff: boolean
+  hasVideo: boolean
   remoteVideoRef: RefObject<HTMLVideoElement | null>
   localVideoRef: RefObject<HTMLVideoElement | null>
+  onToggleMic: () => void
+  onToggleCamera: () => void
+  onHangUp: () => void
+  timer: ReturnType<typeof computeTimerState> | null
+  canSkip: boolean
+  onSkipPhase: () => void
+  partnerUsername: string | null
+  phrases: string[]
+  phrasesLang: Language
+  messages: MessageRow[]
+  profileId: string
+  onSend: (body: string) => Promise<{ error: string | null }>
 }) {
   const t = useDict()
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+  const [showPhrases, setShowPhrases] = useState(true)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages.length])
+
+  async function submit() {
+    if (!validateMessage(draft).ok || sending) return
+    setSending(true)
+    const { error: err } = await onSend(draft)
+    setSending(false)
+    if (!err) setDraft('')
+  }
+
+  const mins = timer ? Math.floor(timer.secondsLeftInPhase / 60) : 0
+  const secs = timer ? timer.secondsLeftInPhase % 60 : 0
+  const speaking = timer?.phase === 'ES' ? t.room.speakES : t.room.speakEN
+
   return (
-    <div className="relative w-full max-h-[26rem] aspect-video bg-stone-900 rounded-3xl overflow-hidden">
-      {/* Partner (fills the stage; carries the remote audio too). */}
+    <div className="fixed inset-0 z-50 bg-stone-950 flex flex-col text-white">
+      {/* Partner fills the screen (carries the remote audio too). */}
       <video
         ref={remoteVideoRef}
         autoPlay
         playsInline
-        className="w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover"
       />
 
+      {/* Connecting / failed overlay */}
       {status !== 'connected' && (
-        <div className="absolute inset-0 grid place-items-center bg-stone-900/80 text-center px-6">
-          <p className="text-sm font-black text-white">
-            {status === 'failed'
-              ? (error ?? t.room.stageFailed)
-              : t.room.stageConnecting}
-          </p>
+        <div className="absolute inset-0 z-30 grid place-items-center bg-stone-950/85 text-center px-6">
+          <div>
+            <p className="text-5xl mb-4 animate-pulse">📡</p>
+            <p className="text-sm font-black">
+              {status === 'failed'
+                ? (error ?? t.room.stageFailed)
+                : t.room.stageConnecting}
+            </p>
+            {status === 'failed' && (
+              <div className="mt-6">
+                <RoundBtn onClick={onHangUp} danger label={t.room.close}>
+                  ✕
+                </RoundBtn>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Your own camera, picture-in-picture. Muted so you don't hear yourself. */}
-      <div className="absolute bottom-3 right-3 w-28 sm:w-36 aspect-video rounded-xl overflow-hidden border-2 border-white/60 bg-stone-800">
+      {/* Your own camera, picture-in-picture. */}
+      <div className="absolute right-3 top-16 z-20 w-24 sm:w-32 aspect-video rounded-xl overflow-hidden border-2 border-white/40 bg-stone-800 shadow-lg">
         <video
           ref={localVideoRef}
           autoPlay
@@ -868,6 +994,142 @@ function CallStage({
             {t.room.cameraOffLabel}
           </div>
         )}
+      </div>
+
+      {/* Top bar: partner + timer */}
+      <div
+        className="relative z-20 flex items-center gap-3 px-4 py-3 bg-gradient-to-b from-black/70 to-transparent"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
+        <span
+          className={cn(
+            'h-2.5 w-2.5 rounded-full shrink-0',
+            partnerUsername ? 'bg-emerald-400' : 'bg-stone-400'
+          )}
+        />
+        <span className="text-sm font-black truncate">
+          {partnerUsername ? `@${partnerUsername}` : t.room.connecting}
+        </span>
+        {timer && timer.phase !== 'ended' && (
+          <span className="ml-auto flex items-center gap-2 bg-emerald-500/90 rounded-full px-3 py-1">
+            <span className="text-[11px] font-black uppercase tracking-wide">
+              {speaking}
+            </span>
+            <span className="text-sm font-black tabular-nums">
+              {mins}:{secs.toString().padStart(2, '0')}
+            </span>
+          </span>
+        )}
+      </div>
+
+      {/* Corner: help phrases (toggleable). */}
+      <div className="relative z-10 flex-1 min-h-0 px-3">
+        {phrases.length > 0 &&
+          (showPhrases ? (
+            <aside className="w-64 max-w-[75%] max-h-[45%] overflow-y-auto bg-black/55 backdrop-blur-sm rounded-2xl p-3">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <h3 className="text-[11px] font-black uppercase tracking-wider text-white/70">
+                  💡 {t.room.helpPhrases} · {phrasesLang}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowPhrases(false)}
+                  aria-label={t.room.close}
+                  className="text-white/60 hover:text-white text-xs font-black shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {phrases.map((p, i) => (
+                  <li key={i} className="text-sm font-semibold leading-snug">
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowPhrases(true)}
+              className="bg-black/55 backdrop-blur-sm rounded-full px-3 py-2 text-xs font-black"
+            >
+              💡 {t.room.helpPhrases}
+            </button>
+          ))}
+      </div>
+
+      {/* Bottom: controls + chat overlay */}
+      <div
+        className="relative z-20 bg-gradient-to-t from-black/85 via-black/60 to-transparent px-3 pt-8 pb-3 space-y-2.5"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="flex items-center justify-center gap-3">
+          <RoundBtn onClick={onToggleMic} active={!micMuted} label={micMuted ? t.room.micOff : t.room.micOn}>
+            {micMuted ? '🔇' : '🎙️'}
+          </RoundBtn>
+          {hasVideo && (
+            <RoundBtn
+              onClick={onToggleCamera}
+              active={!cameraOff}
+              label={cameraOff ? t.room.cameraOffBtn : t.room.cameraOn}
+            >
+              {cameraOff ? '📷' : '📹'}
+            </RoundBtn>
+          )}
+          {canSkip && (
+            <RoundBtn onClick={onSkipPhase} label={t.room.skip}>
+              ⏭️
+            </RoundBtn>
+          )}
+          <RoundBtn onClick={onHangUp} danger label={t.room.hangUp}>
+            📞
+          </RoundBtn>
+        </div>
+
+        <div ref={listRef} className="max-h-36 overflow-y-auto space-y-1.5">
+          {messages.map((m) => {
+            const mine = m.profile_id === profileId
+            return (
+              <div key={m.id} className={mine ? 'flex justify-end' : 'flex justify-start'}>
+                <div
+                  className={cn(
+                    'max-w-[80%] rounded-2xl px-3 py-1.5 text-sm font-semibold',
+                    mine
+                      ? 'bg-emerald-500 text-white rounded-br-md'
+                      : 'bg-white/85 text-stone-900 rounded-bl-md'
+                  )}
+                >
+                  {m.body}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="flex items-end gap-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                submit()
+              }
+            }}
+            placeholder={t.room.messagePlaceholder}
+            maxLength={MAX_MESSAGE_LENGTH}
+            className="flex-1 rounded-2xl bg-white/90 text-stone-900 placeholder:text-stone-400 px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-emerald-400"
+          />
+          <button
+            type="button"
+            onClick={submit}
+            disabled={sending || draft.trim().length === 0}
+            className="rounded-2xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2.5 text-sm font-black uppercase tracking-wide disabled:opacity-50 transition-colors"
+          >
+            {t.room.send}
+          </button>
+        </div>
       </div>
     </div>
   )
