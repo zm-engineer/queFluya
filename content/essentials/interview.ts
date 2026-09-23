@@ -162,7 +162,111 @@ const interviewPhrasesEn: EssentialSet = {
   ],
 }
 
+// ── Concept answers: Laravel & Vue (latest versions) ─────────────────────────
+// Term = a concise headline answer you can say out loud; examples = the detail
+// you would add. For explaining technical concepts in the interview.
+const interviewConceptsEn: EssentialSet = {
+  slug: 'interview-concepts-en',
+  kind: 'interview',
+  language: 'EN',
+  title: 'Entrevista: conceptos técnicos',
+  subtitle: 'Explica conceptos de Laravel y Vue (últimas versiones).',
+  items: [
+    // ── Laravel ──
+    { term: 'Eloquent is Laravel’s ORM for working with the database.', level: 'INTERMEDIATE', translation: 'Eloquent es el ORM de Laravel para trabajar con la base de datos.', examples: [
+      { text: 'Each database table has a model that represents it.', translation: 'Cada tabla de la base de datos tiene un modelo que la representa.' },
+      { text: 'It makes relationships between tables easy to define.', translation: 'Facilita definir relaciones entre tablas.' },
+    ] },
+    { term: 'I use eager loading to avoid the N+1 query problem.', level: 'INTERMEDIATE', translation: 'Uso eager loading para evitar el problema de las N+1 consultas.', examples: [
+      { text: 'Instead of one query per record, I load the relations in advance.', translation: 'En vez de una consulta por registro, cargo las relaciones por adelantado.' },
+      { text: 'It improves performance a lot on large lists.', translation: 'Mejora mucho el rendimiento en listas grandes.' },
+    ] },
+    { term: 'Migrations are version control for the database schema.', level: 'INTERMEDIATE', translation: 'Las migraciones son el control de versiones del esquema de la base de datos.', examples: [
+      { text: 'The whole team can build the same schema from code.', translation: 'Todo el equipo puede construir el mismo esquema desde el código.' },
+    ] },
+    { term: 'Middleware filters an HTTP request before it reaches the controller.', level: 'INTERMEDIATE', translation: 'El middleware filtra una petición HTTP antes de que llegue al controlador.', examples: [
+      { text: 'For example, I use it to check authentication.', translation: 'Por ejemplo, lo uso para comprobar la autenticación.' },
+    ] },
+    { term: 'The service container manages dependency injection.', level: 'INTERMEDIATE', translation: 'El service container gestiona la inyección de dependencias.', examples: [
+      { text: 'Laravel resolves and injects the classes I need automatically.', translation: 'Laravel resuelve e inyecta las clases que necesito automáticamente.' },
+    ] },
+    { term: 'Facades give a simple static-like interface to services.', level: 'INTERMEDIATE', translation: 'Las facades dan una interfaz sencilla, tipo estática, a los servicios.', examples: [
+      { text: 'Under the hood they still resolve from the container.', translation: 'Por debajo siguen resolviéndose desde el container.' },
+    ] },
+    { term: 'I move slow tasks to queues so they run in the background.', level: 'INTERMEDIATE', translation: 'Muevo las tareas lentas a colas para que se ejecuten en segundo plano.', examples: [
+      { text: 'Sending emails is a typical queued job.', translation: 'Enviar correos es un trabajo típico en cola.' },
+    ] },
+    { term: 'Events and listeners help me decouple parts of the app.', level: 'INTERMEDIATE', translation: 'Los eventos y listeners me ayudan a desacoplar partes de la app.', examples: [
+      { text: 'One action can trigger several independent listeners.', translation: 'Una acción puede disparar varios listeners independientes.' },
+    ] },
+    { term: 'Route model binding injects the model straight into the controller.', level: 'INTERMEDIATE', translation: 'El route model binding inyecta el modelo directamente en el controlador.', examples: [
+      { text: 'Laravel fetches the record from the route parameter for me.', translation: 'Laravel obtiene el registro a partir del parámetro de la ruta por mí.' },
+    ] },
+    { term: 'I validate input with form request classes.', level: 'INTERMEDIATE', translation: 'Valido la entrada con clases de form request.', examples: [
+      { text: 'It keeps validation rules out of the controller.', translation: 'Mantiene las reglas de validación fuera del controlador.' },
+    ] },
+    { term: 'API resources transform models into a clean JSON response.', level: 'INTERMEDIATE', translation: 'Los API resources transforman los modelos en una respuesta JSON limpia.', examples: [
+      { text: 'I control exactly which fields the API returns.', translation: 'Controlo exactamente qué campos devuelve la API.' },
+    ] },
+    { term: 'I use Sanctum for API token authentication.', level: 'INTERMEDIATE', translation: 'Uso Sanctum para la autenticación por tokens de la API.', examples: [
+      { text: 'It works well for SPAs and mobile apps.', translation: 'Funciona bien para SPAs y apps móviles.' },
+    ] },
+    { term: 'Laravel 11 introduced a slimmer application structure.', level: 'INTERMEDIATE', translation: 'Laravel 11 introdujo una estructura de aplicación más ligera.', examples: [
+      { text: 'Configuration now lives mostly in bootstrap/app.php.', translation: 'La configuración vive ahora sobre todo en bootstrap/app.php.' },
+      { text: 'There are fewer boilerplate files than in older versions.', translation: 'Hay menos archivos repetitivos que en versiones anteriores.' },
+    ] },
+    { term: 'Laravel 12 ships with modern starter kits.', level: 'INTERMEDIATE', translation: 'Laravel 12 viene con starter kits modernos.', examples: [
+      { text: 'They include React, Vue and Livewire options out of the box.', translation: 'Incluyen opciones de React, Vue y Livewire de serie.' },
+    ] },
+    { term: 'I write tests with Pest and PHPUnit.', level: 'INTERMEDIATE', translation: 'Escribo tests con Pest y PHPUnit.', examples: [
+      { text: 'I test the critical business logic and the API endpoints.', translation: 'Pruebo la lógica de negocio crítica y los endpoints de la API.' },
+    ] },
+    // ── Vue ──
+    { term: 'Vue 3 uses the Composition API to organise logic by feature.', level: 'INTERMEDIATE', translation: 'Vue 3 usa la Composition API para organizar la lógica por funcionalidad.', examples: [
+      { text: 'It replaces the older Options API for complex components.', translation: 'Sustituye a la antigua Options API en componentes complejos.' },
+      { text: 'Related code stays together instead of being split by option.', translation: 'El código relacionado queda junto en vez de separarse por opción.' },
+    ] },
+    { term: 'I use script setup for cleaner single-file components.', level: 'INTERMEDIATE', translation: 'Uso script setup para componentes de un solo archivo más limpios.', examples: [
+      { text: 'It removes a lot of boilerplate from the Composition API.', translation: 'Elimina mucho código repetitivo de la Composition API.' },
+    ] },
+    { term: 'ref wraps a single value and reactive wraps an object.', level: 'INTERMEDIATE', translation: 'ref envuelve un valor individual y reactive envuelve un objeto.', examples: [
+      { text: 'I read and write a ref through its .value property.', translation: 'Leo y escribo un ref a través de su propiedad .value.' },
+    ] },
+    { term: 'Computed properties cache a value derived from state.', level: 'INTERMEDIATE', translation: 'Las computed properties cachean un valor derivado del estado.', examples: [
+      { text: 'They only recalculate when their dependencies change.', translation: 'Solo se recalculan cuando cambian sus dependencias.' },
+    ] },
+    { term: 'watch runs code when a reactive value changes.', level: 'INTERMEDIATE', translation: 'watch ejecuta código cuando cambia un valor reactivo.', examples: [
+      { text: 'watchEffect tracks its dependencies automatically.', translation: 'watchEffect rastrea sus dependencias automáticamente.' },
+    ] },
+    { term: 'I define props with defineProps and events with defineEmits.', level: 'INTERMEDIATE', translation: 'Defino props con defineProps y eventos con defineEmits.', examples: [
+      { text: 'They are compiler macros, so I do not import them.', translation: 'Son macros del compilador, así que no los importo.' },
+    ] },
+    { term: 'In Vue 3.4, defineModel makes two-way binding much simpler.', level: 'INTERMEDIATE', translation: 'En Vue 3.4, defineModel simplifica mucho el enlace bidireccional.', examples: [
+      { text: 'It replaces the old prop-plus-emit pattern for v-model.', translation: 'Sustituye el antiguo patrón de prop más emit para v-model.' },
+    ] },
+    { term: 'Composables are reusable functions that share reactive logic.', level: 'INTERMEDIATE', translation: 'Los composables son funciones reutilizables que comparten lógica reactiva.', examples: [
+      { text: 'For example, a useFetch composable I reuse across components.', translation: 'Por ejemplo, un composable useFetch que reutilizo en varios componentes.' },
+    ] },
+    { term: 'Pinia is the official state management library for Vue 3.', level: 'INTERMEDIATE', translation: 'Pinia es la librería oficial de gestión de estado para Vue 3.', examples: [
+      { text: 'It replaced Vuex and works great with the Composition API.', translation: 'Sustituyó a Vuex y funciona muy bien con la Composition API.' },
+    ] },
+    { term: 'provide and inject share data without prop drilling.', level: 'INTERMEDIATE', translation: 'provide e inject comparten datos sin pasar props por muchos niveles.', examples: [
+      { text: 'A parent provides a value and any descendant can inject it.', translation: 'Un padre provee un valor y cualquier descendiente puede inyectarlo.' },
+    ] },
+    { term: 'Vue 3’s reactivity is built on JavaScript proxies.', level: 'INTERMEDIATE', translation: 'La reactividad de Vue 3 se basa en los proxies de JavaScript.', examples: [
+      { text: 'That is why it tracks changes more reliably than Vue 2.', translation: 'Por eso rastrea los cambios de forma más fiable que Vue 2.' },
+    ] },
+    { term: 'Teleport renders content in a different part of the DOM.', level: 'INTERMEDIATE', translation: 'Teleport renderiza contenido en otra parte del DOM.', examples: [
+      { text: 'It is very useful for modals and tooltips.', translation: 'Es muy útil para modales y tooltips.' },
+    ] },
+    { term: 'onMounted runs after the component is added to the DOM.', level: 'INTERMEDIATE', translation: 'onMounted se ejecuta después de que el componente se añade al DOM.', examples: [
+      { text: 'I use it to fetch data or set up a library.', translation: 'Lo uso para pedir datos o inicializar una librería.' },
+    ] },
+  ],
+}
+
 export const INTERVIEW_SETS: EssentialSet[] = [
   interviewVocabEn,
   interviewPhrasesEn,
+  interviewConceptsEn,
 ]
