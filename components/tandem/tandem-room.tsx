@@ -564,11 +564,8 @@ function ChatView({
   onRestart,
 }: ChatViewProps) {
   const t = useDict()
-  const [draft, setDraft] = useState('')
-  const [sending, setSending] = useState(false)
   const [confirmingEnd, setConfirmingEnd] = useState(false)
   const [inCall, setInCall] = useState(false)
-  const listRef = useRef<HTMLDivElement>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const ended = session.status === 'ENDED' || timer?.phase === 'ended'
@@ -595,18 +592,6 @@ function ChatView({
   const canSkip = timer?.phase === 'EN'
   // Panel follows the timer phase: English vocab during EN, Spanish during ES.
   const panelLang: Language = timer?.phase === 'ES' ? 'ES' : 'EN'
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages.length])
-
-  async function submit() {
-    if (!validateMessage(draft).ok || sending) return
-    setSending(true)
-    const { error } = await onSend(draft)
-    setSending(false)
-    if (!error) setDraft('')
-  }
 
   // In a video call → the immersive, full-screen "gaming" layout: the partner
   // fills the screen, chat is overlaid at the bottom and the topic's help
@@ -641,7 +626,7 @@ function ChatView({
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
-      <div className="bg-white border-2 border-stone-100 rounded-3xl overflow-hidden flex flex-col h-[34rem]">
+      <div className="bg-white border-2 border-stone-100 rounded-3xl overflow-hidden flex flex-col">
         <div className="px-5 py-2.5 border-b-2 border-stone-100 flex items-center gap-2 text-sm font-bold text-stone-600">
           <span
             className={cn(
@@ -660,82 +645,10 @@ function ChatView({
         </div>
         <TimerBanner timer={timer} ended={ended} />
 
-        {!ended && (
-          <div className="px-5 py-2 border-b-2 border-stone-100 flex items-center justify-between gap-2">
-            <CallControls
-              inCall={inCall}
-              status={call.status}
-              micMuted={call.micMuted}
-              cameraOff={call.cameraOff}
-              hasVideo={call.hasVideo}
-              error={call.error}
-              onStart={() => setInCall(true)}
-              onHangUp={() => setInCall(false)}
-              onToggleMic={call.toggleMic}
-              onToggleCamera={call.toggleCamera}
-            />
-            <div className="flex items-center gap-2">
-            {canSkip && (
-              <Button size="sm" variant="secondary" onClick={onSkipPhase}>
-                {t.room.skip}
-              </Button>
-            )}
-            {confirmingEnd ? (
-              <>
-                <span className="text-xs font-bold text-stone-500 mr-1">
-                  {t.room.confirmEnd}
-                </span>
-                <Button size="sm" variant="danger" onClick={onEndEarly}>
-                  {t.room.endYes}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setConfirmingEnd(false)}
-                >
-                  {t.room.cancel}
-                </Button>
-              </>
-            ) : (
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => setConfirmingEnd(true)}
-              >
-                {t.room.end}
-              </Button>
-            )}
-            </div>
-          </div>
-        )}
-
-        <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-3">
-          {messages.length === 0 && !ended && (
-            <p className="text-center text-sm font-semibold text-stone-400 mt-8">
-              {t.room.icebreaker}
-            </p>
-          )}
-          {messages.map((m) => {
-            const mine = m.profile_id === profileId
-            return (
-              <div key={m.id} className={mine ? 'flex justify-end' : 'flex justify-start'}>
-                <div
-                  className={
-                    mine
-                      ? 'max-w-[75%] bg-emerald-500 text-white rounded-2xl rounded-br-md px-4 py-2.5 text-sm font-semibold'
-                      : 'max-w-[75%] bg-stone-100 text-stone-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm font-semibold'
-                  }
-                >
-                  {m.body}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
         {ended ? (
-          <div className="border-t-2 border-stone-100 p-5 text-center">
-            <p className="text-sm font-black text-stone-700 mb-3">
+          <div className="p-10 text-center">
+            <p className="text-5xl mb-3">✅</p>
+            <p className="text-sm font-black text-stone-700 mb-4">
               {t.room.sessionEnded}
             </p>
             <Button size="sm" onClick={onRestart}>
@@ -743,108 +656,57 @@ function ChatView({
             </Button>
           </div>
         ) : (
-          <div className="border-t-2 border-stone-100 p-4 flex items-end gap-3">
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  submit()
-                }
-              }}
-              placeholder={t.room.messagePlaceholder}
-              maxLength={MAX_MESSAGE_LENGTH}
-              className="flex-1"
-            />
-            <Button onClick={submit} disabled={sending || draft.trim().length === 0}>
-              {t.room.send}
+          // Pre-call lobby: the room is a video call, so this screen only starts
+          // it (or rejoins after hanging up) — the chat lives inside the call.
+          <div className="p-8 sm:p-10 text-center">
+            <p className="text-5xl mb-4">🎥</p>
+            <h2 className="text-xl font-black text-stone-900 mb-2">
+              {t.room.callLobbyTitle}
+            </h2>
+            <p className="text-sm font-semibold text-stone-500 mb-6 max-w-sm mx-auto leading-relaxed">
+              {t.room.callLobbyBody}
+            </p>
+            <Button size="lg" onClick={() => setInCall(true)}>
+              {t.room.startCall}
             </Button>
+            <div className="mt-6 flex items-center justify-center gap-2">
+              {canSkip && (
+                <Button size="sm" variant="secondary" onClick={onSkipPhase}>
+                  {t.room.skip}
+                </Button>
+              )}
+              {confirmingEnd ? (
+                <>
+                  <span className="text-xs font-bold text-stone-500 mr-1">
+                    {t.room.confirmEnd}
+                  </span>
+                  <Button size="sm" variant="danger" onClick={onEndEarly}>
+                    {t.room.endYes}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setConfirmingEnd(false)}
+                  >
+                    {t.room.cancel}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => setConfirmingEnd(true)}
+                >
+                  {t.room.end}
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       <VocabPanel vocabulary={vocabByLanguage[panelLang]} language={panelLang} />
       </div>
-    </div>
-  )
-}
-
-type CallControlsProps = {
-  inCall: boolean
-  status: CallStatus
-  micMuted: boolean
-  cameraOff: boolean
-  hasVideo: boolean
-  error: string | null
-  onStart: () => void
-  onHangUp: () => void
-  onToggleMic: () => void
-  onToggleCamera: () => void
-}
-
-function CallControls({
-  inCall,
-  status,
-  micMuted,
-  cameraOff,
-  hasVideo,
-  error,
-  onStart,
-  onHangUp,
-  onToggleMic,
-  onToggleCamera,
-}: CallControlsProps) {
-  const t = useDict()
-  if (!inCall) {
-    return (
-      <Button size="sm" variant="secondary" onClick={onStart}>
-        {t.room.startCall}
-      </Button>
-    )
-  }
-
-  if (status === 'failed') {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-red-600 max-w-[16rem]">
-          {error ?? t.room.callFailed}
-        </span>
-        <Button size="sm" variant="secondary" onClick={onHangUp}>
-          {t.room.close}
-        </Button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="flex items-center gap-1.5 text-xs font-black">
-        <span
-          className={cn(
-            'h-2 w-2 rounded-full',
-            status === 'connected' ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'
-          )}
-        />
-        <span className={status === 'connected' ? 'text-emerald-600' : 'text-stone-500'}>
-          {status === 'connected' ? t.room.inCall : t.room.connectingShort}
-        </span>
-      </span>
-      {status === 'connected' && (
-        <>
-          <Button size="sm" variant="secondary" onClick={onToggleMic}>
-            {micMuted ? t.room.micOff : t.room.micOn}
-          </Button>
-          {hasVideo && (
-            <Button size="sm" variant="secondary" onClick={onToggleCamera}>
-              {cameraOff ? t.room.cameraOffBtn : t.room.cameraOn}
-            </Button>
-          )}
-        </>
-      )}
-      <Button size="sm" variant="danger" onClick={onHangUp}>
-        {t.room.hangUp}
-      </Button>
     </div>
   )
 }

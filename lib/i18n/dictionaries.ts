@@ -440,6 +440,9 @@ const es = {
     vocabLabelEN: 'Inglés 🇬🇧',
     vocabLabelES: 'Español 🇪🇸',
     helpPhrases: 'Frases de ayuda',
+    callLobbyTitle: '¿Todo listo para hablar?',
+    callLobbyBody:
+      'Inicia la videollamada para practicar en vivo. El chat y las frases de ayuda aparecen dentro de la llamada.',
   },
 }
 
@@ -870,6 +873,9 @@ const en: typeof es = {
     vocabLabelEN: 'English 🇬🇧',
     vocabLabelES: 'Spanish 🇪🇸',
     helpPhrases: 'Help phrases',
+    callLobbyTitle: 'Ready to talk?',
+    callLobbyBody:
+      'Start the video call to practise live. The chat and help phrases appear inside the call.',
   },
 }
 
