@@ -48,6 +48,12 @@ export type EssentialSet = {
    */
   title?: string
   subtitle?: string
+  /**
+   * When set, the whole set is only shown to users of exactly this level (the
+   * items' own `level` still groups content). Omit for sets shown at every
+   * level (e.g. the verb sets).
+   */
+  level?: Level
   /** Listed but locked — content not authored yet. */
   comingSoon?: boolean
   items: EssentialItem[]
