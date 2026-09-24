@@ -14,6 +14,7 @@ const interviewVocabEn: EssentialSet = {
   slug: 'interview-vocab-en',
   kind: 'interview',
   language: 'EN',
+  level: 'INTERMEDIATE',
   title: 'Entrevista: vocabulario',
   subtitle: 'Términos técnicos y de RR. HH. para tu entrevista.',
   items: [
@@ -66,6 +67,7 @@ const interviewPhrasesEn: EssentialSet = {
   slug: 'interview-phrases-en',
   kind: 'interview',
   language: 'EN',
+  level: 'INTERMEDIATE',
   title: 'Entrevista: frases',
   subtitle: 'Frases listas para decir en tu entrevista.',
   items: [
@@ -169,6 +171,7 @@ const interviewConceptsEn: EssentialSet = {
   slug: 'interview-concepts-en',
   kind: 'interview',
   language: 'EN',
+  level: 'INTERMEDIATE',
   title: 'Entrevista: conceptos técnicos',
   subtitle: 'Explica conceptos de Laravel y Vue (últimas versiones).',
   items: [

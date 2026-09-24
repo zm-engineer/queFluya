@@ -5,7 +5,7 @@ import { LogoutButton } from '@/components/auth/logout-button'
 import { getDict } from '@/lib/i18n/dictionaries'
 import { essentialsForLanguage, tensesForLanguage } from '@/lib/essentials'
 import type { EssentialKind } from '@/content/essentials/types'
-import type { Language } from '@/lib/topics'
+import type { Language, Level } from '@/lib/topics'
 
 const KIND_EMOJI: Record<EssentialKind, string> = {
   'irregular-verbs': '🔁',
@@ -21,8 +21,13 @@ export default async function EsencialesPage() {
   if (!profile) redirect('/onboarding')
 
   const targetLanguage = profile.target_language as Language
+  const userLevel = profile.level as Level
   const t = getDict(profile.native_language as Language)
-  const sets = essentialsForLanguage(targetLanguage)
+  // Level-restricted sets (e.g. the interview sets → intermediate only) are
+  // hidden unless the user's level matches; level-less sets show at every level.
+  const sets = essentialsForLanguage(targetLanguage).filter(
+    (s) => !s.level || s.level === userLevel
+  )
   const tenses = tensesForLanguage(targetLanguage)
 
   return (
