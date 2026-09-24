@@ -15,6 +15,35 @@ const KIND_ICON: Record<SectionKind, string> = {
   tandem: '🎥',
 }
 
+// Two theme-related figures per topic, keyed by pairKey so a topic and its
+// mirror (EN ↔ ES) share them. Placeholders (emoji) — swap for custom
+// illustrations later; the left gap uses [0], the right gap uses [1].
+const TOPIC_FIGURES: Record<string, [string, string]> = {
+  greetings: ['👋', '😊'],
+  introductions: ['🙋', '🤝'],
+  'family-and-people': ['👪', '👶'],
+  'numbers-and-prices': ['🔢', '💰'],
+  colors: ['🎨', '🌈'],
+  animals: ['🐶', '🦁'],
+  alphabet: ['🔤', '✏️'],
+  'telling-the-time': ['🕐', '⏰'],
+  'body-parts': ['💪', '👀'],
+  directions: ['🧭', '🗺️'],
+  'daily-routine': ['⏰', '☕'],
+  'getting-a-table': ['🍽️', '🍷'],
+  'ordering-food': ['🍔', '🥤'],
+  'at-work': ['💼', '💻'],
+  'job-interview': ['👔', '📝'],
+  'at-the-airport': ['✈️', '🧳'],
+  'at-the-hotel': ['🏨', '🛎️'],
+  'at-the-doctor': ['🩺', '💊'],
+  'getting-around': ['🚕', '🚌'],
+  'making-plans': ['📅', '📞'],
+  'shopping-and-returns': ['🛍️', '🧾'],
+  'the-weather': ['☀️', '🌧️'],
+}
+const DEFAULT_FIGURES: [string, string] = ['🌱', '⭐']
+
 // Balanced serpentine offsets (px) — used only on mobile; centered on both ends.
 const WAVE = [0, 60, 0, -60]
 
@@ -105,14 +134,16 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
                   const offset = WAVE[i % WAVE.length]
                   if (offset === 0) return null
                   // A node shifted right leaves a gap on the LEFT (and vice versa);
-                  // the character goes on that empty side, at this node's row.
+                  // the figure goes on that empty side, at this node's row.
                   const onLeft = offset > 0
+                  const figures = TOPIC_FIGURES[topic.pairKey ?? ''] ?? DEFAULT_FIGURES
+                  const figure = onLeft ? figures[0] : figures[1]
                   const topPct = ((i + 0.5) / sections.length) * 100
                   return (
                     <div
                       key={`char-${i}`}
                       aria-hidden="true"
-                      className="pointer-events-none select-none"
+                      className="pointer-events-none select-none text-6xl leading-none"
                       // Inline style so positioning never depends on Tailwind
                       // generating fraction/arbitrary classes.
                       style={{
@@ -122,7 +153,7 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
                         transform: 'translate(-50%, -50%)',
                       }}
                     >
-                      <PathCharacter className="w-24" mood={i % 2 === 0 ? 'a' : 'b'} />
+                      {figure}
                     </div>
                   )
                 })}
@@ -154,46 +185,6 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
         )
       })}
     </div>
-  )
-}
-
-// Placeholder path character — amber so it clearly contrasts with the green
-// nodes (that was the problem before). Swap this SVG for real art later; the
-// placement in the reserved left column stays the same.
-function PathCharacter({
-  className,
-  mood = 'a',
-}: {
-  className?: string
-  mood?: 'a' | 'b'
-}) {
-  return (
-    <svg viewBox="0 0 100 112" className={cn('h-auto w-20', className)} aria-hidden="true">
-      {/* feet */}
-      <ellipse cx="37" cy="99" rx="9" ry="6" fill="#d97706" />
-      <ellipse cx="63" cy="99" rx="9" ry="6" fill="#d97706" />
-      {/* antenna */}
-      <line x1="50" y1="20" x2="50" y2="9" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="50" cy="6" r="4" fill="#fbbf24" />
-      {/* body */}
-      <rect x="14" y="18" width="72" height="80" rx="34" fill="#fcd34d" stroke="#f59e0b" strokeWidth="3" />
-      {/* cheeks */}
-      <circle cx="30" cy="66" r="5" fill="#fb7185" opacity="0.6" />
-      <circle cx="70" cy="66" r="5" fill="#fb7185" opacity="0.6" />
-      {/* eyes */}
-      <circle cx="40" cy={mood === 'b' ? 52 : 55} r="5.5" fill="#3f2d12" />
-      <circle cx="60" cy={mood === 'b' ? 52 : 55} r="5.5" fill="#3f2d12" />
-      <circle cx="41.5" cy={mood === 'b' ? 50.5 : 53.5} r="1.6" fill="#ffffff" />
-      <circle cx="61.5" cy={mood === 'b' ? 50.5 : 53.5} r="1.6" fill="#ffffff" />
-      {/* smile */}
-      <path
-        d="M40 70 Q 50 80 60 70"
-        fill="none"
-        stroke="#3f2d12"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-    </svg>
   )
 }
 
