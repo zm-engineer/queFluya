@@ -8,6 +8,7 @@ import { DialogueViewer } from '@/components/topic/dialogue-viewer'
 import { PhraseDeck } from '@/components/topic/phrase-deck'
 import { VocabularyDeck } from '@/components/topic/vocabulary-deck'
 import { FreeRecordingPractice } from '@/components/practice/free-recording-practice'
+import { Mascot } from '@/components/mascot/mascot'
 import { createClient } from '@/lib/supabase/client'
 import {
   currentSectionFor,
@@ -154,7 +155,7 @@ export function TopicSections({
   if (allDone) {
     return (
       <div className="bg-white border-2 border-emerald-200 rounded-3xl p-8 sm:p-12 text-center">
-        <p className="text-7xl mb-4">🎉</p>
+        <Mascot mood="celebrating" className="w-28 h-auto mx-auto mb-4 animate-bounce" />
         <h2 className="text-3xl sm:text-4xl font-black text-stone-900 mb-3">
           {t.lesson.completedTitle}
         </h2>
