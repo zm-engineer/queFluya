@@ -9,6 +9,7 @@ import {
   normalizeInviteCode,
   oppositeLanguage,
   parseDbTimestamp,
+  phaseMsForLevel,
   skipToNextPhaseStart,
   validateMessage,
   INVITE_CODE_LENGTH,
@@ -61,6 +62,14 @@ describe('computeTimerState', () => {
     const s = computeTimerState(0, 0, { phaseMs: 1000, order: ['ES', 'EN'] })
     expect(s.phase).toBe('ES')
     expect(s.totalSecondsLeft).toBe(2)
+  })
+})
+
+describe('phaseMsForLevel', () => {
+  it('is shorter for beginners and longer for advanced', () => {
+    expect(phaseMsForLevel('BEGINNER')).toBe(2 * 60 * 1000)
+    expect(phaseMsForLevel('INTERMEDIATE')).toBe(3 * 60 * 1000)
+    expect(phaseMsForLevel('ADVANCED')).toBe(5 * 60 * 1000)
   })
 })
 

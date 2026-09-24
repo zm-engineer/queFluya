@@ -5,7 +5,7 @@
 // the hook/route handlers; this module only decides *rules*: the language
 // timer, invite-code shape, message validity, and session capacity.
 
-import type { Language } from './topics'
+import type { Language, Level } from './topics'
 
 export type SessionStatus = 'WAITING' | 'ACTIVE' | 'ENDED'
 export type SessionPhase = 'EN' | 'ES' | 'ended'
@@ -19,8 +19,21 @@ export function oppositeLanguage(language: Language): Language {
   return language === 'EN' ? 'ES' : 'EN'
 }
 
-/** Each language phase lasts 5 minutes (5 min EN + 5 min ES = the tandem). */
+/** Default phase length (fallback) — 5 minutes. */
 export const TANDEM_PHASE_MS = 5 * 60 * 1000
+
+// Each language phase's length depends on the level: less time for beginners,
+// more for advanced. Both clients derive the same value from the topic's level
+// (mirror topics share a level), so the shared timer stays in sync.
+export const PHASE_MS_BY_LEVEL: Record<Level, number> = {
+  BEGINNER: 2 * 60 * 1000,
+  INTERMEDIATE: 3 * 60 * 1000,
+  ADVANCED: 5 * 60 * 1000,
+}
+
+export function phaseMsForLevel(level: Level): number {
+  return PHASE_MS_BY_LEVEL[level] ?? TANDEM_PHASE_MS
+}
 export const TANDEM_PHASE_ORDER: readonly Exclude<SessionPhase, 'ended'>[] = [
   'EN',
   'ES',
