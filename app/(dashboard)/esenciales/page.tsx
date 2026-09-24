@@ -62,6 +62,32 @@ export default async function EsencialesPage() {
           <p className="text-sm font-bold text-stone-400">{t.essentials.empty}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              href="/esenciales/diccionario"
+              className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
+            >
+              <div className="text-3xl mb-2">🔎</div>
+              <p className="text-lg font-black text-stone-900">
+                {t.essentials.dictionary.title}
+              </p>
+              <p className="text-sm font-semibold text-stone-500 mt-1">
+                {t.essentials.dictionary.desc}
+              </p>
+            </Link>
+
+            <Link
+              href="/esenciales/escucha"
+              className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
+            >
+              <div className="text-3xl mb-2">🎧</div>
+              <p className="text-lg font-black text-stone-900">
+                {t.essentials.listening.title}
+              </p>
+              <p className="text-sm font-semibold text-stone-500 mt-1">
+                {t.essentials.listening.desc}
+              </p>
+            </Link>
+
             {sets.map((set) => {
               const kind = t.essentials.kinds[set.kind]
               const emoji = KIND_EMOJI[set.kind]
@@ -124,32 +150,6 @@ export default async function EsencialesPage() {
                 </span>
               </Link>
             )}
-
-            <Link
-              href="/esenciales/diccionario"
-              className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
-            >
-              <div className="text-3xl mb-2">🔎</div>
-              <p className="text-lg font-black text-stone-900">
-                {t.essentials.dictionary.title}
-              </p>
-              <p className="text-sm font-semibold text-stone-500 mt-1">
-                {t.essentials.dictionary.desc}
-              </p>
-            </Link>
-
-            <Link
-              href="/esenciales/escucha"
-              className="bg-white border-2 border-b-4 border-stone-200 rounded-3xl p-6 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
-            >
-              <div className="text-3xl mb-2">🎧</div>
-              <p className="text-lg font-black text-stone-900">
-                {t.essentials.listening.title}
-              </p>
-              <p className="text-sm font-semibold text-stone-500 mt-1">
-                {t.essentials.listening.desc}
-              </p>
-            </Link>
           </div>
         )}
       </section>
