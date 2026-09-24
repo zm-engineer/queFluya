@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Mascot } from '@/components/mascot/mascot'
 import { useDict } from '@/components/i18n/language-provider'
 import { type Level, type TopicDetail } from '@/lib/topics'
 import { isSectionAccessible, sectionKind, type SectionKind } from '@/lib/topic-journey'
@@ -96,15 +95,8 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
               {allDone && <span className="text-2xl shrink-0">🏆</span>}
             </div>
 
-            {/* Path: zigzag on mobile, a single row on desktop. On mobile a big
-                static mascot fills the empty space beside the zigzag. */}
-            <div className="relative flex flex-col items-center gap-6 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8">
-              {narrow && (
-                <Mascot
-                  mood={topicIdx % 2 === 0 ? 'happy' : 'thinking'}
-                  className="absolute left-1 top-1/2 -translate-y-1/2 w-24 pointer-events-none select-none"
-                />
-              )}
+            {/* Path: zigzag on mobile, a single row on desktop */}
+            <div className="flex flex-col items-center gap-6 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8">
               {sections.map((section, i) => {
                 const kind = sectionKind(section)
                 const offset = WAVE[i % WAVE.length]
