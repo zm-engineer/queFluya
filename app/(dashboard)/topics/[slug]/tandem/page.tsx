@@ -94,6 +94,7 @@ export default async function TandemPage({
           topicSlug={topic.slug}
           topicTitle={topic.title}
           language={topic.language}
+          level={topic.level}
           pairKey={topic.pairKey}
           vocabByLanguage={vocabByLanguage}
           phrasesByLanguage={phrasesByLanguage}

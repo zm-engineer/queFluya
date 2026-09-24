@@ -14,6 +14,7 @@ import {
   computeTimerState,
   normalizeInviteCode,
   parseDbTimestamp,
+  phaseMsForLevel,
   validateMessage,
   MAX_MESSAGE_LENGTH,
 } from '@/lib/tandem'
@@ -26,10 +27,11 @@ import {
   loadMessages,
   sendMessage,
   skipToNextPhase,
+  startSessionClock,
   type MessageRow,
   type SessionRow,
 } from '@/lib/tandem-session'
-import type { Language, TopicVocab } from '@/lib/topics'
+import type { Language, Level, TopicVocab } from '@/lib/topics'
 
 type Props = {
   profileId: string
@@ -37,6 +39,8 @@ type Props = {
   topicSlug: string
   topicTitle: string
   language: Language
+  /** The topic's level — sets each phase's length (2/3/5 min). */
+  level: Level
   pairKey: string | null
   vocabByLanguage: Record<Language, TopicVocab[]>
   /** The topic's practice phrases per language — the in-call help overlay. */
@@ -61,11 +65,13 @@ export function TandemRoom({
   topicSlug,
   topicTitle,
   language,
+  level,
   pairKey,
   vocabByLanguage,
   phrasesByLanguage,
   initialReservationId = null,
 }: Props) {
+  const phaseMs = useMemo(() => phaseMsForLevel(level), [level])
   const supabase = useMemo(() => createClient(), [])
   const t = useDict()
 
@@ -211,6 +217,25 @@ export function TandemRoom({
   // --- Timer tick (only while the session is live) -----------------------
   const startedAtMs = session?.started_at ? parseDbTimestamp(session.started_at) : null
   const isActive = session?.status === 'ACTIVE' && startedAtMs !== null
+  // ACTIVE but the clock hasn't started — we're waiting for both peers to be
+  // present. The timer only starts counting once they are (below).
+  const waitingToStart = session?.status === 'ACTIVE' && startedAtMs === null
+
+  // Start the shared clock the moment both peers are present (presence sync set
+  // partnerUsername). The DB guard (started_at IS NULL) makes it safe for both
+  // to try; the resulting started_at reaches both via the UPDATE listener.
+  const clockStartedRef = useRef(false)
+  const sessionId = session?.id
+  useEffect(() => {
+    if (!waitingToStart || !partnerUsername || !sessionId) return
+    if (clockStartedRef.current) return
+    clockStartedRef.current = true
+    startSessionClock(supabase, sessionId).then(() =>
+      getSessionById(supabase, sessionId).then((row) => {
+        if (row?.started_at) setSession((prev) => (prev ? { ...prev, ...row } : prev))
+      })
+    )
+  }, [supabase, waitingToStart, partnerUsername, sessionId])
 
   useEffect(() => {
     if (!isActive) return
@@ -218,7 +243,9 @@ export function TandemRoom({
     return () => clearInterval(id)
   }, [isActive])
 
-  const timer = isActive ? computeTimerState(startedAtMs as number, now) : null
+  const timer = isActive
+    ? computeTimerState(startedAtMs as number, now, { phaseMs })
+    : null
 
   // When the clock runs out, flip the session to ENDED (idempotent; both
   // peers may fire it, the DB update is harmless either way).
@@ -287,11 +314,11 @@ export function TandemRoom({
   // tandem_sessions UPDATE listener); we also set it locally for instant feedback.
   const handleSkipPhase = useCallback(async () => {
     if (!session?.id || startedAtMs === null) return
-    const result = await skipToNextPhase(supabase, session.id, startedAtMs)
+    const result = await skipToNextPhase(supabase, session.id, startedAtMs, phaseMs)
     if (result) {
       setSession((prev) => (prev ? { ...prev, started_at: result.startedAt } : prev))
     }
-  }, [supabase, session, startedAtMs])
+  }, [supabase, session, startedAtMs, phaseMs])
 
   // End the conversation early. endSession flips status to ENDED, which reaches
   // the peer through the same tandem_sessions UPDATE listener.
@@ -345,6 +372,7 @@ export function TandemRoom({
       session={session}
       messages={messages}
       timer={timer}
+      waitingToStart={waitingToStart}
       vocabByLanguage={vocabByLanguage}
       phrasesByLanguage={phrasesByLanguage}
       partnerUsername={partnerUsername}
@@ -540,6 +568,7 @@ type ChatViewProps = {
   session: SessionRow
   messages: MessageRow[]
   timer: ReturnType<typeof computeTimerState> | null
+  waitingToStart: boolean
   vocabByLanguage: Record<Language, TopicVocab[]>
   phrasesByLanguage: Record<Language, string[]>
   partnerUsername: string | null
@@ -555,6 +584,7 @@ function ChatView({
   session,
   messages,
   timer,
+  waitingToStart,
   vocabByLanguage,
   phrasesByLanguage,
   partnerUsername,
@@ -643,7 +673,7 @@ function ChatView({
             <span className="text-stone-400">{t.room.connecting}</span>
           )}
         </div>
-        <TimerBanner timer={timer} ended={ended} />
+        <TimerBanner timer={timer} ended={ended} waitingToStart={waitingToStart} />
 
         {ended ? (
           <div className="p-10 text-center">
@@ -1000,15 +1030,25 @@ function ImmersiveCall({
 function TimerBanner({
   timer,
   ended,
+  waitingToStart,
 }: {
   timer: ReturnType<typeof computeTimerState> | null
   ended: boolean
+  waitingToStart: boolean
 }) {
   const t = useDict()
-  if (ended || !timer || timer.phase === 'ended') {
+  if (ended || timer?.phase === 'ended') {
     return (
       <div className="bg-stone-100 px-5 py-3 text-center text-sm font-black text-stone-500">
         {t.room.sessionFinished}
+      </div>
+    )
+  }
+  if (waitingToStart || !timer) {
+    // ACTIVE but the clock hasn't started — waiting for both peers to connect.
+    return (
+      <div className="bg-amber-400 text-amber-950 px-5 py-3 text-center text-sm font-black">
+        ⏳ {t.room.clockWaiting}
       </div>
     )
   }

@@ -134,14 +134,16 @@ export async function joinByCode(
     }
   }
 
-  const startedAt = new Date().toISOString()
+  // Activate but DON'T start the clock yet — startSessionClock() sets
+  // started_at once both peers are actually present, so the timer only counts
+  // real conversation time (not the connecting seconds).
   await supabase
     .from('tandem_sessions')
-    .update({ status: 'ACTIVE', started_at: startedAt })
+    .update({ status: 'ACTIVE' })
     .eq('id', session.id)
     .eq('status', 'WAITING')
 
-  return { session: { ...session, status: 'ACTIVE', started_at: startedAt } }
+  return { session: { ...session, status: 'ACTIVE' } }
 }
 
 export type MatchResult =
@@ -208,15 +210,15 @@ export async function findOrCreateMatch(
           return { error: 'unknown' }
         }
 
-        const startedAt = new Date().toISOString()
+        // Activate; the clock starts later, once both peers are present.
         await supabase
           .from('tandem_sessions')
-          .update({ status: 'ACTIVE', started_at: startedAt })
+          .update({ status: 'ACTIVE' })
           .eq('id', candidate.id)
           .eq('status', 'WAITING')
 
         return {
-          session: { ...candidate, status: 'ACTIVE', started_at: startedAt },
+          session: { ...candidate, status: 'ACTIVE' },
           matched: true,
         }
       }
@@ -240,9 +242,10 @@ export async function skipToNextPhase(
   supabase: SupabaseClient,
   sessionId: string,
   startedAtMs: number,
+  phaseMs: number,
   nowMs: number = Date.now()
 ): Promise<{ startedAt: string } | null> {
-  const newStartMs = skipToNextPhaseStart(startedAtMs, nowMs)
+  const newStartMs = skipToNextPhaseStart(startedAtMs, nowMs, { phaseMs })
   if (newStartMs === null) return null
 
   const startedAt = new Date(newStartMs).toISOString()
@@ -300,14 +303,32 @@ export async function joinSessionById(
     }
   }
 
-  const startedAt = new Date().toISOString()
+  // Activate; the clock starts later, once both peers are present.
   await supabase
     .from('tandem_sessions')
-    .update({ status: 'ACTIVE', started_at: startedAt })
+    .update({ status: 'ACTIVE' })
     .eq('id', sessionId)
     .eq('status', 'WAITING')
 
   return getSessionById(supabase, sessionId)
+}
+
+/**
+ * Start the shared clock once both peers are actually connected. Sets
+ * `started_at = now` only if it's still null (idempotent — the first caller
+ * wins, and the value reaches both clients via the tandem_sessions UPDATE
+ * listener). Both browsers derive the timer purely from this timestamp.
+ */
+export async function startSessionClock(
+  supabase: SupabaseClient,
+  sessionId: string
+): Promise<void> {
+  await supabase
+    .from('tandem_sessions')
+    .update({ started_at: new Date().toISOString() })
+    .eq('id', sessionId)
+    .eq('status', 'ACTIVE')
+    .is('started_at', null)
 }
 
 export async function loadMessages(
