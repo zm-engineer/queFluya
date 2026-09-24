@@ -46,6 +46,9 @@ export function TopicSections({
   const [practicedInCurrent, setPracticedInCurrent] = useState(0)
   const [freeRecordingDone, setFreeRecordingDone] = useState(false)
   const [shadowingDone, setShadowingDone] = useState(false)
+  // "Repeat topic" → free-practice mode: every section is unlocked so the user
+  // can jump to any phase without the completion gates.
+  const [freePractice, setFreePractice] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const allVocabulary = useMemo(
@@ -117,7 +120,11 @@ export function TopicSections({
   // Free navigation: any section is reachable except a locked one (the tandem
   // call, gated on completing the phrase practice). You can always stay put.
   function canJumpTo(idx: number): boolean {
-    return idx === currentIdx || isSectionAccessible(sections, idx, completed)
+    return (
+      freePractice ||
+      idx === currentIdx ||
+      isSectionAccessible(sections, idx, completed)
+    )
   }
 
   // Navigate to a section, clearing the per-section transient gate flags (the
@@ -134,7 +141,8 @@ export function TopicSections({
 
   const nextIdx = currentIdx + 1
   const canAdvance =
-    nextIdx < total && isSectionAccessible(sections, nextIdx, completed)
+    nextIdx < total &&
+    (freePractice || isSectionAccessible(sections, nextIdx, completed))
 
   function complete() {
     const nextCompleted = new Set(completed)
@@ -152,7 +160,7 @@ export function TopicSections({
     }
   }
 
-  if (allDone) {
+  if (allDone && !freePractice) {
     return (
       <div className="bg-white border-2 border-emerald-200 rounded-3xl p-8 sm:p-12 text-center">
         <Mascot mood="celebrating" className="w-28 h-auto mx-auto mb-4 animate-bounce" />
@@ -171,8 +179,8 @@ export function TopicSections({
         <button
           type="button"
           onClick={() => {
+            setFreePractice(true)
             goToSection(0)
-            setCompleted(new Set())
           }}
           className="block mx-auto mt-6 text-sm font-bold text-stone-500 hover:text-emerald-600 transition-colors"
         >
