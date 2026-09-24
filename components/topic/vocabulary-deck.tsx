@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
 import { useDict } from '@/components/i18n/language-provider'
 import { Button } from '@/components/ui/button'
+import { Mascot } from '@/components/mascot/mascot'
 import type { Language, TopicVocab } from '@/lib/topics'
 
 type Props = {
@@ -47,7 +48,7 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
   if (done) {
     return (
       <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 text-center">
-        <p className="text-5xl mb-3">✅</p>
+        <Mascot mood="celebrating" className="w-20 mx-auto mb-3 animate-bounce" />
         <p className="text-xl font-black text-stone-900 mb-2">
           {t.deck.vocabDone}
         </p>
