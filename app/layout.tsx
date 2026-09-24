@@ -50,11 +50,20 @@ export default async function RootLayout({
   const lang = detectLanguage((await headers()).get('accept-language'))
 
   return (
+    // suppressHydrationWarning: browser extensions (Grammarly, LanguageTool,
+    // ColorZilla, Dark Reader…) inject attributes onto <html>/<body> before React
+    // hydrates, which trips the hydration warning. This only silences attribute
+    // mismatches on THESE two elements — a real mismatch inside any component
+    // still warns — so it's the safe, documented fix for extension noise.
     <html
       lang={lang === 'EN' ? 'en' : 'es'}
       className={`${nunito.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full bg-stone-50 text-stone-900 font-sans">
+      <body
+        className="min-h-full bg-stone-50 text-stone-900 font-sans"
+        suppressHydrationWarning
+      >
         <TopProgressBar />
         <ServiceWorkerRegister />
         <LanguageProvider nativeLanguage={lang}>{children}</LanguageProvider>
