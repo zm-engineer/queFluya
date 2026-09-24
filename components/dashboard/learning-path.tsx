@@ -106,7 +106,7 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
                   // Inline style so positioning never depends on Tailwind
                   // generating fraction/arbitrary classes. Centred in the empty
                   // left column (the zigzag is pushed right by pl-24).
-                  style={{ position: 'absolute', left: '25%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                  style={{ position: 'absolute', left: '35%', top: '50%', transform: 'translate(-50%, -50%)' }}
                 >
                   <PathCharacter className="w-20" mood={topicIdx % 2 === 0 ? 'a' : 'b'} />
                 </div>
