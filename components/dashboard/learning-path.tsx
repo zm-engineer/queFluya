@@ -95,22 +95,37 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
               {allDone && <span className="text-2xl shrink-0">🏆</span>}
             </div>
 
-            {/* Path: zigzag on mobile, a single row on desktop. On mobile the
-                path is pushed right (pl-24) so a character sits in the reserved
-                left column without overlapping any node. */}
-            <div className="relative flex flex-col items-center gap-6 py-8 pl-24 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8 sm:pl-0">
-              {narrow && (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none select-none"
-                  // Inline style so positioning never depends on Tailwind
-                  // generating fraction/arbitrary classes. Centred in the empty
-                  // left column (the zigzag is pushed right by pl-24).
-                  style={{ position: 'absolute', left: '35%', top: '50%', transform: 'translate(-50%, -50%)' }}
-                >
-                  <PathCharacter className="w-20" mood={topicIdx % 2 === 0 ? 'a' : 'b'} />
-                </div>
-              )}
+            {/* Path: zigzag on mobile, a single row on desktop. On mobile a
+                character sits centred in each empty gap the zigzag leaves — the
+                left gap beside a right-shifted node, the right gap beside a
+                left-shifted one. */}
+            <div className="relative flex flex-col items-center gap-6 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8">
+              {narrow &&
+                sections.map((_, i) => {
+                  const offset = WAVE[i % WAVE.length]
+                  if (offset === 0) return null
+                  // A node shifted right leaves a gap on the LEFT (and vice versa);
+                  // the character goes on that empty side, at this node's row.
+                  const onLeft = offset > 0
+                  const topPct = ((i + 0.5) / sections.length) * 100
+                  return (
+                    <div
+                      key={`char-${i}`}
+                      aria-hidden="true"
+                      className="pointer-events-none select-none"
+                      // Inline style so positioning never depends on Tailwind
+                      // generating fraction/arbitrary classes.
+                      style={{
+                        position: 'absolute',
+                        top: `${topPct}%`,
+                        left: onLeft ? '25%' : '75%',
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      <PathCharacter className="w-24" mood={i % 2 === 0 ? 'a' : 'b'} />
+                    </div>
+                  )
+                })}
               {sections.map((section, i) => {
                 const kind = sectionKind(section)
                 const offset = WAVE[i % WAVE.length]
