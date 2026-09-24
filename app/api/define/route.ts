@@ -28,6 +28,16 @@ Return strict JSON: {"word": string, "translation": string}
 "translation" is the 1-3 most common ${LANG_NAME[to]} equivalents, comma-separated, in ${LANG_NAME[to]} only.`
 }
 
+// Phrase help: the learner pastes a COMPLETE phrase in the language they're
+// studying and gets a monolingual explanation (in that language). The native
+// translation is also returned but the UI keeps it hidden until asked for.
+function phrasePrompt(phrase: string, from: Lang, to: Lang): string {
+  return `A learner studying ${LANG_NAME[from]} wants help understanding this complete ${LANG_NAME[from]} phrase: "${phrase}".
+Return strict JSON: {"phrase": string, "explanation": string, "translation": string}
+- "explanation": a clear, simple explanation IN ${LANG_NAME[from]} ONLY (1-2 sentences) of what the phrase means and how it's used, like a monolingual dictionary. Never use ${LANG_NAME[to]} here.
+- "translation": a natural ${LANG_NAME[to]} translation of the whole phrase, in ${LANG_NAME[to]} only.`
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -43,20 +53,23 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json()
   const word = typeof body?.word === 'string' ? body.word.trim().slice(0, 60) : ''
+  const phrase = typeof body?.phrase === 'string' ? body.phrase.trim().slice(0, 300) : ''
   const language: Lang | null =
     body?.language === 'EN' || body?.language === 'ES' ? body.language : null
-  const mode: 'define' | 'translate' =
-    body?.mode === 'translate' ? 'translate' : 'define'
+  const mode: 'define' | 'translate' | 'phrase' =
+    body?.mode === 'translate' ? 'translate' : body?.mode === 'phrase' ? 'phrase' : 'define'
   const nativeLanguage: Lang = language === 'EN' ? 'ES' : 'EN'
 
-  if (!word || !language) {
+  if (!language || (mode === 'phrase' ? !phrase : !word)) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
   }
 
   const prompt =
-    mode === 'translate'
-      ? translatePrompt(word, language, nativeLanguage)
-      : definePrompt(word, language)
+    mode === 'phrase'
+      ? phrasePrompt(phrase, language, nativeLanguage)
+      : mode === 'translate'
+        ? translatePrompt(word, language, nativeLanguage)
+        : definePrompt(word, language)
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 

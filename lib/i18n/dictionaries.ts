@@ -63,6 +63,10 @@ const es = {
       notFound: (w: string) => `No encontré "${w}". Revisa la ortografía.`,
       error: 'Algo salió mal. Inténtalo de nuevo.',
       prompt: 'Escribe una palabra para ver su significado.',
+      phraseTitle: '💬 Ayuda con frases',
+      phraseDesc: 'Busca una frase completa; te la explico en el idioma que aprendes.',
+      phrasePlaceholder: 'Ej.: "it now looks as if I\'m going to stay"',
+      phrasePrompt: 'Escribe una frase completa para recibir ayuda.',
     },
     listening: {
       title: 'Escucha',
@@ -501,6 +505,10 @@ const en: typeof es = {
       notFound: (w: string) => `Couldn't find "${w}". Check the spelling.`,
       error: 'Something went wrong. Try again.',
       prompt: 'Type a word to see its meaning.',
+      phraseTitle: '💬 Phrase help',
+      phraseDesc: "Search a complete phrase; I'll explain it in the language you're learning.",
+      phrasePlaceholder: 'e.g. "it now looks as if I\'m going to stay"',
+      phrasePrompt: 'Type a complete phrase to get help.',
     },
     listening: {
       title: 'Listen',
