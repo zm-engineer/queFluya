@@ -89,6 +89,9 @@ export function AudioLooper() {
   const [tab, setTab] = useState<Tab>('page')
   const [src, setSrc] = useState<string | null>(null)
   const [title, setTitle] = useState<string | null>(null)
+  // The <audio> couldn't load the source (blocked hotlink, CORS, 404, or the
+  // page had no real audio file) — show a helpful hint instead of a dead player.
+  const [audioError, setAudioError] = useState(false)
 
   // Page tab
   const [pageUrl, setPageUrl] = useState('')
@@ -136,6 +139,7 @@ export function AudioLooper() {
   }, [])
 
   function play(audioUrl: string, audioTitle: string | null) {
+    setAudioError(false)
     setSrc(audioUrl)
     setTitle(audioTitle)
   }
@@ -494,8 +498,21 @@ export function AudioLooper() {
               {l.loopBadge}
             </span>
           </div>
-          <audio key={src} src={src} controls loop className="w-full" />
-          <p className="text-[13px] font-bold text-stone-400 mt-4">💡 {l.hint}</p>
+          <audio
+            key={src}
+            src={src}
+            controls
+            loop
+            className="w-full"
+            onError={() => setAudioError(true)}
+          />
+          {audioError ? (
+            <p className="text-[13px] font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3 mt-4">
+              {l.playError}
+            </p>
+          ) : (
+            <p className="text-[13px] font-bold text-stone-400 mt-4">💡 {l.hint}</p>
+          )}
         </div>
       )}
     </div>
