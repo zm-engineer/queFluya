@@ -80,7 +80,7 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
                 away. Opaque bg + z-index so the path passes under it. */}
             <div
               className={cn(
-                'sticky top-16 z-[5] rounded-2xl px-5 py-4 flex items-center justify-between gap-3 text-white shadow-sm',
+                'sticky top-16 z-20 rounded-2xl px-5 py-4 flex items-center justify-between gap-3 text-white shadow-sm',
                 allDone ? 'bg-emerald-600' : 'bg-emerald-500'
               )}
             >
@@ -95,8 +95,21 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
               {allDone && <span className="text-2xl shrink-0">🏆</span>}
             </div>
 
-            {/* Path: zigzag on mobile, a single row on desktop */}
-            <div className="flex flex-col items-center gap-6 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8">
+            {/* Path: zigzag on mobile, a single row on desktop. On mobile the
+                path is pushed right (pl-24) so a character sits in the reserved
+                left column without overlapping any node. */}
+            <div className="relative flex flex-col items-center gap-6 py-8 pl-24 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8 sm:pl-0">
+              {narrow && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none"
+                  // Inline style so positioning never depends on Tailwind
+                  // generating fraction/arbitrary classes.
+                  style={{ position: 'absolute', left: 2, top: '50%', transform: 'translateY(-50%)' }}
+                >
+                  <PathCharacter className="w-20" mood={topicIdx % 2 === 0 ? 'a' : 'b'} />
+                </div>
+              )}
               {sections.map((section, i) => {
                 const kind = sectionKind(section)
                 const offset = WAVE[i % WAVE.length]
@@ -125,6 +138,46 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
         )
       })}
     </div>
+  )
+}
+
+// Placeholder path character — amber so it clearly contrasts with the green
+// nodes (that was the problem before). Swap this SVG for real art later; the
+// placement in the reserved left column stays the same.
+function PathCharacter({
+  className,
+  mood = 'a',
+}: {
+  className?: string
+  mood?: 'a' | 'b'
+}) {
+  return (
+    <svg viewBox="0 0 100 112" className={cn('h-auto w-20', className)} aria-hidden="true">
+      {/* feet */}
+      <ellipse cx="37" cy="99" rx="9" ry="6" fill="#d97706" />
+      <ellipse cx="63" cy="99" rx="9" ry="6" fill="#d97706" />
+      {/* antenna */}
+      <line x1="50" y1="20" x2="50" y2="9" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="50" cy="6" r="4" fill="#fbbf24" />
+      {/* body */}
+      <rect x="14" y="18" width="72" height="80" rx="34" fill="#fcd34d" stroke="#f59e0b" strokeWidth="3" />
+      {/* cheeks */}
+      <circle cx="30" cy="66" r="5" fill="#fb7185" opacity="0.6" />
+      <circle cx="70" cy="66" r="5" fill="#fb7185" opacity="0.6" />
+      {/* eyes */}
+      <circle cx="40" cy={mood === 'b' ? 52 : 55} r="5.5" fill="#3f2d12" />
+      <circle cx="60" cy={mood === 'b' ? 52 : 55} r="5.5" fill="#3f2d12" />
+      <circle cx="41.5" cy={mood === 'b' ? 50.5 : 53.5} r="1.6" fill="#ffffff" />
+      <circle cx="61.5" cy={mood === 'b' ? 50.5 : 53.5} r="1.6" fill="#ffffff" />
+      {/* smile */}
+      <path
+        d="M40 70 Q 50 80 60 70"
+        fill="none"
+        stroke="#3f2d12"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }
 
