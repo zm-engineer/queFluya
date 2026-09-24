@@ -83,6 +83,8 @@ const es = {
       notFound:
         'No pude sacar el audio de esta página (puede estar protegida o ser vídeo). Prueba con una página abierta.',
       error: 'Algo salió mal. Inténtalo de nuevo.',
+      playError:
+        'No se pudo reproducir este audio (la página puede bloquear la reproducción externa, ser un vídeo, o el enlace ya no existe). Prueba con otra página, o usa las pestañas Archivo o Podcast.',
       hint: 'Se reproduce en bucle hasta que lo pares. Puedes pausarlo desde los controles del móvil o del coche.',
     },
     formLabels: {
@@ -519,6 +521,8 @@ const en: typeof es = {
       notFound:
         "Couldn't get the audio from this page (it may be protected or video). Try an open page.",
       error: 'Something went wrong. Try again.',
+      playError:
+        "This audio couldn't play (the page may block external playback, be a video, or the link no longer exists). Try another page, or use the File or Podcast tabs.",
       hint: 'It loops until you stop it. Pause it from your phone or car controls.',
     },
     formLabels: {

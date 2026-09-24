@@ -34,9 +34,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'blocked_host' }, { status: 400 })
   }
 
+  // The app is served over HTTPS, so an http:// audio URL is blocked as mixed
+  // content and the <audio> element just shows "Error". Upgrade to https:// —
+  // if the host supports it (nearly all do) the clip plays; if not, it would
+  // have been blocked anyway.
+  const toHttps = (url: string) => url.replace(/^http:\/\//i, 'https://')
+
   // If the user pasted a direct media file, use it as-is (no fetch needed).
   if (/\.(mp3|m4a|ogg|wav|aac)(\?.*)?$/i.test(pageUrl.pathname + pageUrl.search)) {
-    return NextResponse.json({ found: true, audioUrl: pageUrl.toString() })
+    return NextResponse.json({ found: true, audioUrl: toHttps(pageUrl.toString()) })
   }
 
   const controller = new AbortController()
@@ -63,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({
       found: true,
-      audioUrl,
+      audioUrl: toHttps(audioUrl),
       title: extractTitle(html) ?? undefined,
     })
   } catch {
