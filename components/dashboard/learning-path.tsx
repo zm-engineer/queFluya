@@ -128,7 +128,7 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
                 character sits centred in each empty gap the zigzag leaves — the
                 left gap beside a right-shifted node, the right gap beside a
                 left-shifted one. */}
-            <div className="relative flex flex-col items-center gap-6 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8">
+            <div className="relative flex flex-col items-center gap-6 pt-14 pb-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8 sm:pt-8">
               {narrow &&
                 sections.map((_, i) => {
                   const offset = WAVE[i % WAVE.length]
