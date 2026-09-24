@@ -14,7 +14,7 @@ type DefineResult = {
   phonetic?: string
   entries: Entry[]
 }
-type PhraseResult = { phrase: string; translation: string; note: string }
+type PhraseResult = { phrase: string; explanation: string; translation: string }
 
 // Session caches so the same lookup isn't paid for twice.
 const defineCache = new Map<string, DefineResult>()
@@ -41,6 +41,8 @@ export function Dictionary({ language }: Props) {
   const [phraseQuery, setPhraseQuery] = useState('')
   const [phraseStatus, setPhraseStatus] = useState<'idle' | 'searching' | 'error'>('idle')
   const [phraseResult, setPhraseResult] = useState<PhraseResult | null>(null)
+  // The Spanish translation stays hidden until the learner asks for it.
+  const [phraseTransShown, setPhraseTransShown] = useState(false)
 
   async function onSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -110,6 +112,7 @@ export function Dictionary({ language }: Props) {
     if (!phrase) return
 
     setPhraseResult(null)
+    setPhraseTransShown(false)
     setPhraseStatus('searching')
 
     const key = `${language}:${phrase.toLowerCase()}`
@@ -280,22 +283,26 @@ export function Dictionary({ language }: Props) {
                 </button>
               )}
             </div>
-            <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 mb-1">
-              {d.phraseMeaning}
+            <p className="text-base font-bold text-stone-800 leading-snug">
+              {phraseResult.explanation}
             </p>
-            <p className="text-base font-black text-emerald-700 leading-snug">
-              {phraseResult.translation}
-            </p>
-            {phraseResult.note && (
-              <>
-                <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 mt-4 mb-1">
-                  {d.phraseNote}
+
+            {/* Help: reveal the Spanish translation only on demand */}
+            <div className="mt-6 pt-4 border-t-2 border-stone-100">
+              {!phraseTransShown ? (
+                <button
+                  type="button"
+                  onClick={() => setPhraseTransShown(true)}
+                  className="text-sm font-black text-stone-500 hover:text-emerald-600 transition-colors"
+                >
+                  {d.help}
+                </button>
+              ) : (
+                <p className="text-base font-black text-emerald-700 leading-snug">
+                  {phraseResult.translation}
                 </p>
-                <p className="text-sm font-semibold text-stone-500 leading-snug">
-                  {phraseResult.note}
-                </p>
-              </>
-            )}
+              )}
+            </div>
           </div>
         )}
       </section>

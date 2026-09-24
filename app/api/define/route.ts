@@ -28,14 +28,14 @@ Return strict JSON: {"word": string, "translation": string}
 "translation" is the 1-3 most common ${LANG_NAME[to]} equivalents, comma-separated, in ${LANG_NAME[to]} only.`
 }
 
-// Phrase help: the learner pastes a phrase in the language they're studying and
-// gets a native-language translation plus a short note on any tricky bit.
+// Phrase help: the learner pastes a COMPLETE phrase in the language they're
+// studying and gets a monolingual explanation (in that language). The native
+// translation is also returned but the UI keeps it hidden until asked for.
 function phrasePrompt(phrase: string, from: Lang, to: Lang): string {
-  return `A learner studying ${LANG_NAME[from]} wants help with this ${LANG_NAME[from]} phrase: "${phrase}".
-Return strict JSON: {"phrase": string, "translation": string, "note": string}
-- "translation": a natural ${LANG_NAME[to]} translation of the phrase.
-- "note": a SHORT (1-2 sentences) explanation, IN ${LANG_NAME[to]}, of any tricky grammar, tense, or idiom in the phrase; if nothing is tricky, give a brief usage tip.
-Write "translation" and "note" in ${LANG_NAME[to]} only.`
+  return `A learner studying ${LANG_NAME[from]} wants help understanding this complete ${LANG_NAME[from]} phrase: "${phrase}".
+Return strict JSON: {"phrase": string, "explanation": string, "translation": string}
+- "explanation": a clear, simple explanation IN ${LANG_NAME[from]} ONLY (1-2 sentences) of what the phrase means and how it's used, like a monolingual dictionary. Never use ${LANG_NAME[to]} here.
+- "translation": a natural ${LANG_NAME[to]} translation of the whole phrase, in ${LANG_NAME[to]} only.`
 }
 
 export async function POST(request: NextRequest) {
