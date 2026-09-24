@@ -97,15 +97,28 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
             <div className="flex flex-col items-center gap-6 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-8">
               {sections.map((section, i) => {
                 const kind = sectionKind(section)
+                const offset = WAVE[i % WAVE.length]
                 return (
                   <div
                     key={i}
+                    className="relative"
                     style={{
-                      transform: narrow
-                        ? `translateX(${WAVE[i % WAVE.length]}px)`
-                        : undefined,
+                      transform: narrow ? `translateX(${offset}px)` : undefined,
                     }}
                   >
+                    {/* Static decorations fill the empty side left by the mobile
+                        zigzag (a node shifted right leaves a gap on its left, and
+                        vice versa). Placeholder figures — swap them later. */}
+                    {narrow && offset > 0 && (
+                      <div className="absolute top-8 right-full mr-3 -translate-y-1/2 pointer-events-none">
+                        <PathDecoration variant="drop" />
+                      </div>
+                    )}
+                    {narrow && offset < 0 && (
+                      <div className="absolute top-8 left-full ml-3 -translate-y-1/2 pointer-events-none">
+                        <PathDecoration variant="sparkle" />
+                      </div>
+                    )}
                     <PathNode
                       slug={topic.slug}
                       index={i}
@@ -123,6 +136,39 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
         )
       })}
     </div>
+  )
+}
+
+// Small static decoration for the mobile serpentine gaps. Placeholder SVGs kept
+// deliberately pale so they read as background flavour, not tappable nodes.
+// Swap these paths for real illustrations later; the placement stays the same.
+function PathDecoration({ variant }: { variant: 'drop' | 'sparkle' }) {
+  if (variant === 'drop') {
+    return (
+      <svg viewBox="0 0 40 48" className="w-10 h-auto" aria-hidden="true">
+        <path
+          d="M20 4 C 26 18 34 24 34 33 A 14 14 0 1 1 6 33 C 6 24 14 18 20 4 Z"
+          fill="#6ee7b7"
+          stroke="#10b981"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+        <ellipse cx="14" cy="30" rx="3" ry="5" fill="#ffffff" opacity="0.5" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 40 40" className="w-9 h-auto" aria-hidden="true">
+      <path
+        d="M20 3 L24 16 L37 20 L24 24 L20 37 L16 24 L3 20 L16 16 Z"
+        fill="#fcd34d"
+        stroke="#f59e0b"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="33" cy="8" r="2.5" fill="#fbbf24" />
+      <circle cx="8" cy="31" r="2" fill="#fbbf24" />
+    </svg>
   )
 }
 
