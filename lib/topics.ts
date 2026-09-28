@@ -18,7 +18,13 @@ export function isLevelUnlocked(topicLevel: Level, userLevel: Level): boolean {
   return LEVEL_ORDER[topicLevel] <= LEVEL_ORDER[userLevel]
 }
 
-export type TopicVocab = { term: string; translation: string }
+export type TopicVocab = {
+  term: string
+  translation: string
+  /** Optional illustration of the word's meaning (path under /public, e.g.
+   * '/vocab/dog.svg'). Shown in the vocabulary deck when present. */
+  image?: string
+}
 export type TopicDialogueLine = { speaker: string; text: string }
 export type TopicSection = {
   title: string

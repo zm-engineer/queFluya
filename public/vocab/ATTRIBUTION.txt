@@ -1,0 +1,6 @@
+Vocabulary illustrations.
+
+The animal illustrations in this folder are from OpenMoji (https://openmoji.org),
+licensed CC BY-SA 4.0. Keep this attribution if you ship them. They are meant as
+a first, swappable batch — replace any file with your own custom illustration
+(same filename) and it shows up automatically after re-seeding the topics.
