@@ -82,5 +82,35 @@ export async function loadStreak(
     days.add(dayKeyOf(parseDbTimestamp(row.created_at), timeZone))
   }
 
+  // Union in non-recording activity days (e.g. using Esenciales). These rows
+  // already store a `date`, so they compare directly as DayKeys.
+  const { data: activity } = await supabase
+    .from('activity_days')
+    .select('day')
+    .eq('profile_id', profileId)
+  for (const row of (activity ?? []) as { day: string }[]) {
+    if (row.day) days.add(row.day)
+  }
+
   return computeStreak(days, dayKeyOf(now, timeZone))
+}
+
+/**
+ * Mark today as an active day for the streak (idempotent — one row per user per
+ * day). Use for streak-worthy activity that doesn't create a recording, like
+ * opening Esenciales. Safe to call on every visit; the PK + ignoreDuplicates
+ * makes repeats a no-op.
+ */
+export async function recordActivity(
+  supabase: SupabaseClient,
+  profileId: string,
+  now: number | Date = Date.now(),
+  timeZone = 'UTC'
+): Promise<void> {
+  await supabase
+    .from('activity_days')
+    .upsert(
+      { profile_id: profileId, day: dayKeyOf(now, timeZone) },
+      { onConflict: 'profile_id,day', ignoreDuplicates: true }
+    )
 }

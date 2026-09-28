@@ -56,6 +56,7 @@ model Profile {
   updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at")
   topicProgress  TopicProgress[]
   recordings     Recording[]
+  activityDays   ActivityDay[]
   hostedSessions TandemSession[]      @relation("HostedSessions")
   sessionMembers SessionParticipant[]
   chatMessages   ChatMessage[]
@@ -191,4 +192,17 @@ model Recording {
   profile           Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("recordings")
+}
+
+// One row per calendar day the user did ANY streak-worthy activity that isn't a
+// recording (e.g. using Esenciales). The streak unions these days with the
+// recordings' days. Kept separate from `recordings` so the practice count isn't
+// inflated.
+model ActivityDay {
+  profileId String   @map("profile_id") @db.Uuid
+  day       DateTime @db.Date
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, day])
+  @@map("activity_days")
 }
