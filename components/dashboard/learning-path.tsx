@@ -4,7 +4,12 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useDict } from '@/components/i18n/language-provider'
-import { type Level, type TopicDetail } from '@/lib/topics'
+import {
+  LEVEL_ORDER,
+  LEVELS_IN_ORDER,
+  type Level,
+  type TopicDetail,
+} from '@/lib/topics'
 import { isSectionAccessible, sectionKind, type SectionKind } from '@/lib/topic-journey'
 
 const KIND_ICON: Record<SectionKind, string> = {
@@ -68,8 +73,14 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
+  // Optional review of earlier levels — hidden until the user asks for it.
+  const [showReview, setShowReview] = useState(false)
+
   const t = useDict()
   const levelTopics = topics.filter((topic) => topic.level === userLevel)
+  const reviewTopics = topics.filter(
+    (topic) => LEVEL_ORDER[topic.level] < LEVEL_ORDER[userLevel]
+  )
 
   if (levelTopics.length === 0) {
     return (
@@ -184,6 +195,58 @@ export function LearningPath({ topics, userLevel, progressBySlug }: Props) {
           </div>
         )
       })}
+
+      {/* Optional review of earlier levels — collapsed by default. */}
+      {reviewTopics.length > 0 && (
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setShowReview((v) => !v)}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-300 bg-white px-5 py-4 text-sm font-black text-stone-600 hover:border-emerald-300 hover:text-emerald-600 transition-colors"
+          >
+            {showReview ? t.path.reviewHide : t.path.reviewShow}
+          </button>
+
+          {showReview && (
+            <div className="mt-4 space-y-6">
+              <p className="text-sm font-semibold text-stone-400 text-center">
+                {t.path.reviewHint}
+              </p>
+              {LEVELS_IN_ORDER.filter(
+                (l) => LEVEL_ORDER[l] < LEVEL_ORDER[userLevel]
+              ).map((level) => {
+                const group = reviewTopics.filter((topic) => topic.level === level)
+                if (group.length === 0) return null
+                return (
+                  <div key={level}>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-3">
+                      {t.common.levels[level]}
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {group.map((topic) => (
+                        <Link
+                          key={topic.slug}
+                          href={`/topics/${topic.slug}`}
+                          className="bg-white border-2 border-b-4 border-stone-200 rounded-2xl px-5 py-4 transition-transform duration-150 hover:-translate-y-0.5 hover:border-emerald-300 active:translate-y-0.5 active:border-b-2"
+                        >
+                          <p className="text-base font-black text-stone-900 leading-snug">
+                            {topic.title}
+                          </p>
+                          {topic.description && (
+                            <p className="text-sm font-semibold text-stone-500 mt-1 line-clamp-2">
+                              {topic.description}
+                            </p>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
