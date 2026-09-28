@@ -125,6 +125,9 @@ const es = {
     topic: (n: number) => `Tema ${n}`,
     start: 'Empieza',
     tandemLocked: 'Completa la práctica de frases primero',
+    reviewShow: '📚 Repasar niveles anteriores',
+    reviewHide: '📚 Ocultar repaso',
+    reviewHint: 'Vuelve a cualquier tema de un nivel anterior cuando lo necesites.',
     kinds: {
       study: 'Estudio',
       shadowing: 'Repetir',
@@ -568,6 +571,9 @@ const en: typeof es = {
     topic: (n: number) => `Topic ${n}`,
     start: 'Start',
     tandemLocked: 'Finish the phrase practice first',
+    reviewShow: '📚 Review earlier levels',
+    reviewHide: '📚 Hide review',
+    reviewHint: 'Jump back to any topic from an earlier level whenever you need it.',
     kinds: {
       study: 'Study',
       shadowing: 'Repeat',
