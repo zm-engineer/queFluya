@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { pingEssentialsActivity } from '@/lib/essentials-activity'
 import { useDict } from '@/components/i18n/language-provider'
 import {
   deleteAudioFile,
@@ -139,6 +140,7 @@ export function AudioLooper() {
   }, [])
 
   function play(audioUrl: string, audioTitle: string | null) {
+    pingEssentialsActivity()
     setAudioError(false)
     setSrc(audioUrl)
     setTitle(audioTitle)

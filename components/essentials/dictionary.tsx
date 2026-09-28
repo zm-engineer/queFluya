@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTTS } from '@/lib/practice/use-tts'
+import { pingEssentialsActivity } from '@/lib/essentials-activity'
 import { useDict } from '@/components/i18n/language-provider'
 import type { Language } from '@/lib/topics'
 
@@ -48,6 +49,7 @@ export function Dictionary({ language }: Props) {
     e.preventDefault()
     const word = query.trim()
     if (!word) return
+    pingEssentialsActivity()
 
     setResult(null)
     setTranslation(null)
@@ -110,6 +112,7 @@ export function Dictionary({ language }: Props) {
     e.preventDefault()
     const phrase = phraseQuery.trim()
     if (!phrase) return
+    pingEssentialsActivity()
 
     setPhraseResult(null)
     setPhraseTransShown(false)

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
+import { pingEssentialsActivity } from '@/lib/essentials-activity'
 import { useDict } from '@/components/i18n/language-provider'
 import { Button } from '@/components/ui/button'
 import type { EssentialExample } from '@/content/essentials/types'
@@ -58,7 +59,10 @@ export function ExampleCard({ examples, language }: Props) {
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => synthesis.speak(ex.text, language)}
+            onClick={() => {
+              pingEssentialsActivity()
+              synthesis.speak(ex.text, language)
+            }}
             disabled={synthesis.isSpeaking}
           >
             🔊 {synthesis.isSpeaking ? t.deck.playing : t.practice.listen}

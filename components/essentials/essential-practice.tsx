@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTTS } from '@/lib/practice/use-tts'
+import { pingEssentialsActivity } from '@/lib/essentials-activity'
 import { useDict } from '@/components/i18n/language-provider'
 import { Button } from '@/components/ui/button'
 import { ExampleCard } from '@/components/essentials/example-card'
@@ -49,7 +50,10 @@ export function EssentialPractice({ items, formLabels, language }: Props) {
     return (
       <button
         type="button"
-        onClick={() => synthesis.speak(text, language)}
+        onClick={() => {
+          pingEssentialsActivity()
+          synthesis.speak(text, language)
+        }}
         disabled={synthesis.isSpeaking}
         aria-label={t.practice.listen}
         className={`shrink-0 inline-flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 transition-colors ${dim}`}
@@ -120,7 +124,10 @@ export function EssentialPractice({ items, formLabels, language }: Props) {
           type="button"
           size="md"
           className="flex-1"
-          onClick={() => setCurrentIdx(Math.min(items.length - 1, idx + 1))}
+          onClick={() => {
+            pingEssentialsActivity()
+            setCurrentIdx(Math.min(items.length - 1, idx + 1))
+          }}
           disabled={idx === items.length - 1}
         >
           {t.deck.next}
