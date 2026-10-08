@@ -5,9 +5,11 @@ type Lang = 'EN' | 'ES'
 const CODE: Record<Lang, string> = { EN: 'en', ES: 'es' }
 
 // Fast word/phrase translation (word in the studied language → the learner's
-// native language). Uses MyMemory (free, no key) so the meaning shows almost
-// instantly — the richer AI definition loads separately. Auth is a light,
-// local session check (no network round-trip) to keep it fast.
+// native language). Uses Google's public `gtx` endpoint (free, no key, ~0.35s
+// — MyMemory was ~1.4s, no faster than the AI define it was meant to beat) so
+// the meaning shows almost instantly, while the richer AI definition loads
+// separately. Auth is a light, local session check (no network round-trip) to
+// keep it fast.
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -26,19 +28,22 @@ export async function POST(request: NextRequest) {
   }
 
   const to: Lang = language === 'EN' ? 'ES' : 'EN'
-  const langpair = `${CODE[language]}|${CODE[to]}`
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
-    word
-  )}&langpair=${langpair}`
+  const url =
+    `https://translate.googleapis.com/translate_a/single?client=gtx` +
+    `&sl=${CODE[language]}&tl=${CODE[to]}&dt=t&q=${encodeURIComponent(word)}`
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 5000)
+  const timeout = setTimeout(() => controller.abort(), 4000)
   try {
     const res = await fetch(url, { signal: controller.signal })
-    const data = (await res.json().catch(() => null)) as {
-      responseData?: { translatedText?: string }
-    } | null
-    const translation = data?.responseData?.translatedText ?? ''
+    // gtx returns [ [ [ "<translated>", "<source>", … ], … ], … ]. The
+    // translation is the first element of each segment, concatenated.
+    const data = (await res.json().catch(() => null)) as unknown
+    const segments = Array.isArray(data) && Array.isArray(data[0]) ? data[0] : []
+    const translation = segments
+      .map((seg) => (Array.isArray(seg) && typeof seg[0] === 'string' ? seg[0] : ''))
+      .join('')
+      .trim()
     return NextResponse.json({ translation })
   } catch {
     return NextResponse.json({ translation: '' })
