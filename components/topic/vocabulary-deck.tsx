@@ -83,18 +83,8 @@ export function VocabularyDeck({ vocabulary, language }: Props) {
         </div>
       </div>
 
-      {/* Studied word: illustration (if any), term, 🔊, then the translation */}
+      {/* Studied word: term, 🔊 right below it, then the translation */}
       <div className="bg-white border-2 border-stone-200 rounded-2xl px-6 py-8 text-center">
-        {card.image && (
-          <div className="flex justify-center mb-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={card.image}
-              alt={card.term}
-              className="w-28 h-28 object-contain"
-            />
-          </div>
-        )}
         <p className="text-3xl font-black text-stone-900">{card.term}</p>
         {synthesis.isSupported && (
           <div className="mt-3 flex justify-center">
