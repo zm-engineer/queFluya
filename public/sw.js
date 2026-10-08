@@ -14,8 +14,16 @@
 const CACHE = 'quefluya-shell-v1'
 const PRECACHE = ['/', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png']
 
+// In local development the Next dev chunks have STABLE names, so a cache-first
+// SW serves yesterday's JS and breaks HMR (stale code → hydration mismatches).
+// So on localhost the SW caches nothing and wipes any existing cache. Production
+// (content-hashed chunks) keeps the full caching behaviour.
+const DEV =
+  self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
+
 self.addEventListener('install', (event) => {
   self.skipWaiting()
+  if (DEV) return
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).catch(() => {})
   )
@@ -24,9 +32,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // Drop caches from older versions so a new shell fully replaces the old.
+      // Drop old caches — on dev, drop ALL of them for a clean slate.
       const keys = await caches.keys()
-      await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      await Promise.all(
+        keys.filter((k) => DEV || k !== CACHE).map((k) => caches.delete(k))
+      )
       await self.clients.claim()
     })()
   )
@@ -55,6 +65,10 @@ async function staleWhileRevalidate(request) {
 }
 
 self.addEventListener('fetch', (event) => {
+  // Dev: never intercept — let everything hit the network so HMR always serves
+  // the latest code.
+  if (DEV) return
+
   const request = event.request
   if (request.method !== 'GET') return
 
