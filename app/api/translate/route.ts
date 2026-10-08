@@ -1,20 +1,21 @@
+import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 type Lang = 'EN' | 'ES'
+const LANG_NAME: Record<Lang, string> = { EN: 'English', ES: 'Spanish' }
 
 // DeepL target codes (free API rejects a bare "EN"; Spanish is just "ES").
 const DEEPL_SOURCE: Record<Lang, string> = { EN: 'EN', ES: 'ES' }
 const DEEPL_TARGET: Record<Lang, string> = { EN: 'EN-US', ES: 'ES' }
-// MyMemory (fallback) uses lowercase ISO codes in a `from|to` pair.
-const MYMEMORY: Record<Lang, string> = { EN: 'en', ES: 'es' }
 
-// Fast word/phrase translation (word in the studied language → the learner's
-// native language), shown instantly while the richer AI definition loads
-// separately. Primary engine is DeepL Free (~0.3s, reliable, best quality);
-// if no key is configured (or DeepL errors) we fall back to MyMemory (free,
-// no key, but ~1.4s) so the feature still works. Auth is a light, local
-// session check (no network round-trip) to keep it fast.
+// Fast word translation (word in the studied language → the learner's native
+// language), shown instantly while the richer AI definition loads separately.
+// Engine order, each used only if the one before it isn't available/succeeds:
+//   1. DeepL Free  (~0.3s, best, but needs DEEPL_API_KEY)
+//   2. OpenAI      (~0.7s, reliable, reuses the key we already have)
+//   3. MyMemory    (~1.4s, free, no key — last-resort so it never fully breaks)
+// Auth is a light, local session check (no network round-trip) to stay fast.
 async function withDeepL(
   word: string,
   from: Lang,
@@ -42,7 +43,24 @@ async function withDeepL(
   const data = (await res.json().catch(() => null)) as {
     translations?: { text?: string }[]
   } | null
-  return data?.translations?.[0]?.text?.trim() ?? null
+  return data?.translations?.[0]?.text?.trim() || null
+}
+
+async function withOpenAI(word: string, from: Lang, to: Lang): Promise<string | null> {
+  if (!process.env.OPENAI_API_KEY) return null
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0,
+    max_tokens: 30,
+    messages: [
+      {
+        role: 'user',
+        content: `Translate the ${LANG_NAME[from]} word "${word}" into ${LANG_NAME[to]}. Reply with ONLY the 1-3 most common ${LANG_NAME[to]} equivalents, comma-separated, and nothing else.`,
+      },
+    ],
+  })
+  return completion.choices[0]?.message?.content?.trim() || null
 }
 
 async function withMyMemory(
@@ -51,7 +69,7 @@ async function withMyMemory(
   to: Lang,
   signal: AbortSignal
 ): Promise<string> {
-  const langpair = `${MYMEMORY[from]}|${MYMEMORY[to]}`
+  const langpair = `${from.toLowerCase()}|${to.toLowerCase()}`
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
     word
   )}&langpair=${langpair}`
@@ -81,11 +99,12 @@ export async function POST(request: NextRequest) {
 
   const to: Lang = language === 'EN' ? 'ES' : 'EN'
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 4000)
+  const timeout = setTimeout(() => controller.abort(), 6000)
   try {
-    const deepl = await withDeepL(word, language, to, controller.signal)
     const translation =
-      deepl ?? (await withMyMemory(word, language, to, controller.signal))
+      (await withDeepL(word, language, to, controller.signal)) ??
+      (await withOpenAI(word, language, to)) ??
+      (await withMyMemory(word, language, to, controller.signal))
     return NextResponse.json({ translation })
   } catch {
     return NextResponse.json({ translation: '' })
