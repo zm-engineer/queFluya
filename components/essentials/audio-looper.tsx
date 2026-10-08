@@ -83,6 +83,27 @@ function writePages(pages: SavedPage[]) {
   }
 }
 
+// Remember where playback was, per source, so a podcast resumes where you left
+// it (e.g. after the car Bluetooth disconnects and reconnects) — Spotify-style.
+const POSITION_KEY = 'escucha:position'
+
+function readPosition(): { src: string; time: number } | null {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY)
+    return raw ? (JSON.parse(raw) as { src: string; time: number }) : null
+  } catch {
+    return null
+  }
+}
+
+function writePosition(src: string, time: number) {
+  try {
+    localStorage.setItem(POSITION_KEY, JSON.stringify({ src, time }))
+  } catch {
+    // storage unavailable — fine.
+  }
+}
+
 export function AudioLooper() {
   const t = useDict()
   const l = t.essentials.listening
@@ -138,6 +159,64 @@ export function AudioLooper() {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     }
   }, [])
+
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const lastSaveRef = useRef(0)
+
+  // Media Session: wire the OS / car Bluetooth controls (play, pause, seek) to
+  // our <audio>, and show the title. This is what lets the car resume playback.
+  useEffect(() => {
+    if (!src || typeof navigator === 'undefined' || !('mediaSession' in navigator))
+      return
+    const ms = navigator.mediaSession
+    try {
+      ms.metadata = new MediaMetadata({ title: title || l.audio, artist: 'queFluya' })
+    } catch {
+      // MediaMetadata unavailable — fine.
+    }
+    const el = () => audioRef.current
+    const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
+      ['play', () => el()?.play()],
+      ['pause', () => el()?.pause()],
+      [
+        'seekbackward',
+        (d) => {
+          const a = el()
+          if (a) a.currentTime = Math.max(0, a.currentTime - (d.seekOffset ?? 10))
+        },
+      ],
+      [
+        'seekforward',
+        (d) => {
+          const a = el()
+          if (a) a.currentTime = a.currentTime + (d.seekOffset ?? 10)
+        },
+      ],
+      [
+        'seekto',
+        (d) => {
+          const a = el()
+          if (a && d.seekTime != null) a.currentTime = d.seekTime
+        },
+      ],
+    ]
+    for (const [action, handler] of handlers) {
+      try {
+        ms.setActionHandler(action, handler)
+      } catch {
+        // unsupported action — fine.
+      }
+    }
+    return () => {
+      for (const [action] of handlers) {
+        try {
+          ms.setActionHandler(action, null)
+        } catch {
+          // fine.
+        }
+      }
+    }
+  }, [src, title, l.audio])
 
   function play(audioUrl: string, audioTitle: string | null) {
     pingEssentialsActivity()
@@ -501,12 +580,40 @@ export function AudioLooper() {
             </span>
           </div>
           <audio
+            ref={audioRef}
             key={src}
             src={src}
             controls
             loop
             className="w-full"
             onError={() => setAudioError(true)}
+            onLoadedMetadata={() => {
+              // Resume where we left off (same source) — e.g. getting back in
+              // the car. Guards against seeking past the end.
+              const a = audioRef.current
+              const saved = readPosition()
+              if (
+                a &&
+                saved &&
+                saved.src === src &&
+                saved.time > 1 &&
+                saved.time < a.duration - 1
+              ) {
+                a.currentTime = saved.time
+              }
+            }}
+            onTimeUpdate={() => {
+              const a = audioRef.current
+              if (!a || !src) return
+              const now = Date.now()
+              if (now - lastSaveRef.current < 4000) return // throttle writes
+              lastSaveRef.current = now
+              writePosition(src, a.currentTime)
+            }}
+            onPause={() => {
+              const a = audioRef.current
+              if (a && src) writePosition(src, a.currentTime)
+            }}
           />
           {audioError ? (
             <p className="text-[13px] font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3 mt-4">
