@@ -357,10 +357,7 @@ export function Dictionary({ language }: Props) {
         ) : (
           <ul className="flex flex-wrap gap-2">
             {savedWords.map((w) => (
-              <li
-                key={wordKey(w)}
-                className="flex items-center gap-1 rounded-full bg-white border-2 border-stone-100 pl-4 pr-1 py-1"
-              >
+              <li key={wordKey(w)} className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => openSaved(w)}
