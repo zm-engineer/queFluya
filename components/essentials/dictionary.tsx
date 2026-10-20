@@ -352,7 +352,6 @@ export function Dictionary({ language }: Props) {
 
       {/* Saved words — tap one to reopen it instantly, ✕ to forget it. */}
       <section className="space-y-3">
-        <h2 className="text-lg font-black text-stone-900">{d.savedTitle}</h2>
         {savedWords.length === 0 ? (
           <p className="text-sm font-semibold text-stone-400">{d.savedEmpty}</p>
         ) : (
