@@ -67,6 +67,9 @@ const es = {
       phraseDesc: 'Busca una frase completa; te la explico en el idioma que aprendes.',
       phrasePlaceholder: 'Ej.: "it now looks as if I\'m going to stay"',
       phrasePrompt: 'Escribe una frase completa para recibir ayuda.',
+      savedTitle: '⭐ Mis palabras',
+      savedEmpty: 'Las palabras que busques se guardarán aquí.',
+      savedRemove: 'Eliminar',
     },
     listening: {
       title: 'Escucha',
@@ -513,6 +516,9 @@ const en: typeof es = {
       phraseDesc: "Search a complete phrase; I'll explain it in the language you're learning.",
       phrasePlaceholder: 'e.g. "it now looks as if I\'m going to stay"',
       phrasePrompt: 'Type a complete phrase to get help.',
+      savedTitle: '⭐ My words',
+      savedEmpty: 'Words you look up will be saved here.',
+      savedRemove: 'Remove',
     },
     listening: {
       title: 'Listen',
