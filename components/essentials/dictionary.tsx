@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTTS } from '@/lib/practice/use-tts'
@@ -17,10 +17,93 @@ type DefineResult = {
 }
 type PhraseResult = { phrase: string; explanation: string; translation: string }
 
+// A word the learner looked up and kept. We store the meaning too so reopening
+// it is instant and free (no new AI call).
+type SavedWord = {
+  word: string
+  language: Language
+  translation: string | null
+  phonetic?: string
+  entries: Entry[]
+  savedAt: number
+}
+
 // Session caches so the same lookup isn't paid for twice.
 const defineCache = new Map<string, DefineResult>()
 const fastCache = new Map<string, string>()
 const phraseCache = new Map<string, PhraseResult>()
+
+// Saved words live in localStorage (per-device). Could move to a DB table with
+// RLS later if cross-device sync is wanted — the shape above is ready for it.
+const SAVED_KEY = 'essentials:dictionary:saved'
+const wordKey = (w: { language: Language; word: string }) =>
+  `${w.language}:${w.word.toLowerCase()}`
+
+function readSaved(): SavedWord[] {
+  try {
+    const raw = localStorage.getItem(SAVED_KEY)
+    const parsed = raw ? (JSON.parse(raw) as unknown) : []
+    return Array.isArray(parsed) ? (parsed as SavedWord[]) : []
+  } catch {
+    return []
+  }
+}
+
+function writeSaved(words: SavedWord[]) {
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(words))
+  } catch {
+    // Private mode / quota — saving is a nice-to-have, never break the page.
+  }
+}
+
+// A tiny external store over that localStorage list, read through
+// useSyncExternalStore. This keeps the list hydration-safe (server renders the
+// empty snapshot, the client re-renders with the real list after hydration,
+// with no mismatch warning) and lets us save/remove from plain event handlers
+// instead of setState-in-effect.
+let savedCache: SavedWord[] | null = null
+const savedListeners = new Set<() => void>()
+const EMPTY_SAVED: SavedWord[] = []
+
+function getSavedSnapshot(): SavedWord[] {
+  if (savedCache === null) savedCache = readSaved()
+  return savedCache
+}
+
+function getSavedServerSnapshot(): SavedWord[] {
+  return EMPTY_SAVED
+}
+
+function subscribeSaved(cb: () => void): () => void {
+  savedListeners.add(cb)
+  return () => savedListeners.delete(cb)
+}
+
+function commitSaved(next: SavedWord[]) {
+  savedCache = next
+  writeSaved(next)
+  savedListeners.forEach((l) => l())
+}
+
+/** Upsert a word (newest first, deduped by language+word). */
+function saveWord(entry: SavedWord) {
+  commitSaved([
+    entry,
+    ...getSavedSnapshot().filter((w) => wordKey(w) !== wordKey(entry)),
+  ])
+}
+
+/** Fill in a translation that arrived after the word was first saved. */
+function updateSavedTranslation(key: string, translation: string) {
+  const cur = getSavedSnapshot()
+  if (!cur.some((w) => wordKey(w) === key)) return
+  commitSaved(cur.map((w) => (wordKey(w) === key ? { ...w, translation } : w)))
+}
+
+function removeSavedWord(key: string) {
+  commitSaved(getSavedSnapshot().filter((w) => wordKey(w) !== key))
+}
 
 type Props = {
   /** The language being learned — the dictionary is monolingual in it. */
@@ -47,6 +130,26 @@ export function Dictionary({ language }: Props) {
   // The Spanish translation stays hidden until the learner asks for it.
   const [phraseTransShown, setPhraseTransShown] = useState(false)
 
+  // Saved words, read from the localStorage-backed store. Hydration-safe: the
+  // server snapshot is empty and the client re-renders with the real list.
+  const savedWords = useSyncExternalStore(
+    subscribeSaved,
+    getSavedSnapshot,
+    getSavedServerSnapshot
+  )
+
+  // Reopen a saved word straight from storage — no network, no AI cost.
+  function openSaved(w: SavedWord) {
+    pingEssentialsActivity()
+    setQuery(w.word)
+    setSearchedWord(w.word)
+    setFastTranslation(w.translation)
+    setResult({ word: w.word, found: true, phonetic: w.phonetic, entries: w.entries })
+    setTranslatingFast(false)
+    setDefining(false)
+    if (synthesis.isSupported) synthesis.prefetch(w.word, w.language)
+  }
+
   async function onSearch(e: React.FormEvent) {
     e.preventDefault()
     const word = query.trim()
@@ -58,10 +161,32 @@ export function Dictionary({ language }: Props) {
     setResult(null)
     setFastTranslation(null)
 
+    // Freshest translation seen this search — the two requests resolve in any
+    // order, so whichever finishes first leaves the value here for the other.
+    let currentTranslation: string | null = null
+    const rememberTranslation = (value: string) => {
+      currentTranslation = value
+      updateSavedTranslation(key, value) // no-op until the word is saved
+    }
+    // Save a real word with the meaning we have so far; a later translation
+    // fills in through rememberTranslation → updateSavedTranslation.
+    const saveIfFound = (data: DefineResult) => {
+      if (!data.found) return
+      saveWord({
+        word: data.word,
+        language,
+        translation: currentTranslation,
+        phonetic: data.phonetic,
+        entries: data.entries,
+        savedAt: Date.now(),
+      })
+    }
+
     // 1) Instant translation (fast, free) — the meaning the learner wants NOW.
     const tCached = fastCache.get(key)
     if (tCached !== undefined) {
       setFastTranslation(tCached)
+      rememberTranslation(tCached)
     } else {
       setTranslatingFast(true)
       fetch('/api/translate', {
@@ -74,6 +199,7 @@ export function Dictionary({ language }: Props) {
           const value = (data?.translation ?? '') as string
           fastCache.set(key, value)
           setFastTranslation(value)
+          rememberTranslation(value)
         })
         .catch(() => setFastTranslation(''))
         .finally(() => setTranslatingFast(false))
@@ -84,6 +210,7 @@ export function Dictionary({ language }: Props) {
     if (dCached) {
       setResult(dCached)
       if (dCached.found) synthesis.prefetch(dCached.word, language)
+      saveIfFound(dCached)
     } else {
       setDefining(true)
       fetch('/api/define', {
@@ -97,6 +224,7 @@ export function Dictionary({ language }: Props) {
           defineCache.set(key, data)
           setResult(data)
           if (data.found) synthesis.prefetch(data.word, language)
+          saveIfFound(data)
         })
         .catch(() => {})
         .finally(() => setDefining(false))
@@ -221,6 +349,35 @@ export function Dictionary({ language }: Props) {
           </div>
         </div>
       )}
+
+      {/* Saved words — tap one to reopen it instantly, ✕ to forget it. */}
+      <section className="space-y-3">
+        {savedWords.length === 0 ? (
+          <p className="text-sm font-semibold text-stone-400">{d.savedEmpty}</p>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {savedWords.map((w) => (
+              <li key={wordKey(w)} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => openSaved(w)}
+                  className="text-sm font-black text-stone-700 hover:text-emerald-600 transition-colors"
+                >
+                  {w.word}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeSavedWord(wordKey(w))}
+                  aria-label={`${d.savedRemove}: ${w.word}`}
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-stone-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {/* Phrase help — a separate block on the same page. */}
       <section className="border-t-2 border-stone-100 pt-8 space-y-4">
